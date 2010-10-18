@@ -2,7 +2,7 @@ package io.mth.pirate.demo
 
 import io.mth.pirate.Pirate
 
-object Demo {
+object SwitchesDemo {
   import Pirate._
   case class DemoArgs(help: Boolean, version: Boolean, verbose: Boolean, expression: Option[String], console: Boolean, config: Option[String])
 

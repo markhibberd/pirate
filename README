@@ -15,3 +15,14 @@ BUILD
 
         Artifacts will be built into:
             <repository>/gen/dist/.
+
+
+TODO
+        . Positional arguments
+        . Proguard
+        . Flags with arguments
+        . Sub commands
+        . Pretty up usage output
+        . API tidy
+        . Demos
+        . Tests
