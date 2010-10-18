@@ -62,6 +62,8 @@ object PirateParser {
 
 
 
+  // FIX can this be defined in terms of many/list
+  // FIX lossy end of flags vs hard fail (i.e. unexpected flag)
   def flagParser[A](p: PirateParser[A]): PirateParser[List[A]] = new PirateParser[List[A]] {
     def parse(args: List[String]) = is("--").parse(args) match {
       case Success((rest, value)) => Failure("End of flags reached")

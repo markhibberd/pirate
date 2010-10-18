@@ -1,0 +1,17 @@
+NAME
+        pirate - command line 'arg processor
+
+DESCRIPTION
+
+
+USAGE
+
+
+BUILD
+        To build from source:
+            $ git clone git@github.com:markhibberd/pirate.git
+            $ cd pirate
+            $ make
+
+        Artifacts will be built into:
+            <repository>/gen/dist/.
