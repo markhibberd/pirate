@@ -2,8 +2,6 @@ package io.mth.pirate
 
 import scalaz._
 
-case class Flag()
-
 trait Pirate[A] {
   def fold[T](
     flag: String => String => String => (A => A) => T,
