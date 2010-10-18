@@ -1,7 +1,7 @@
 MODULE = pirate
 PROD = src/prod
 TEST = src/test
-CP = lib/prod/\*:lib/test/scalatest-1.2.jar
+CP = lib/prod/\*:lib/test/\*
 CP_PROD = ${CP}:${PROD_CLS}
 CP_TEST = ${CP_PROD}:${TEST_CLS}
 GEN = gen
@@ -19,7 +19,8 @@ compile: ${PROD_CLS} ${TEST_CLS}
 	find ${TEST} -name "*.scala"  | xargs fsc -unchecked -classpath ${CP_PROD} -d ${TEST_CLS}
 
 test: compile
-	scala -cp ${CP_TEST} org.scalatest.tools.Runner -p ${TEST_CLS} -o
+	scala -cp ${CP_TEST} org.scalatest.tools.Runner -p ${TEST_CLS} -o && \
+        scala -cp ${CP_TEST} scala.io.mth.pirate.test.PirateTest
 
 dist:  compile ${DIST}
 	jar cf ${JAR} -C ${PROD_CLS} .

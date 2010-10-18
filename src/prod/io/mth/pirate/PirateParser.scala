@@ -7,7 +7,7 @@ trait PirateParser[+A] {
   def parse(args: List[String]): Validation[String, (List[String], A)]
 
   // FIX work out why I can't point free these without type annotating up the wazoo.....
-  def lift[B]: PirateParser[B] = PirateParser.lift(this)(f)
+  def lift[B](f: A => B) : PirateParser[B] = PirateParser.lift(this)(f)
 
   def lift2[B, C](p: PirateParser[B])(f: A => B => C) = PirateParser.lift2(this)(p)(f)
 }
