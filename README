@@ -18,9 +18,8 @@ BUILD
 
 
 TODO
-        . Positional arguments
         . Proguard
-        . Flags with arguments
+        . Flags types, mandatory arguments, optional arguments, formats -xfoo -x foo -x=foo
         . Sub commands
         . Pretty up usage output
         . API tidy
