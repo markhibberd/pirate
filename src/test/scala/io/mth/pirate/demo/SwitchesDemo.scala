@@ -16,8 +16,7 @@ object SwitchesDemo {
 
     val p = demo.parserise
 
-    // FIX fail on unexpected input...
-    val result = parse(demo, List("--version", "-h", "-x"), DemoArgs(false, false, false, None, false, None))
+    val result = demo.parse(List("--version", "-h"), DemoArgs(false, false, false, None, false, None))
     println(result)
   }
 }

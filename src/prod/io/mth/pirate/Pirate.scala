@@ -15,14 +15,20 @@ trait Pirate[A] {
      command => flags => positional => command + " [OPTIONS] " + positional.map(_.usage).mkString(" ") + "\n\t\t" + flags.map(_.usage).mkString("\n\t\t")
   )
 
-  def parserise: PirateParser[A => A] = {
-    import PirateParser._
+  def parserise: Parser[A => A] = {
+    import Parser._
     fold(
       short => long => desc => f => flag(short, long).lift(_ => f),
       meta => f => string.lift(s => f(_)(s)),
       command => flags => positional => flatCommandline(flags.map(_.parserise), positional.map(_.parserise))
     )
   }
+
+  def parse(args: List[String], a: A): Option[A] =
+    parserise.parse(args) match {
+      case Success((rest, f)) => if (rest.isEmpty) Some(f(a)) else None
+      case Failure(msg) => None
+    }
 }
 
 
@@ -51,11 +57,7 @@ object Pirate {
     ) = line(command)(flags)(positionals)
   }
 
-  def parse[A](p: Pirate[A], args: List[String], a: A): Option[A] =
-    p.parserise.parse(args) match {
-      case Success((rest, f)) => Some(f(a))
-      case Failure(msg) => None
-    }
+
 }
 
 
