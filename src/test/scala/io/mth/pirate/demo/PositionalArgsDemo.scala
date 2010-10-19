@@ -16,13 +16,13 @@ object PositionalArgsDemo {
 
     val p = demo.parserise
 
-    val result1 = parse(demo, List("-h", "config.scala"), DemoArgs(false, ""))
+    val result1 = demo.parse(List("-h", "config.scala"), DemoArgs(false, ""))
     println(result1)
 
-    val result2 = parse(demo, List("config.scala"), DemoArgs(false, ""))
+    val result2 = demo.parse(List("config.scala"), DemoArgs(false, ""))
     println(result2)
 
-    val result3 = parse(demo, List("-h"), DemoArgs(false, ""))
+    val result3 = demo.parse(List("-h"), DemoArgs(false, ""))
     println(result3)
   }
 }
