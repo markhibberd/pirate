@@ -9,6 +9,8 @@ PROD_CLS = gen/prod/classes
 TEST_CLS = gen/test/classes
 DIST = gen/dist
 JAR = ${DIST}/${MODULE}.jar
+PROGUARD = lib/build/proguard.jar
+MIN_JAR = ${DIST}/${MODULE}.min.jar
 
 .PHONY: clean
 
@@ -24,6 +26,10 @@ test: compile
 
 dist:  compile ${DIST}
 	jar cf ${JAR} -C ${PROD_CLS} .
+
+shrink: dist
+	java -jar ${PROGUARD} -injars lib/prod/scala-library.jar:lib/prod/scalaz-core_2.8.0-5.0.jar:${JAR} \
+                              -outjar ${MIN_JAR} @etc/proguard.conf
 
 repl: compile
 	scala -classpath ${CP}:${PROD_CLS}:${TEST_CLS}
