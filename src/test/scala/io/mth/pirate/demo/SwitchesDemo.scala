@@ -14,8 +14,6 @@ object SwitchesDemo {
   def main(args: Array[String]) {
     println(demo.usage)
 
-    val p = demo.parserise
-
     val result = demo.parse(List("--version", "-h"), DemoArgs(false, false, false, None, false, None))
     println(result)
   }
