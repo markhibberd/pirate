@@ -14,8 +14,6 @@ object PositionalArgsDemo {
   def main(args: Array[String]) {
     println(demo.usage)
 
-    val p = demo.parserise
-
     val result1 = demo.parse(List("-h", "config.scala"), DemoArgs(false, ""))
     println(result1)
 

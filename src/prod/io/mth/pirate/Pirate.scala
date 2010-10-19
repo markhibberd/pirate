@@ -15,17 +15,17 @@ trait Pirate[A] {
      command => flags => positional => command + " [OPTIONS] " + positional.map(_.usage).mkString(" ") + "\n\t\t" + flags.map(_.usage).mkString("\n\t\t")
   )
 
-  def parserise: Parser[A => A] = {
+  def toParser: Parser[A => A] = {
     import Parser._
     fold(
       short => long => desc => f => flag(short, long).lift(_ => f),
       meta => f => string.lift(s => f(_)(s)),
-      command => flags => positional => flatCommandline(flags.map(_.parserise), positional.map(_.parserise))
+      command => flags => positional => flatCommandline(flags.map(_.toParser), positional.map(_.toParser))
     )
   }
 
   def parse(args: List[String], a: A): Option[A] =
-    parserise.parse(args) match {
+    toParser.parse(args) match {
       case Success((rest, f)) => if (rest.isEmpty) Some(f(a)) else None
       case Failure(msg) => None
     }
