@@ -1,10 +1,9 @@
 package io.mth.pirate
 
-import scalaz._
-import Scalaz._
-
 object FlagParsers {
   import Parser._
+
+  def endargs = is("--")
 
   def flag0(short: Option[Char], long: Option[String]) =  (short, long) match {
     case (Some(s), Some(l)) => is("-" + s) | is(l)
@@ -13,38 +12,19 @@ object FlagParsers {
     case (None, None) => throw new IllegalStateException("Flag must have at least one of a short of long form.")
   }
 
-  def flag1(short: Option[Char], long: Option[String]) =  (short, long) match {
-    case (Some(s), Some(l)) => (is("-" + s) | is(l)) >>> string
-    case (Some(s), None) => is("-" + s) >>> string
-    case (None, Some(l)) => is(l) >>> string
-    case (None, None) => throw new IllegalStateException("Flag must have at least one of a short of long form.")
-  }
+  def flag1(short: Option[Char], long: Option[String]) =
+    flag0(short, long) >>> string
 
   def positional1 = string
 
   def positionalN = string*
 
-  def endargs = is("--")
+  def flagParser[A](p: Parser[A]): Parser[List[A]] =
+    (endargs >>> value(List())) | (p.lift2(flagParser(p))(_::_) | value(List()))
 
-  def flagParser[A](p: Parser[A]): Parser[List[A]] = new Parser[List[A]] {
-    def parse(args: List[String]) = endargs.parse(args) match {
-      case Success((rest, value)) => Success((rest, List()))
-      case Failure(error) => (flagParserx(p) | value(List())).parse(args)
-    }
-  }
+  // FIX naive (and ugly as) implementation of positionals, should be able to have variable arity at any (single) position.
+  def commandline[A](flags: List[Parser[A => A]], positional: List[Parser[A => A]]): Parser[A => A] =
+    ((flagParser(choiceN(flags)).lift2(sequence(positional))(_:::_)) | sequence(positional)).lift(_.foldRight(id[A]_)(_ compose _))
 
-  def flagParserx[A](p: Parser[A]): Parser[List[A]] = p.lift2(flagParser(p))((x, xs) => x :: xs)
-
-  def commandline[A](flags: List[Parser[A => A]], positional: List[Parser[A => A]]) = new Parser[List[A => A]] {
-    def parse(args: List[String]) = flagParser(choiceN(flags)).parse(args) match {
-      case Success((rest, value)) => sequence(positional).parse(rest) match {
-         case Success((rest2, value2)) => Success(rest2, value ::: value2)
-         case Failure(error) => Failure(error)
-      }
-      case Failure(error) => sequence(positional).parse(args)
-    }
-  }
-
-  def flatCommandline[A](flags: List[Parser[A => A]], positional: List[Parser[A => A]]) =
-    commandline(flags, positional).lift(_.foldRight((a: A) => a)(_.compose(_)))
+  def id[A](a: A) = a
 }
