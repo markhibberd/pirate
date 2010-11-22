@@ -1,35 +1,31 @@
 package io.mth.pirate
 
+/**
+ * Hell'a ordinary usage mode printer.
+ */
+// FIX Clean this mess up
 object Usage {
   def usageForMode[A](mode: UsageMode)(pirate: Pirate[A]): String = {
+    import Text._
 
-    def space(width: Int) = (for (i <- 1 to width) yield " ").mkString
-
-     def wrap(s: String, width: Int, indent: Int): String = {
-       val spacer = space(indent)
-       def wrapit(s:String, w: Int): String =
-        if (w <= 0 || s.length < w)
-          s
-        else if  (s.charAt(w) == ' ')
-          s.substring(0, w) + "\n" + spacer + wrapit(s.substring(w + 1, s.length), width)
-        else
-          wrapit(s, w - 1)
-
-       wrapit(s, width)
-     }
+    def flagspace = space(mode.flagIndent)
 
     def render(p: Pirate[A]): String = p.fold(
-      command => flags => "Usage:\n" + space(mode.flagIndent) + command + " " + wrap(synopsisp(p), mode.width - mode.flagIndent - command.length, mode.flagIndent + command.length) + "\nOptions: \n" +
-               space(mode.flagIndent) + flags.allFlags.map(usagef(_)).mkString("\n" + space(mode.flagIndent)),
-
+      command => flags =>
+          "Usage:\n" +
+                flagspace + command + " " + wrappedsynopsisp(p, command) + "\n" +
+          "Options: \n" +
+                flagspace + flags.allFlags.map(usagef(_)).mkString("\n" + flagspace),
       commands => commands.map(render(_)).mkString("\n\n")
     )
 
     def usagef(f: Flag[A]) =
-        space(mode.flagIndent) + f.flaguse + "\n" + space(mode.flagIndent + mode.descIndent) + wrap(f.description,  mode.width - mode.flagIndent - mode.descIndent,  mode.flagIndent + mode.descIndent)
-
+        f.flaguse + "\n" + space(mode.flagIndent + mode.descIndent) + wrap(f.description,  mode.width - mode.flagIndent - mode.descIndent,  mode.flagIndent + mode.descIndent)
 
     def synopsisf(f: Flag[A]) = f.flagsynopsis
+
+    def wrappedsynopsisp(p: Pirate[A], command: String) =
+      wrap(synopsisp(p), mode.width - mode.flagIndent - command.length, mode.flagIndent + command.length)
 
     def synopsisp(p: Pirate[A]) =
       if (mode.condenseSynopsis)

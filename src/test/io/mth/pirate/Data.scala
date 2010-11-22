@@ -1,8 +1,7 @@
-package scala.io.mth.pirate.test
+package io.mth.pirate
 
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
-import io.mth.pirate.{Flag, Pirate}
 import org.scalacheck.Gen.{frequency, choose, listOfN, value, oneOf}
 
 object Data {

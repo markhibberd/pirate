@@ -34,6 +34,10 @@ trait Pirate[A] {
       case Success((rest, f)) => if (rest.isEmpty) Some(f(a)) else None
       case Failure(msg) => None
     }
+
+  def usage = Usage.usage(this)
+
+  def usage(mode: UsageMode) = Usage.usageForMode(mode)(this)
 }
 
 object Pirate {
