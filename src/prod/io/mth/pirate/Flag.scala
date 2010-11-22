@@ -112,7 +112,7 @@ trait Flag[A] {
         s => l => d => m => f =>  FlagParsers.flag1(s, l).lift(v => f(v)(_)),
         m => f => FlagParsers.positional1.lift(v => f(v)(_)),
         m => f => FlagParsers.positionalN.lift(v => f(v)(_)),
-        fs => FlagParsers.flatCommandline(allFlags.map(_.toParser), allPositional.map(_.toParser))
+        fs => FlagParsers.commandline(allFlags.map(_.toParser), allPositional.map(_.toParser))
       )
 
 

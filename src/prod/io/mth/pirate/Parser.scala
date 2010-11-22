@@ -82,10 +82,10 @@ object Parser {
   def thisMany[A](n: Int, p1: Parser[A]) =
     sequence((for (i <- 1 to n) yield p1).toList)
 
-  def list[A](p: Parser[A]): Parser[List[A]] =
+  def list[A](p: => Parser[A]): Parser[List[A]] =
       many1(p) | value(List[A]())
 
-  def many1[A](p: Parser[A]): Parser[List[A]] =
+  def many1[A](p: => Parser[A]): Parser[List[A]] =
     p.lift2(list(p))(_::_)
 
   def lift[A, B](p: => Parser[A])(f: A => B) =
