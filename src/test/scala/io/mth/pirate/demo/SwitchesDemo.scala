@@ -1,20 +1,26 @@
 package io.mth.pirate.demo
 
-import io.mth.pirate.Pirate
+import io.mth.pirate.{Usage, Pirate, Flag}
 
 object SwitchesDemo {
-  import Pirate._
   case class DemoArgs(help: Boolean, version: Boolean, verbose: Boolean, expression: Option[String], console: Boolean, config: Option[String])
 
-  val helparg = flag("-h", "--help", "display usage.", (d: DemoArgs) => d.copy(help = true))
-  val versionarg = flag("-V", "--version", "display version.", (d: DemoArgs) => d.copy(version = true))
-  val verbosearg = flag("-v", "--verbose", "verbose output.", (d: DemoArgs) => d.copy(verbose = true))
-  val demo = line("demo", List(helparg, versionarg, verbosearg), List())
+  import Flag._
+  import Pirate._
+
+  val flags =
+    full('h', "--help", "display usage.")((d: DemoArgs) => d.copy(help = true)) >>=
+    full('V', "--version", "display version.")((d: DemoArgs) => d.copy(version = true)) >>=
+    full('v', "--verbose", "verbose output.")((d: DemoArgs) => d.copy(verbose = true))
+
+  val cmd =
+    command("demo", flags)
 
   def main(args: Array[String]) {
-    println(demo.usage)
+    println(Usage.usage(cmd))
 
-    val result = demo.parse(List("--version", "-h"), DemoArgs(false, false, false, None, false, None))
+    val result = cmd.parse(List("--version", "-h"), DemoArgs(false, false, false, None, false, None))
+    
     println(result)
   }
 }

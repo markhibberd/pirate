@@ -2,26 +2,35 @@ NAME
         pirate - command line 'arrrrg processor
 
 DESCRIPTION
-
+        Pirate is a scala library that provides a mechanism for parsing
+        command line arguments and producing usage strings.
 
 USAGE
+        T.B.A.
 
+STATE
+        The `pirate` library is currently in an incubation stage and is
+        considered experimental and subject to breaking change.
 
-BUILD
-        To build from source:
-            $ git clone git@github.com:markhibberd/pirate.git
-            $ cd pirate
-            $ make
+LIMITATIONS
+        The current version does lacks built in support for a small set
+        of command line styles:
+          1. git style sub commands using different argument types*
+          2. find style state based switching (e.g. -name abc -o -name xyz
+          3. variable arity flags (e.g. -names abc xyz / -name <optional>)
+          4. variable length positional parameters may only be used last
 
-        Artifacts will be built into:
-            <repository>/gen/dist/.
+        * can be emulated without too much trouble.
 
+AUTHOR
+        Mark Hibberd <mark@hibberd.id.au>
+        Karl Roberts <karl.roberts@owtelse.com>
 
-TODO
-        . Proguard
-        . Flags types, mandatory arguments, optional arguments, formats -xfoo -x foo -x=foo
-        . Sub commands
-        . Pretty up usage output
-        . API tidy
-        . Demos
-        . Tests
+NOTES
+        1. official repository
+           https://github.com/markhibberd/pirate
+        2. site and documentation
+           http://pirate.mth.io
+        3. license (3 point BSD style)
+           https://github.com/markhibberd/pirate/blob/master/LICENSE
+

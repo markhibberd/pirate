@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Specification-Title: io.mth.pirate
+Specification-Version: VERSION
+Specification-Vendor: io.mth
+Implementation-Title: io.mth.pirate
+Implementation-Version: VERSION
+Implementation-Vendor: io.mth
+

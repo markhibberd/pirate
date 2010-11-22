@@ -3,26 +3,31 @@ package io.mth.pirate
 import scalaz._
 
 trait Pirate[A] {
-  def fold[T](
-    flag: String => String => String => (A => A) => T,
-    positional: String => (A => String => A) => T,
-    line: String => List[Pirate[A]] => List[Pirate[A]] => T
-  ): T
+  def fold[B](
+    command: String => Flag[A] => B,
+    compound: List[Pirate[A]] => B
+  ): B
 
-  def usage: String = fold(
-     short => long => desc => f => short + ", " + long + "\t\t" + desc,
-     meta => f => meta,
-     command => flags => positional => command + " [OPTIONS] " + positional.map(_.usage).mkString(" ") + "\n\t\t" + flags.map(_.usage).mkString("\n\t\t")
-  )
-
-  def toParser: Parser[A => A] = {
-    import Parser._
-    fold(
-      short => long => desc => f => flag(short, long).lift(_ => f),
-      meta => f => string.lift(s => f(_)(s)),
-      command => flags => positional => flatCommandline(flags.map(_.toParser), positional.map(_.toParser))
-    )
+  def bind(p: Pirate[A]) = new Pirate[A] {
+    def fold[B](
+      single: String => Flag[A] => B,
+      compound: List[Pirate[A]] => B
+    ): B = compound(List(this, p))
   }
+
+  def >>=(p: Pirate[A]) = bind(p)
+
+  def dispatch(args: List[String], a: A)(succ: A => Unit)(err:String => Unit) = {
+    toParser.parse(args) match {
+      case Success((rest, f)) => if (rest.isEmpty) succ(f(a)) else err("Not all arguments could be processed: " + rest)
+      case Failure(msg) => err(msg)
+    }
+  }
+
+  def toParser: Parser[A => A] = fold(
+      name => f => f.toParser,
+      ps => Parser.choiceN(ps.map(_.toParser))
+    )
 
   def parse(args: List[String], a: A): Option[A] =
     toParser.parse(args) match {
@@ -31,33 +36,12 @@ trait Pirate[A] {
     }
 }
 
-
 object Pirate {
-  def flag[A](short: String, long: String, desc: String, f: A => A): Pirate[A] = new Pirate[A] {
-    def fold[T](
-      flag: String => String => String => (A => A) => T,
-      positional: String => (A => String => A)  => T,
-      line: String => List[Pirate[A]] => List[Pirate[A]] => T
-    ) = flag(short)(long)(desc)(f)
+  def command[A](name: String, flags:Flag[A]) = new Pirate[A] {
+    def fold[B](
+      single: String => Flag[A] => B,
+      compound: List[Pirate[A]] => B
+    ): B = single(name)(flags)
   }
-
-  def positional[A](desc: String, f: A => String => A): Pirate[A] = new Pirate[A] {
-    def fold[T](
-      flag: String => String => String => (A => A) => T,
-      positional: String => (A => String => A)  => T,
-      line: String => List[Pirate[A]] => List[Pirate[A]] => T
-    ) = positional(desc)(f)
-  }
-
-  def line[A](command: String, flags: List[Pirate[A]], positionals: List[Pirate[A]]): Pirate[A] = new Pirate[A] {
-    def fold[T](
-      flag: String => String => String => (A => A)  => T,
-      positional: String => (A => String => A)  => T,
-      line: String => List[Pirate[A]] => List[Pirate[A]] => T
-    ) = line(command)(flags)(positionals)
-  }
-
-
 }
-
 
