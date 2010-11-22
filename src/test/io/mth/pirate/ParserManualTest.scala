@@ -1,7 +1,6 @@
-package scala.io.mth.pirate.test
+package io.mth.pirate
 
 import org.scalatest.FunSuite
-import io.mth.pirate.{Flag, Parser}
 
 // FIX Replace with an automated scalacheck test.
 class ParserManualTest extends FunSuite {

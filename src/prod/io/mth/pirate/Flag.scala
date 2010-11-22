@@ -4,9 +4,6 @@ package io.mth.pirate
  * A data type representing argument values.
  */
 trait Flag[A] {
-  /**
-   * The catamorphism for the Flag data type.
-   */
   def fold[B](
     flag0: Option[Char] => Option[String] => String => (A => A) => B,
     flag1: Option[Char] => Option[String] => String => String => (String => A => A) => B,

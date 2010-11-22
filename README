@@ -6,21 +6,28 @@ DESCRIPTION
         command line arguments and producing usage strings.
 
 USAGE
-        T.B.A.
+        Documentation is currently light on. The best place to start is
+        the demos:
+          . io.mth.pirate.demo.SwitchesDemo
+          . io.mth.pirate.demo.PositionalArgsDemo
 
 STATE
         The `pirate` library is currently in an incubation stage and is
-        considered experimental and subject to breaking change.
+        considered experimental and subject to breaking change -- the
+        plan is to evolve the api until the following limitations have
+        been addressed.
 
 LIMITATIONS
-        The current version does lacks built in support for a small set
-        of command line styles:
-          1. git style sub commands using different argument types*
+        The current version does lacks built in support for a set
+        of command line styles*:
+          1. git style sub commands using different argument types**
           2. find style state based switching (e.g. -name abc -o -name xyz
           3. variable arity flags (e.g. -names abc xyz / -name <optional>)
           4. variable length positional parameters may only be used last
+          5. flags with --flag=value syntax as well as --flag value.
 
-        * can be emulated without too much trouble.
+        *  support is planed for these in the near future
+        ** can be emulated without too much trouble.
 
 AUTHOR
         Mark Hibberd <mark@hibberd.id.au>

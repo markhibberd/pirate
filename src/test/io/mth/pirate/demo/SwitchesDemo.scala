@@ -9,6 +9,7 @@ object SwitchesDemo {
   import Pirate._
 
   val flags =
+    full1('c', "--config", "specify config file.", "FILE")((s: String) => (d: DemoArgs) => d.copy(config = Some(s))) >>=
     full('h', "--help", "display usage.")((d: DemoArgs) => d.copy(help = true)) >>=
     full('V', "--version", "display version.")((d: DemoArgs) => d.copy(version = true)) >>=
     full('v', "--verbose", "verbose output.")((d: DemoArgs) => d.copy(verbose = true))
@@ -17,10 +18,10 @@ object SwitchesDemo {
     command("demo", flags)
 
   def main(args: Array[String]) {
-    println(Usage.usage(cmd))
+    println(cmd.usage)
 
     val result = cmd.parse(List("--version", "-h"), DemoArgs(false, false, false, None, false, None))
-    
-    println(result)
+
+    println("Parsed: \n        " + result)
   }
 }

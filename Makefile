@@ -30,7 +30,11 @@ compile: clean ${PROD_CLS} ${TEST_CLS}
 
 test: compile
 	scala -cp ${CP_TEST} org.scalatest.tools.Runner -p ${TEST_CLS} -oDFW && \
-	scala -cp ${CP_TEST} scala.io.mth.pirate.test.PirateTest
+	scala -cp ${CP_TEST} io.mth.pirate.PirateTest && \
+	scala -cp ${CP_TEST} io.mth.pirate.ParserTest && \
+	scala -cp ${CP_TEST} io.mth.pirate.FlagTest && \
+	scala -cp ${CP_TEST} io.mth.pirate.TextTest && \
+	scala -cp ${CP_TEST} io.mth.pirate.UsageTest
 
 ${JAR}: compile ${DIST_MANIFEST} ${DIST}
 	jar cfm ${JAR} ${DIST_MANIFEST} -C ${PROD_CLS} .
@@ -46,6 +50,9 @@ ${TAR}: ${JAR} ${JAR_SRC} ${TAR_IMAGE} ${TAR_IMAGE}/lib
 	tar cfz ${TAR} -C ${GEN}/image .
 
 dist: clean ${TAR}
+
+publish:
+	rsync -aH --stats --exclude \*~ ${ETC}/www/ web@mth.io:pirate.mth.io/data
 
 ${MIN_JAR}: ${JAR}
 	java -jar ${PROGUARD} -injars lib/run/scala-library.jar:lib/run/scalaz-core_2.8.0-5.0.jar:${JAR} \
