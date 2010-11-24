@@ -2,112 +2,84 @@ package io.mth.pirate
 
 import scalaz._
 import Scalaz._
-import Monad._
 
-// FIX This is a simple (poor mans) combinator library - not very generic.
-// FIX Wire in scalaz.Monad and kill the dupe.
-trait Parser[+A] {
+sealed trait Parser[A] {
+  import Parser._
+
   def parse(args: List[String]): Validation[String, (List[String], A)]
 
-  def lift[B](f: A => B) = Parser.lift(this)(f)
+  def |(p: => Parser[A]): Parser[A] = this <+> p
+  
+  def list: Parser[List[A]] = many1 | value(List[A]())
 
-  def lift2[B, C](p: => Parser[B])(f: (A, B) => C) = Parser.lift2(this)(p)(f)
+  def many1: Parser[List[A]]  = lift2(list)(_::_)
 
-  def >>=[B](f: A => Parser[B]) = Parser.bind(this, f)
+  def rep(n: Int) = this.replicateM[List](n)
 
-  def >>>[B](f: => Parser[B]) = Parser.bind(this, (_:A) => f)
+  def * = list
 
-  def |[B >: A](p: => Parser[B]) = Parser.choice(this, p)
+  def + = many1
 
-  def * = Parser.list(this)
+  // because scalaz impl of lift2 <**> is not lazy
+  def lift[B](f: A => B): Parser[B] =
+     this >>= { (a: A) => value(f(a)) }
 
-  def + = Parser.many1(this)
-
-  def rep(n: Int) = Parser.thisMany(n, this)
+  def lift2[B, C](p: => Parser[B])(f: (A, B) => C): Parser[C] =
+    this >>= { (a: A) => p.lift(f(a, _)) }
 }
 
 object Parser {
-  def value[A](v: A) = new Parser[A] {
-    def parse(args: List[String]) = Success((args, v))
+  def parser[A](f: List[String] => Validation[String, (List[String], A)]): Parser[A] = new Parser[A] {
+    def parse(args: List[String]) = f(args)
   }
 
-  def bind[A, B](p: Parser[A], f: A => Parser[B]) = new Parser[B] {
-    def parse(args: List[String]) = p.parse(args) match {
-      case Success((rest, value)) => f(value).parse(rest)
-      case Failure(error) => Failure(error)
-    }
+  def value[A](v: A): Parser[A] = parser(Success(_, v))
+
+  def failure[A](msg: String): Parser[A] = parser(_ => Failure(msg))
+
+
+  implicit def ParserFunctor: Functor[Parser] = new Functor[Parser] {
+    def fmap[A, B](a: Parser[A], f: A => B) = parser(a.parse(_) map (_ map f))
   }
 
-  def failed[A](msg: String): Parser[A] = new Parser[A] {
-    def parse(args: List[String]) = Failure(msg)
-  }
-
-  def zerox[A] = failed[A]("zero")
-
-  def string = new Parser[String] {
-    def parse(args: List[String]) = args match {
-      case Nil => Failure("Unexpected end of input.")
-      case head :: tail => Success((tail, head))
-    }
-  }
-
-  def satisfyFor(pred: String => Boolean)(s: String) = 
-    if (pred(s))
-      value(s)
-    else
-      failed("Unexpected string [" + s + "]")
-
-  def satisfy(pred: String => Boolean) =
-    string >>= satisfyFor(pred)
-
-  def is(s: String) =
-    satisfy(_ == s)
-  
-  def choice[A](p1: Parser[A], p2: Parser[A]) = new Parser[A] {
-    def parse(args: List[String]) = p1.parse(args) match {
-      case Success((rest, value)) => Success((rest, value))
-      case Failure(error) => p2.parse(args)
-    }
-  }
-
-  def choiceN[A](ps: List[Parser[A]]): Parser[A] =
-    ps.foldRight(zerox[A])(_ | _)
-
-  def sequence[A](ps: List[Parser[A]]): Parser[List[A]] =
-    if (ps.isEmpty)
-      value(List[A]())
-    else
-      ps.head.lift2(sequence(ps.tail))(_::_)
-
-  def thisMany[A](n: Int, p1: Parser[A]) =
-    sequence((for (i <- 1 to n) yield p1).toList)
-
-  def list[A](p: => Parser[A]): Parser[List[A]] =
-      many1(p) | value(List[A]())
-
-  def many1[A](p: => Parser[A]): Parser[List[A]] =
-    p.lift2(list(p))(_::_)
-
-  def lift[A, B](p: => Parser[A])(f: A => B) =
-    p >>= { (a: A) => value(f(a)) }
-
-  def lift2[A, B, C](pa: => Parser[A])(pb: => Parser[B])(f: (A, B) => C) =
-    pa >>= { (a: A) => pb.lift(f(a, _)) } 
-
-  // FIX Complete and use this properly to remove some of the dupe ^^^^
   implicit def ParserPure: Pure[Parser] = new Pure[Parser] {
     def pure[A](a: => A) = value(a)
   }
 
   implicit def ParserBind: Bind[Parser] = new Bind[Parser] {
-    def bind[A, B](p: Parser[A], f: A => Parser[B]) = p >>= f
+    def bind[A, B](p: Parser[A], f: A => Parser[B]) = parser(p.parse(_) match {
+      case Success((rest, value)) => f(value).parse(rest)
+      case Failure(error) => Failure(error)
+    })
   }
 
-  implicit def ParserMonad[A] = monad[Parser](ParserBind, ParserPure)
-
-  implicit def ParserZero[A]: Zero[Parser[A]] = zero(zerox)
-
-  implicit def ParserFunctor: Functor[Parser] = new Functor[Parser] {
-    def fmap[A, B](a: Parser[A], f: A => B) = a.lift(f)
+  implicit def ParserApply: Apply[Parser] = new Apply[Parser] {
+    def apply[A, B](f: Parser[A => B], a: Parser[A]) = f flatMap { k => a map (k(_)) }
   }
+
+  implicit def ParserZero[A]: Zero[Parser[A]] = zero(failure[A]("empty"))
+
+  implicit def ParserPlus[A]: Plus[Parser] = new Plus[Parser] {
+    def plus[A](p1: Parser[A], p2: => Parser[A]) =
+      parser((args: List[String]) => p1.parse(args) match {
+        case Success((rest, value)) => Success((rest, value))
+        case Failure(_) => p2.parse(args)
+      })
+  }
+
+  def string: Parser[String] =
+    parser({
+      case Nil => Failure("Unexpected end of input.")
+      case head :: tail => Success((tail, head))
+    })
+    
+  def satisfy(pred: String => Boolean): Parser[String] =
+    string >>=
+      (s => if (pred(s)) value(s) else failure("unexpected value [" + s + "]"))
+
+  def is(s: String): Parser[String] =
+    satisfy(_ == s)
+
+  def choiceN[A](ps: List[Parser[A]]): Parser[A] =
+    ps.foldRight(failure[A]("empty"))(_ | _)
 }

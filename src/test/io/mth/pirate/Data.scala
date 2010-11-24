@@ -4,6 +4,10 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen.{frequency, choose, listOfN, value, oneOf}
 
+import scalaz._
+import Scalaz._
+import Parser._
+
 object Data {
   implicit def ArbitraryPirate: Arbitrary[Pirate[Map[String, String]]] = {
     val c1 = for {
@@ -31,12 +35,12 @@ object Data {
     val s1 = Flag.short1[Map[String, String]]('d', "d", "D")((s: String) => (m: Map[String, String]) => m + (("d", s)))
     val l = Flag.long[Map[String, String]]("--ee", "ee")((m: Map[String, String]) => m + (("e", "")))
     val l1 = Flag.long1[Map[String, String]]("--ff", "ff", "F")((s: String) => (m: Map[String, String]) => m + (("f", s)))
-    val c1 = f >>= s >>= l
-    val c2 = f1 >>= s1 >>= l1
-    val c3 = f >>= f1
-    val c4 = s >>= s1
-    val c5 = l >>= l1
-    val c6 = f >>= f1 >>= s >>= s1 >>= l >>= l1
+    val c1 = f | s | l
+    val c2 = f1 | s1 | l1
+    val c3 = f | f1
+    val c4 = s | s1
+    val c5 = l | l1
+    val c6 = f | f1 | s | s1 | l | l1
   }
 
   implicit def ArbitraryFlag: Arbitrary[Flag[Map[String, String]]] = {
