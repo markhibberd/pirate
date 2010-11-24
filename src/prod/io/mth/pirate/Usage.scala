@@ -5,43 +5,70 @@ package io.mth.pirate
  */
 // FIX Clean this mess up
 object Usage {
-  def usageForMode[A](mode: UsageMode)(pirate: Pirate[A]): String = {
+  def usageForMode[A](mode: UsageMode)(pirate: Command[A]): String = {
     import Text._
 
     def flagspace = space(mode.flagIndent)
 
-    def render(p: Pirate[A]): String = p.fold(
-      command => flags =>
+    def render(p: Command[A]): String = p.fold(
+      command => flags => positionals =>
           "Usage:\n" +
                 flagspace + command + " " + wrappedsynopsisp(p, command) + "\n" +
           "Options: \n" +
-                flagspace + flags.allFlags.map(usagef(_)).mkString("\n" + flagspace),
-      commands => commands.map(render(_)).mkString("\n\n")
+                flagspace + flags.map(usagef(_)).mkString("\n" + flagspace)
     )
 
     def usagef(f: Flag[A]) =
-        f.flaguse + "\n" + space(mode.flagIndent + mode.descIndent) + wrap(f.description,  mode.width - mode.flagIndent - mode.descIndent,  mode.flagIndent + mode.descIndent)
+        flaguse(f) + "\n" + space(mode.flagIndent + mode.descIndent) + wrap(flagdescription(f),  mode.width - mode.flagIndent - mode.descIndent,  mode.flagIndent + mode.descIndent)
 
-    def synopsisf(f: Flag[A]) = f.flagsynopsis
+    def synopsisf(f: Flag[A]) = flagsynopsis(f)
 
-    def wrappedsynopsisp(p: Pirate[A], command: String) =
+    def wrappedsynopsisp(p: Command[A], command: String) =
       wrap(synopsisp(p), mode.width - mode.flagIndent - command.length, mode.flagIndent + command.length)
 
-    def synopsisp(p: Pirate[A]) =
+    def synopsisp(p: Command[A]) =
       if (mode.condenseSynopsis)
         "[OPTIONS] " + p.fold(
-          command => flags => flags.allPositional.map(synopsisf(_)).mkString(" "),
-          commands => ""
+          command => flags => positional => positional.map(paramsyopsis(_)).mkString(" ")
         ).mkString(" ")
       else p.fold(
-         command => flags => flags.all.map(synopsisf(_)).mkString(" "),
-         commands => ""
+         command => flags => positional => flags.map(synopsisf(_)).mkString(" ") + " " + positional.map(paramsyopsis(_)).mkString(" ")
       )
+
+    def flagdescription[A](f: Flag[A]): String =
+      f.fold(
+        s => l => d => f => d,
+        s => l => d => m => f => d,
+        f => ""
+      )
+
+    def flaguse[A](f: Flag[A]): String =
+      f.fold(
+        s => l => d => f => s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "," else "") + l.getOrElse(""),
+        s => l => d => m => f => s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "," else "") + l.getOrElse("") + "=" + m ,
+        f => ""
+      )
+
+    def flagsynopsis[A](f: Flag[A]): String =
+      f.fold(
+        s => l => d => f => "[" + s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "|" else "") + l.getOrElse("") + "]",
+        s => l => d => m => f => "[" + s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "|" else "") + l.getOrElse("") + " " + m + "]",
+        f => ""
+      )
+
+    def paramsyopsis[A](p: Positional[A]): String = p.fold(
+        m => f => m,
+        n => m => f => (for (_ <- 1 to n) yield m).mkString(" "),
+        m => f => " [" + m + " ...]",
+        m => f => m + " [" + m + " ...]",
+        ps => ""
+      )
+
 
     render(pirate)
   }
 
-  def usage[A](pirate: Pirate[A]) = usageForMode(DefaultUsageMode)(pirate)
+  def usage[A](pirate: Command[A]) = usageForMode(DefaultUsageMode)(pirate)
 }
 
 case class UsageMode(
