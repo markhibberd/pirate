@@ -1,7 +1,12 @@
 package io.mth
 
-import pirate.{Program, Command, Flag, Positional}
+import pirate.{Command, Flag, Positional}
 
+/**
+ * Pirate argument parser.
+ *
+ * This package object contains everything required for normal usage.
+ */
 package object pirate {
   def command[A] = Command.command[A] _
 
@@ -16,6 +21,4 @@ package object pirate {
   def positionalN[A] = Positional.positionalN[A] _
   def positional0plus[A] = Positional.positional0plus[A] _
   def positional1plus[A] = Positional.positional1plus[A] _
-
-  implicit def Command2Program[A](c: Command[A]): Program[A] = Program.program(c)
 }
