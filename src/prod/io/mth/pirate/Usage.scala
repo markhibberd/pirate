@@ -54,22 +54,22 @@ object Usage {
 
     def flagdescription[A](f: Flag[A]): String =
       f.fold(
-        s => l => d => f => d,
-        s => l => d => m => f => d,
-        f => ""
+        (s, l, d, f) => d,
+        (s, l, d, m, f) =>  d,
+        fs => ""
       )
 
     def flaguse[A](f: Flag[A]): String =
       f.fold(
-        s => l => d => f => s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "," else "") + l.getOrElse(""),
-        s => l => d => m => f => s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "," else "") + l.getOrElse("") + "=" + m ,
+        (s, l, d, f) => s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "," else "") + l.getOrElse(""),
+        (s, l, d, m, f) => s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "," else "") + l.getOrElse("") + "=" + m ,
         f => ""
       )
 
     def flagsynopsis[A](f: Flag[A]): String =
       f.fold(
-        s => l => d => f => "[" + s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "|" else "") + l.getOrElse("") + "]",
-        s => l => d => m => f => "[" + s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "|" else "") + l.getOrElse("") + " " + m + "]",
+        (s, l, d, f) => "[" + s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "|" else "") + l.getOrElse("") + "]",
+        (s, l, d, m, f) => "[" + s.map("-" + _).getOrElse("") + (if (s.isDefined && l.isDefined) "|" else "") + l.getOrElse("") + " " + m + "]",
         f => ""
       )
 

@@ -1,5 +1,6 @@
 package io.mth.pirate
 
+// FIX split into, FlagParsers, PositionalParsers & CommandParsers
 object FlagParsers {
   import scalaz._
   import Scalaz._
@@ -22,6 +23,8 @@ object FlagParsers {
   def positionalN = string*
 
   def empty[A]: Parser[List[A]]  = value(List())
+
+  def flagParsers[A](p: List[Parser[A]]): Parser[List[A]] = flagParser(choiceN(p))
 
   def flagParser[A](p: Parser[A]): Parser[List[A]] = 
     (endargs >>=| empty[A]) | (p.lift2(flagParser(p))(_::_) | empty[A])

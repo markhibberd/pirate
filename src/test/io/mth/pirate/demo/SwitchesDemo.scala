@@ -9,11 +9,11 @@ object SwitchesDemo {
   import Command._
 
   val cmd =
-    command("demo") <|>
-      full1('c', "--config", "specify config file.", "FILE")((s: String) => (d: DemoArgs) => d.copy(config = Some(s))) <|>
-      full('h', "--help", "display usage.")((d: DemoArgs) => d.copy(help = true)) <|>
-      full('V', "--version", "display version.")((d: DemoArgs) => d.copy(version = true)) <|>
-      full('v', "--verbose", "verbose output.")((d: DemoArgs) => d.copy(verbose = true))
+    command[DemoArgs]("demo") <|>
+      full1('c', "--config", "specify config file.", "FILE")((d, s) => d.copy(config = Some(s))) <|>
+      full('h', "--help", "display usage.")(_.copy(help = true)) <|>
+      full('V', "--version", "display version.")(_.copy(version = true)) <|>
+      full('v', "--verbose", "verbose output.")(_.copy(verbose = true))
 
   def main(args: Array[String]) {
     println(cmd.usage)
