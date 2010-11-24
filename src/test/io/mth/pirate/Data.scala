@@ -25,11 +25,11 @@ object Data {
 
   object CannedFlags {
     val f = Flag.full[Map[String, String]]('a', "--aa", "a/aa")(_ + (("a", "")))
-    val f1 = Flag.full1[Map[String, String]]('b', "--bb", "b/bb", "B")((s: String) => (m: Map[String, String]) => m + (("b", s)))
-    val s = Flag.short[Map[String, String]]('c', "c")((m: Map[String, String]) => m + (("c", "")))
-    val s1 = Flag.short1[Map[String, String]]('d', "d", "D")((s: String) => (m: Map[String, String]) => m + (("d", s)))
-    val l = Flag.long[Map[String, String]]("--ee", "ee")((m: Map[String, String]) => m + (("e", "")))
-    val l1 = Flag.long1[Map[String, String]]("--ff", "ff", "F")((s: String) => (m: Map[String, String]) => m + (("f", s)))
+    val f1 = Flag.full1[Map[String, String]]('b', "--bb", "b/bb", "B")((m, s) => m + (("b", s)))
+    val s = Flag.short[Map[String, String]]('c', "c")(_ + (("c", "")))
+    val s1 = Flag.short1[Map[String, String]]('d', "d", "D")((m, s) => m + (("d", s)))
+    val l = Flag.long[Map[String, String]]("--ee", "ee")(_ + (("e", "")))
+    val l1 = Flag.long1[Map[String, String]]("--ff", "ff", "F")((m, s) => m + (("f", s)))
     val c1 = f <|> s <|> l
     val c2 = f1 <|> s1 <|> l1
     val c3 = f <|> f1
