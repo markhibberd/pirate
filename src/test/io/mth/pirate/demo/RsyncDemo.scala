@@ -1,6 +1,6 @@
 package io.mth.pirate.demo
 
-object ComplexDemo {
+object RsyncDemo {
    def main(args: Array[String]) {
      error("todo")
    }

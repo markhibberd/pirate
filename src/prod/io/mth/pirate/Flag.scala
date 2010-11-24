@@ -10,6 +10,9 @@ package io.mth.pirate
  *    -f=PARAM
  *    --flag=PARAM
  *    -f|--flag=PARAM
+ *
+ * Consider support for:
+ *    -f param[,param ...]
  */
 sealed trait Flag[A] {
   import scalaz._
