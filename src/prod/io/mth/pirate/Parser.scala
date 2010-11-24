@@ -3,6 +3,9 @@ package io.mth.pirate
 import scalaz._
 import Scalaz._
 
+/**
+ * Minimal parser combinator library, pimped with scalaz MA[M[_], A].
+ */
 sealed trait Parser[A] {
   import Parser._
 
@@ -20,7 +23,7 @@ sealed trait Parser[A] {
 
   def + = many1
 
-  // because scalaz impl of lift2 <**> is not lazy
+  // FIX because scalaz impl of lift2 <**> is not lazy -- need to submit a patch for this...
   def lift[B](f: A => B): Parser[B] =
      this >>= { (a: A) => value(f(a)) }
 

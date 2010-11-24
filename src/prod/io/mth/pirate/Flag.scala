@@ -1,11 +1,17 @@
 package io.mth.pirate
 
-import scalaz.{Success, Failure, Validation, X}
-
 /**
  * A data type representing argument values.
+ *
+ * Can represent:
+ *   -f
+ *   --flag
+ *   -f|--flag
+ *    -f=PARAM
+ *    --flag=PARAM
+ *    -f|--flag=PARAM
  */
-trait Flag[A] {
+sealed trait Flag[A] {
   import scalaz._
   import Scalaz._
   import Parser._
@@ -27,6 +33,7 @@ trait Flag[A] {
   def <|>(flag: Flag[A]) =
     flags(toList ::: flag.toList)
 
+  // FIX add ParseMode, configure up the flag syntax.
   def toParser: Parser[A => A] = fold(
     (s, l, d, f) => FlagParsers.flag0(s, l) map (_ => f),
     (s, l, d, m, f) =>  FlagParsers.flag1(s, l) map (v => f(_, v)),
@@ -58,10 +65,14 @@ object Flag {
         flag0: (Option[Char], Option[String], String, (A => A)) => B,
         flag1: (Option[Char], Option[String], String, String, ((A, String) => A)) => B,
         flagsx: List[Flag[A]] => B
-      ): B = flagsx(flags)
+      ): B = flagsx(flags.flatMap(_.toList))
     }
 
-
+  /*
+   * These need to be hidden to maintain integrity of datatype. Is there a better way to
+   * do it with types?
+   */
+  
   private def flag0[A](s: Option[Char], l: Option[String], d: String, f: A => A): Flag[A] = new Flag[A] {
     def fold[B](
       flag0: (Option[Char], Option[String], String, (A => A)) => B,
