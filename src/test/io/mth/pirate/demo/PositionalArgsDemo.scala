@@ -14,17 +14,28 @@ object PositionalArgsDemo {
       positional("COMMAND")((d, s) => d.copy(command = Some(s))) >|
       positional0plus("CONFIG")((d, ss) => d.copy(config = ss))
 
-  val program = cmd //~
-//      """
-//      |This is a demo program. COMMAND represents some program command
-//      |and CONFIG represents a config file.
-//      """.stripMargin
+  val program = cmd ~
+      """
+      |This is a demo program. COMMAND represents some program command
+      |and CONFIG represents a config file.
+      """.stripMargin
 
   def main(args: Array[String]) {
     println(program.usage)
 
-    val result = program.parse(List("--version", "-h", "go", "config1.file", "config2.file"), DemoArgs(false, false, false, None, false, None, List()))
+    val result = program.parse(List("--version", "-h", "go", "config1.file", "config2.file"), DemoArgs(false, false, false, None, true, None, List()))
 
-    println("Parsed: \n        " + result)
+    println("Result: \n        " + result)
+
+    assert(result.isSuccess)
+    val r = result.toOption.get
+    assert(r.version)
+    assert(r.help)
+    assert(!r.verbose)
+    assert(r.expression.isEmpty)
+    assert(r.console)
+    assert(r.command.isDefined)
+    assert(r.command.get == "go")
+    assert(r.config == List("config1.file", "config2.file"))
   }
 }

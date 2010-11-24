@@ -11,9 +11,10 @@ object Usage {
     def flagspace = space(mode.flagIndent)
 
     def render(p: Command[A]): String = p.fold(
-      command => flags => positionals =>
+      command => description => flags => positionals =>
           "Usage:\n" +
                 flagspace + command + " " + wrappedsynopsisp(p, command) + "\n" +
+         description.map(_ + "\n").getOrElse("") +
           "Options: \n" +
                 flagspace + flags.map(usagef(_)).mkString("\n" + flagspace)
     )
@@ -29,10 +30,10 @@ object Usage {
     def synopsisp(p: Command[A]) =
       if (mode.condenseSynopsis)
         "[OPTIONS] " + p.fold(
-          command => flags => positional => positional.map(paramsyopsis(_)).mkString(" ")
+          command => description => flags => positional => positional.map(paramsyopsis(_)).mkString(" ")
         ).mkString(" ")
       else p.fold(
-         command => flags => positional => flags.map(synopsisf(_)).mkString(" ") + " " + positional.map(paramsyopsis(_)).mkString(" ")
+         command => description => flags => positional => flags.map(synopsisf(_)).mkString(" ") + " " + positional.map(paramsyopsis(_)).mkString(" ")
       )
 
     def flagdescription[A](f: Flag[A]): String =

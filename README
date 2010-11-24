@@ -8,7 +8,6 @@ DESCRIPTION
 USAGE
         Documentation is currently light on. The best place to start is
         the demos:
-          . io.mth.pirate.demo.SwitchesDemo
           . io.mth.pirate.demo.PositionalArgsDemo
 
 STATE
