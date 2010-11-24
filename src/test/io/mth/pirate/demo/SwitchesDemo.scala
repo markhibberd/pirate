@@ -1,6 +1,6 @@
 package io.mth.pirate.demo
 
-import io.mth.pirate.{Command, Usage, Pirate, Flag}
+import io.mth.pirate._
 
 object SwitchesDemo {
   case class DemoArgs(help: Boolean, version: Boolean, verbose: Boolean, expression: Option[String], console: Boolean, config: Option[String])

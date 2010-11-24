@@ -30,7 +30,7 @@ compile: clean ${PROD_CLS} ${TEST_CLS}
 
 test: compile
 	scala -cp ${CP_TEST} org.scalatest.tools.Runner -p ${TEST_CLS} -oDFW && \
-	scala -cp ${CP_TEST} io.mth.pirate.PirateTest && \
+	scala -cp ${CP_TEST} io.mth.pirate.CommandTest && \
 	scala -cp ${CP_TEST} io.mth.pirate.ParserTest && \
 	scala -cp ${CP_TEST} io.mth.pirate.FlagTest && \
 	scala -cp ${CP_TEST} io.mth.pirate.TextTest && \

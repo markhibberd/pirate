@@ -4,7 +4,7 @@ import org.scalacheck.Prop._
 import org.scalacheck.Properties
 
 
-object PirateTest extends Properties("Pirate") {
+object CommandTest extends Properties("Command") {
   property("place holder -- test me you dodgy bastard") =
         forAll((s: String) =>
             true)

@@ -9,38 +9,33 @@ import Scalaz._
 import Parser._
 
 object Data {
-  implicit def ArbitraryPirate: Arbitrary[Pirate[Map[String, String]]] = {
+  implicit def ArbitraryPirate: Arbitrary[Command[Map[String, String]]] = {
     val c1 = for {
       name <- arbitrary[String]
       flags <- arbitrary[Flag[Map[String, String]]]
-    } yield Pirate.command(name, flags)
+    } yield Command.commandfpl(name, flags.toList, List())
 
     val c2 = for {
       name <- arbitrary[String]
       flags <- arbitrary[Flag[Map[String, String]]]
-    } yield Pirate.command(name, flags)
+    } yield Command.commandfpl(name, flags.toList, List())
 
-    val c3 = for {
-      x <- c1
-      y <- c2
-    } yield x >>= y
-
-    Arbitrary(frequency((1, c1), (1, c2), (1, c3)))
+    Arbitrary(frequency((1, c1), (1, c2)))
   }
 
   object CannedFlags {
-    val f = Flag.full[Map[String, String]]('a', "--aa", "a/aa")((m: Map[String, String]) => m + (("a", "")))
+    val f = Flag.full[Map[String, String]]('a', "--aa", "a/aa")(_ + (("a", "")))
     val f1 = Flag.full1[Map[String, String]]('b', "--bb", "b/bb", "B")((s: String) => (m: Map[String, String]) => m + (("b", s)))
     val s = Flag.short[Map[String, String]]('c', "c")((m: Map[String, String]) => m + (("c", "")))
     val s1 = Flag.short1[Map[String, String]]('d', "d", "D")((s: String) => (m: Map[String, String]) => m + (("d", s)))
     val l = Flag.long[Map[String, String]]("--ee", "ee")((m: Map[String, String]) => m + (("e", "")))
     val l1 = Flag.long1[Map[String, String]]("--ff", "ff", "F")((s: String) => (m: Map[String, String]) => m + (("f", s)))
-    val c1 = f | s | l
-    val c2 = f1 | s1 | l1
-    val c3 = f | f1
-    val c4 = s | s1
-    val c5 = l | l1
-    val c6 = f | f1 | s | s1 | l | l1
+    val c1 = f <|> s <|> l
+    val c2 = f1 <|> s1 <|> l1
+    val c3 = f <|> f1
+    val c4 = s <|> s1
+    val c5 = l <|> l1
+    val c6 = f <|> f1 <|> s <|> s1 <|> l <|> l1
   }
 
   implicit def ArbitraryFlag: Arbitrary[Flag[Map[String, String]]] = {
