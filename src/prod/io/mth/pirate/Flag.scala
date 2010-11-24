@@ -55,7 +55,7 @@ trait Flag[A] {
       f => f.flatMap(_.toList)
     )
 
-  def |(flag: Flag[A]) = flags(toList ::: flag.toList)
+  def <|>(flag: Flag[A]) = flags(toList ::: flag.toList)
 
   def toParser: Parser[A => A] = fold(
         s => l => d => f => FlagParsers.flag0(s, l) map (_ => f),

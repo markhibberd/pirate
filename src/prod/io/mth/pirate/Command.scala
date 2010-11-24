@@ -12,20 +12,18 @@ sealed trait Command[A] {
   ): X
 
   def <|>(flag: Flag[A]): Command[A] = fold(
-      n => f => p => commandfp(n, flags(f) | flag, positionals(p))
+      n => f => p => commandfp(n, flags(f) <|> flag, positionals(p))
     )
 
   def >|(positional: Positional[A]): Command[A] = fold(
       n => f => p => commandfp(n, flags(f), positionals(p) >| positional)
     )
 
-  def usage = Usage.usage(this)
+  def ~(description: String): Program[A] = Program.programWithDescription(this, description)
 
   def toParser: Parser[A => A] = fold(
       n => f => p => FlagParsers.commandlinex(flags(f).toParser, positionals(p).toParser)
     )
-
-  def parseArgs(args: Array[String], a: A) = parse(args.toList, a)
 
   def parse(args: List[String], a: A): Validation[String, A] =
     toParser.parse(args) match {
