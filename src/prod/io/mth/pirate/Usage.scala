@@ -16,7 +16,7 @@ object Usage {
                 flagspace + command + " " + wrappedsynopsisp(p, command) + "\n" +
          description.map(_ + "\n").getOrElse("") +
           "Options: \n" +
-                flagspace + flags.map(usagef(_)).mkString("\n" + flagspace)
+                flagspace + flags.toList.map(usagef(_)).mkString("\n" + flagspace)
     )
 
     def usagef(f: Flag[A]) =
@@ -30,10 +30,10 @@ object Usage {
     def synopsisp(p: Command[A]) =
       if (mode.condenseSynopsis)
         "[OPTIONS] " + p.fold(
-          command => description => flags => positional => positional.map(paramsyopsis(_)).mkString(" ")
+          command => description => flags => positional => positional.toList.map(paramsyopsis(_)).mkString(" ")
         ).mkString(" ")
       else p.fold(
-         command => description => flags => positional => flags.map(synopsisf(_)).mkString(" ") + " " + positional.map(paramsyopsis(_)).mkString(" ")
+         command => description => flags => positional => flags.toList.map(synopsisf(_)).mkString(" ") + " " + positional.toList.map(paramsyopsis(_)).mkString(" ")
       )
 
     def flagdescription[A](f: Flag[A]): String =

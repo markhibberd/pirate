@@ -12,25 +12,25 @@ sealed trait Command[A] {
   import Positional._
 
   def fold[X](
-    x: String => Option[String] => List[Flag[A]] => List[Positional[A]] => X 
+    x: String => Option[String] => Flag[A] => Positional[A] => X
   ): X
 
   def <|>(flag: Flag[A]): Command[A] = fold(
-      n => d => f => p => commandfpo(n, d, flags(f) <|> flag, positionals(p))
+      n => d => f => p => commandfpo(n, d, f <|> flag, p)
     )
 
   def >|(positional: Positional[A]): Command[A] = fold(
-      n => d => f => p => commandfpo(n, d, flags(f), positionals(p) >| positional)
+      n => d => f => p => commandfpo(n, d, f, p >| positional)
     )
 
   def ~(description: String): Command[A] = fold(
-      n => d => f => p => commandfpo(n, Some(description), flags(f), positionals(p))  
+      n => d => f => p => commandfpo(n, Some(description), f, p)
   )
 
   def usage = Usage.usage(this)
 
   def toParser: Parser[A => A] = fold(
-      n => d => f => p => FlagParsers.commandlinex(flags(f).toParser, positionals(p).toParser)
+      n => d => f => p => FlagParsers.commandlinex(f.toParser, p.toParser)
     )
 
   def parse(args: List[String], a: A): Validation[String, A] =
@@ -74,8 +74,8 @@ object Command {
 
   def commandfpo[A](name: String, description: Option[String], flag: Flag[A], positional: Positional[A]): Command[A] = new Command[A] {
     def fold[X](
-      x: String => Option[String] => List[Flag[A]] => List[Positional[A]] => X
-    ): X = x(name)(description)(flag.toList)(positional.toList)
+      x: String => Option[String] => Flag[A] => Positional[A] => X
+    ): X = x(name)(description)(flag)(positional)
   }
 }
 
