@@ -6,6 +6,8 @@ import org.scalatest.FunSuite
 class ParserManualTest extends FunSuite {
   import Flag._
   import Data.CannedFlags._
+  
+  implicit def flag2flags[A](f: Flag[A]) = f.toFlags
 
   test("simple flags") {
     check(f,  List("-a", "-b"),           List("-b"),            Map(("a", "")))
@@ -18,9 +20,6 @@ class ParserManualTest extends FunSuite {
 
     check(l,  List("--ee", "--bb", "-c"), List("--bb", "-c"),    Map(("e", "")))
     check(l1, List("--ff", "x", "--aa"),  List("--aa"),          Map(("f", "x")))
-
-    bomb(s, List("--cc"))
-    bomb(f, List("a", "b", "c"))
   }
 
   test("combined flags") {
@@ -51,21 +50,21 @@ class ParserManualTest extends FunSuite {
     check(c6, List("-a", "-b", "x", "--", "-c", "-d", "y", "--ee", "--ff", "z"), List("-c", "-d", "y", "--ee", "--ff", "z"), Map(("a", ""), ("b", "x")))
   }
 
-  def bomb(f: Flag[Map[String, String]], args: List[String]) =
+  def bomb(f: Flags[Map[String, String]], args: List[String]) =
     assert(p(f, args).fold(_ => true, _ => false))
 
-  def check(f: Flag[Map[String, String]], args: List[String], rest: List[String], expected: Map[String, String]) = {
+  def check(f: Flags[Map[String, String]], args: List[String], rest: List[String], expected: Map[String, String]) = {
     val result = p(f, args)
     assert(result.fold(
         _ => false,
-        { case (r, f) => r == rest && f(Map()) == expected}
+        { case (r, f) => r == rest && f.foldRight(Map[String, String]())((f, acc) => f(acc)) == expected}
       ), result.fold(
         msg => "failed to parse [" + msg + "]",
-        { case (r, f) => "rest[" + r + "], expected[" + rest + "], [" + (r == rest) + "]\nvalue[" + f(Map()) + "], expected[" + expected + "], [" + (f(Map()) == expected) + "]\n\n" }
+        { case (r, f) => "rest[" + r + "], expected[" + rest + "], [" + (r == rest) + "]\nvalue[" + f.foldRight(Map[String, String]())((f, acc) => f(acc)) + "], expected[" + expected + "], [" + ( f.foldRight(Map[String, String]())((f, acc) => f(acc)) == expected) + "]\n\n" }
       ))
   }
 
-  def p(f: Flag[Map[String, String]], args: List[String]) =
-      f.toParser.parse(args.toList)
+  def p(f: Flags[Map[String, String]], args: List[String]) =
+      CommandParsers.flags(f).parse(args.toList)
 
 }

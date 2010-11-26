@@ -1,10 +1,17 @@
 package io.mth.pirate
 
 object Text {
-  def space(width: Int) = (for (i <- 1 to width) yield " ").mkString
+  /**
+   * Create a string of spaces exactly n long.
+   */
+  def space(width: Int) = (for (_ <- 1 to width) yield " ").mkString
 
-  def wrap(s: String, width: Int, indent: Int): String = {
+  /**
+   * Wrap text at width. Prepend an indent on each line of indent.
+   */
+  def wrap(text: String, width: Int, indent: Int): String = {
     val spacer = space(indent)
+
     def wrapit(s: String, w: Int): String =
       if (s.length <= w)
         s
@@ -15,6 +22,6 @@ object Text {
       else
         wrapit(s, w - 1)
 
-    wrapit(s, width)
+    wrapit(spacer + text, width)
   }
 }

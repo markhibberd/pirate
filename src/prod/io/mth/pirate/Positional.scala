@@ -1,14 +1,11 @@
 package io.mth.pirate
 
-
 /**
- * A data type representing positional arguments.
+ * Positional data type. Represents positional parameters,
+ * and their arity.
  *
- * Can represent:
- *   ARG
- *   ARG ARG ARG
- *   [ARG ...]
- *   ARG [ARG ...]
+ * Each of the variants of this type include a function
+ * for transforming a type if it is succeeds in parsing.
  */
 sealed trait Positional[A] {
   import Positional._
@@ -16,83 +13,80 @@ sealed trait Positional[A] {
   import Scalaz._
   import Parser._
 
+  /**
+   * Catamorphism for the Positional data type.
+   */
   def fold[X](
     one: (String, ((A, String) => A)) => X,
     n: (Int, String, ((A, List[String]) => A)) => X,
     zeroplus: (String, ((A, List[String]) => A)) => X,
-    oneplus: (String, ((A, List[String]) => A)) => X,
-    combined: List[Positional[A]] => X
+    oneplus: (String, ((A, List[String]) => A)) => X
   ): X
 
-  def toList: List[Positional[A]] =
-    fold(
-      (_, _) => List(this),
-      (_, _, _) => List(this),
-      (_, _) => List(this),
-      (_, _) => List(this),
-      ps => ps
-    )
+  /**
+   * Combine this positional parameter with a new positional,
+   * parameter and return the positional parameters. The operation
+   * to combine positional parameters is NOT associative. Parsing
+   * is heavily dependent on the order in which positional parameters
+   * added to the command.
+   */
+  def >|(p: Positional[A]): Positionals[A] = toPositionals >| p
 
-  // FIX complete implementation for more complicated parsers.
-  def toParser: Parser[A => A] = fold(
-    (m, f) => FlagParsers.positional1.lift(v => f(_, v)),
-    (n, m, f) => error("todo"),
-    (m, f) => FlagParsers.positionalN.lift(v => f(_, v)),
-    (m, f) => error("todo"),
-    ps => ps.map(_.toParser).sequence.map(_.foldRight(identity[A]_)(_ compose _))
-  )
 
-  def >|(p: Positional[A]): Positional[A] = positionals(toList ::: p.toList)
+  /**
+   * Convert this Positional into a Positionals.
+   */
+  def toPositionals = Positionals.positionals(this)
 }
 
 object Positional {
+  /**
+   * Type constructor for a single positional parameter.
+   */
   def positional[A](meta: String)(f: (A, String) => A): Positional[A] = new Positional[A] {
     def fold[X](
       one: (String, ((A, String) => A)) => X,
       n: (Int, String, ((A, List[String]) => A)) => X,
       zeroplus: (String, ((A, List[String]) => A)) => X,
-      oneplus: (String, ((A, List[String]) => A)) => X,
-      combined: List[Positional[A]] => X
+      oneplus: (String, ((A, List[String]) => A)) => X
     ): X = one(meta, f)
   }
 
-  def positionals[A](ps: List[Positional[A]]): Positional[A] = new Positional[A] {
+  /**
+   * Type constructor for a fixed n positional parameter.
+   */
+  def positionalN[A](number: Int, meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {
     def fold[X](
       one: (String, ((A, String) => A)) => X,
       n: (Int, String, ((A, List[String]) => A)) => X,
       zeroplus: (String, ((A, List[String]) => A)) => X,
-      oneplus: (String, ((A, List[String]) => A)) => X,
-      combined: List[Positional[A]] => X
-    ): X = combined(ps)
+      oneplus: (String, ((A, List[String]) => A)) => X
+    ): X = n(number, meta, f)
   }
 
-  def positionalN[A](n: Int, meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {
-    def fold[X](
-      one: (String, ((A, String) => A)) => X,
-      i: (Int, String, ((A, List[String]) => A)) => X,
-      zeroplus: (String, ((A, List[String]) => A)) => X,
-      oneplus: (String, ((A, List[String]) => A)) => X,
-      combined: List[Positional[A]] => X
-    ): X = i(n, meta, f)
-  }
-
+  /**
+   * Type constructor for a variable positional parameter that
+   * can occur 0 or more times.
+   */
   def positional0plus[A](meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {
     def fold[X](
       one: (String, ((A, String) => A)) => X,
       n: (Int, String, ((A, List[String]) => A)) => X,
       zeroplus: (String, ((A, List[String]) => A)) => X,
-      oneplus: (String, ((A, List[String]) => A)) => X,
-      combined: List[Positional[A]] => X
+      oneplus: (String, ((A, List[String]) => A)) => X
     ): X = zeroplus(meta, f)
   }
 
+  /**
+   * Type constructor for a variable positional parameter that
+   * can occur 1 or more times.
+   */
   def positional1plus[A](meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {
     def fold[X](
       one: (String, ((A, String) => A)) => X,
       n: (Int, String, ((A, List[String]) => A)) => X,
       zeroplus: (String, ((A, List[String]) => A)) => X,
-      oneplus: (String, ((A, List[String]) => A)) => X,
-      combined: List[Positional[A]] => X
+      oneplus: (String, ((A, List[String]) => A)) => X
     ): X = oneplus(meta, f)
   }
 }

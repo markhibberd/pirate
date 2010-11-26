@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
 <head>
    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title>about</title>
+   <title>pirate - command line 'arrrrg processor</title>
    <meta name="author" content="Mark Hibberd" />
    <link href="http://mth.io/atom.xml" rel="alternate" title="mth i/o" type="application/atom+xml" />
    <link rel="stylesheet" href="http://mth.io/css/reset.css" type="text/css" />
@@ -23,7 +23,7 @@
       <a href="/"><span class="main">pirate</span> @ 
       <a href="http://mth.io/"><span class="main">mth</span> <span class="alt">i/o</span></a>
       <span id="headernav">
-         <a class="headernava" href="http://mth.io/"/>home</a> <span>|</span> <a class="headernava" href="http://mth.io/posts"/>blog</a> <span>|</span> <a class="headernava" href="http://mth.io/code">code</a>
+         <a class="headernava" href="http://mth.io/">home</a> <span>|</span> <a class="headernava" href="http://mth.io/posts">blog</a> <span>|</span> <a class="headernava" href="http://mth.io/code">code</a>
        </span>
     </span>
 
@@ -34,27 +34,91 @@
   <div id="post">
     <h1>pirate</h1>
 
-    <p>
-        Pirate is a scala library that provides a mechanism for parsing
-        command line arguments and producing usage strings.
-    </p>
+      <div onclick='document.location="/release/0.1/pirate-0.1.tar.gz"; return false;' class="linked"
+           style="-moz-border-radius: 15px;
+                  -webkit-border-bottom: 15px;
+                   padding: 25px;
+                   margin: 30px;
+                   border: 4px solid #000;
+                   background: #2C77C1;
+                   color: #fff;
+                   font-size: 3em;
+                   float: right;
+                    ">
+          Version 0.1
+      </div>
+      <h2>about</h2>
+     <p>
+        Pirate is a functional scala library that provides a mechanism for
+        parsing command line arguments and producing usage strings.
+     </p>
+     <p>
+        Pirate defines a set of combinators for constructing commands from
+        a set of flags and positional parameters. Each component has an
+        attached function that is executed when an argument is parsed to
+        transform a default argument object into its final form.
+     </p>
+     <p>
+        Pirate also provides a number of utilities such as a standard
+        dispatch mechanism for parsing arguments and executing a program
+        based upon the result.
+     </p>
 
 
     <h2>quick start</h2>
 
     <p>
-        Documentation is currently light on. The best place to start is
-        the demos:
-        <ul>
-          <li> io.mth.pirate.demo.PositionalArgsDemo </li>
-        </ul>
+    To get started, import the pirate package:
     </p>
+
+    <pre>
+    import io.mth.pirate._
+    </pre>
+
+     <p>
+    This will expose the required type constructors.
+     </p>
+     <p>
+    Define an argument object, could be anything from
+    a simple map or list through to a case class (which
+    is recommended).
+    </p>
+    <pre>
+      case class MyArgs(flag: Boolean, params: List[String])
+    </pre>
+    <p>
+    Construct a command line, combining in flags and
+    positional parameters.
+    </p>
+    <pre>
+      val cmd = command[MyArgs]("myprogram") <|>
+          flag('f', "flag", "enable flag.")(_.copy(flag = true)) >|
+          positional0plus("THINGS")((myargs, list) => myargs.copy(params = list))
+    </pre>
+    <p>
+    Dispatch on that command line for default behaviour.
+    </p>
+    <pre>
+      val exitcode = cmd.dispatch(args, MyArgs(false, List()) { myargs =>
+        // run program with parsed myargs.
+      }
+      exit(exitcode)
+    </pre>
+    Consult the <a href="/release/0.1/doc/scaladoc">api</a> and <a href="/release/0.1/doc/xray/demo">demos</a>. for more advanced/complete
+    documentation.
 
     <h2>release</h2>
 
     <p>
-      There is not an official release yet. If you want to try it out, the source can be found at <a href="https://github.com/markhibberd/pirate">github</a>.
+      The current released version is 0.1.
     </p>
+    <ul>
+       <li><a href="/release/0.1/pirate-0.1.tar.gz">pirate-0.1.tar.gz</a> <a href="/release/0.1/pirate-0.1.tar.gz.sha1">[sha1]</a></li>
+       <li><a href="/release/0.1/pirate.jar">pirate.jar</a> <a href="/release/0.1/pirate.jar.sha1">[sha1]</a></li>
+       <li><a href="/release/0.1/doc/scaladoc">scaladoc</a> </li>
+       <li><a href="/release/0.1/doc/xray/prod">xray source</a> </li>
+       <li><a href="/release/0.1/doc/xray/demo">demos</a> </li>
+    </ul>
 
     <h2>code</h2>
 
@@ -66,8 +130,6 @@
 
     <p>
      The code is free to use under the terms of a <a href="https://github.com/markhibberd/pirate/blob/master/LICENSE">3 point BSD license</a>
-
-
     </p>
 
     <h2>contact</h2>
