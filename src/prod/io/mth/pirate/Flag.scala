@@ -1,18 +1,16 @@
 package io.mth.pirate
 
 /**
- * A data type representing argument values.
+ * Flag data type. Can represent one of:
+ *  - flag with short and long identifier, and no argument
+ *  - flag with only short identifier, and no argument
+ *  - flag with only long identifier, and no argument
+ *  - flag with short and long identifier, and an argument
+ *  - flag with only short identifier, and an argument
+ *  - flag with only long identifier, and an argument
  *
- * Can represent:
- *   -f
- *   --flag
- *   -f|--flag
- *    -f=PARAM
- *    --flag=PARAM
- *    -f|--flag=PARAM
- *
- * Consider support for:
- *    -f param[,param ...]
+ * Each of the variants of this type include a function
+ * for transforming a type if it is succeeds in parsing. 
  */
 sealed trait Flag[A] {
   import scalaz._
@@ -20,76 +18,128 @@ sealed trait Flag[A] {
   import Parser._
   import Flag._
 
+  /**
+   * Catamorphism for the Flag data type.
+   */
   def fold[B](
-    flag0: (Option[Char], Option[String], String, (A => A)) => B,
-    flag1: (Option[Char], Option[String], String, String, ((A, String) => A)) => B,
-    flags: List[Flag[A]] => B
+    flag0: (Char, String, String, (A => A)) => B,
+    flag0s: (Char, String, (A => A)) => B,
+    flag0l: (String, String, (A => A)) => B,
+    flag1: (Char, String, String, String, ((A, String) => A)) => B,
+    flag1s: (Char, String, String, ((A, String) => A)) => B,
+    flag1l: (String, String, String, ((A, String) => A)) => B
   ): B
 
-  def toList: List[Flag[A]] =
-    fold(
-      (_, _, _, _) => List(this),
-      (_, _, _, _, _) => List(this),
-      _.flatMap(_.toList)
-    )
 
-  def <|>(flag: Flag[A]) =
-    flags(toList ::: flag.toList)
+  /**
+   * Combine this flag with a new flag, and return as
+   * a new flags. The operation to combine flags is
+   * associative, i.e. not order dependant.
+   */
+  def <|>(flag: Flag[A]) = toFlags <|> flag
 
-  // FIX add ParseMode, configure up the flag syntax.
-  def toParser: Parser[A => A] = fold(
-    (s, l, d, f) => FlagParsers.flag0(s, l) map (_ => f),
-    (s, l, d, m, f) =>  FlagParsers.flag1(s, l) map (v => f(_, v)),
-    fs => FlagParsers.flagParsers(fs.map(_.toParser)).map(_.foldRight(identity[A]_)(_ compose _))
+  /**
+   * Convert this Flag into a Flags.
+   */
+  def toFlags = Flags.flags(this)
+
+  /**
+   * The description for this flag.
+   */
+  def description = fold(
+    (_, _, d, _) => d,
+    (_, d, _) => d,
+    (_, d, _) => d,
+    (_, _, d, _, _) =>  d,
+    (_, d, _, _) =>  d,
+    (_, d, _, _) =>  d
   )
 }
 
 object Flag {
-  def short[A](short: Char, description: String)(f: A => A) =
-    flag0(Some(short), None, description, f)
-
-  def long[A](long: String, description: String)(f: A => A) =
-    flag0(None, Some(long), description, f)
-
-  def full[A](short: Char, long: String, description: String)(f: A => A) =
-    flag0(Some(short), Some(long), description, f)
-
-  def short1[A](short: Char, description: String, meta: String)(f: (A, String) => A) =
-    flag1(Some(short), None, description, meta, f)
-
-  def long1[A](long: String, description: String, meta: String)(f: (A, String) => A) =
-    flag1(None, Some(long), description, meta, f)
-
-  def full1[A](short: Char, long: String, description: String, meta: String)(f: (A, String) => A) =
-    flag1(Some(short), Some(long), description, meta, f)
-
-  def flags[A](flags: List[Flag[A]]): Flag[A] = new Flag[A] {
-      def fold[B](
-        flag0: (Option[Char], Option[String], String, (A => A)) => B,
-        flag1: (Option[Char], Option[String], String, String, ((A, String) => A)) => B,
-        flagsx: List[Flag[A]] => B
-      ): B = flagsx(flags.flatMap(_.toList))
-    }
-
-  /*
-   * These need to be hidden to maintain integrity of datatype. Is there a better way to
-   * do it with types?
+  /**
+   *  Type constructor for a Flag with only a short identifier, and no argument.
    */
-  
-  private def flag0[A](s: Option[Char], l: Option[String], d: String, f: A => A): Flag[A] = new Flag[A] {
+  def short[A](short: Char, desc: String)(f: A => A): Flag[A] = new Flag[A] {
     def fold[B](
-      flag0: (Option[Char], Option[String], String, (A => A)) => B,
-      flag1: (Option[Char], Option[String], String, String, ((A, String) => A)) => B,
-      flags: List[Flag[A]] => B
-    ): B = flag0(s, l, d, f)
+      flag0: (Char, String, String, (A => A)) => B,
+      flag0s: (Char, String, (A => A)) => B,
+      flag0l: (String, String, (A => A)) => B,
+      flag1: (Char, String, String, String, ((A, String) => A)) => B,
+      flag1s: (Char, String, String, ((A, String) => A)) => B,
+      flag1l: (String, String, String, ((A, String) => A)) => B
+    ): B = flag0s(short, desc, f)
   }
 
-  private def flag1[A](s: Option[Char], l: Option[String], d: String, m: String, f: (A, String) => A): Flag[A] = new Flag[A] {
+  /**
+   * Type constructor for a Flag with only a long identifier, and no argument.
+   */
+  def long[A](long: String, desc: String)(f: A => A): Flag[A] = new Flag[A] {
     def fold[B](
-      flag0: (Option[Char], Option[String], String, (A => A)) => B,
-      flag1: (Option[Char], Option[String], String, String, ((A, String) => A)) => B,
-      flags: List[Flag[A]] => B
-    ): B = flag1(s, l, d, m, f)
+      flag0: (Char, String, String, (A => A)) => B,
+      flag0s: (Char, String, (A => A)) => B,
+      flag0l: (String, String, (A => A)) => B,
+      flag1: (Char, String, String, String, ((A, String) => A)) => B,
+      flag1s: (Char, String, String, ((A, String) => A)) => B,
+      flag1l: (String, String, String, ((A, String) => A)) => B
+    ): B = flag0l(long, desc, f)
   }
+
+  /**
+   * Type constructor for a Flag with both a short and long identifier, and no argument.
+   */
+  def flag[A](short: Char, long: String, desc: String)(f: A => A): Flag[A] = new Flag[A] {
+    def fold[B](
+      flag0: (Char, String, String, (A => A)) => B,
+      flag0s: (Char, String, (A => A)) => B,
+      flag0l: (String, String, (A => A)) => B,
+      flag1: (Char, String, String, String, ((A, String) => A)) => B,
+      flag1s: (Char, String, String, ((A, String) => A)) => B,
+      flag1l: (String, String, String, ((A, String) => A)) => B
+    ): B = flag0(short, long, desc, f)
+  }
+
+  /**
+   * Type constructor for a Flag with only a short identifier, and with an argument.
+   */
+  def short1[A](short: Char, desc: String, meta: String)(f: (A, String) => A): Flag[A] = new Flag[A] {
+    def fold[B](
+      flag0: (Char, String, String, (A => A)) => B,
+      flag0s: (Char, String, (A => A)) => B,
+      flag0l: (String, String, (A => A)) => B,
+      flag1: (Char, String, String, String, ((A, String) => A)) => B,
+      flag1s: (Char, String, String, ((A, String) => A)) => B,
+      flag1l: (String, String, String, ((A, String) => A)) => B
+    ): B = flag1s(short, desc, meta, f)
+  }
+
+  /**
+   * Type constructor for a Flag with only a long identifier, and with an argument.
+   */
+  def long1[A](long: String, desc: String, meta: String)(f: (A, String) => A): Flag[A] = new Flag[A] {
+    def fold[B](
+      flag0: (Char, String, String, (A => A)) => B,
+      flag0s: (Char, String, (A => A)) => B,
+      flag0l: (String, String, (A => A)) => B,
+      flag1: (Char, String, String, String, ((A, String) => A)) => B,
+      flag1s: (Char, String, String, ((A, String) => A)) => B,
+      flag1l: (String, String, String, ((A, String) => A)) => B
+    ): B = flag1l(long, desc, meta, f)
+  }
+
+  /**
+   * Type constructor for a Flag with both a long and short identifier, and with an argument.
+   */
+  def flag1[A](short: Char, long: String, desc: String, meta: String)(f: (A, String) => A): Flag[A] = new Flag[A] {
+    def fold[B](
+      flag0: (Char, String, String, (A => A)) => B,
+      flag0s: (Char, String, (A => A)) => B,
+      flag0l: (String, String, (A => A)) => B,
+      flag1: (Char, String, String, String, ((A, String) => A)) => B,
+      flag1s: (Char, String, String, ((A, String) => A)) => B,
+      flag1l: (String, String, String, ((A, String) => A)) => B
+    ): B = flag1(short, long, desc, meta, f)
+  }
+
 }
 
