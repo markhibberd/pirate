@@ -38,7 +38,7 @@ object InteractiveDemo {
 
     val default = DemoArgs(false, false, false, List())
 
-    val exitcode = cmd.dispatch(args, default)(run _)
+    val exitcode = cmd.dispatchOrUsage(args, default)(run _)
 
     exit(exitcode)
   }

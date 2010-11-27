@@ -91,16 +91,21 @@ sealed trait Command[A] {
    * Higher order function to handle parse and dispatch. This is
    * a convenience only.
    */
-  def dispatch(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Int =
-    dispatchBoth(args, default)(f) { msg =>
-        err.println(msg + "\n\n" + usage)
-    }
+  def dispatchOrUsage(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Int =
+    dispatch(args, default)(f)(err.println(_ + "\n\n" + usage))
+
+  /**
+   * Higher order function to handle parse and dispatch. This is
+   * a convenience only.
+   */
+  def dispatchOrDie(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Unit =
+    exit(dispatchOrUsage(args, default)(f))
   
   /**
    * Higher order function to handle parse and dispatch. This is
    * a convenience only.
    */
-  def dispatchBoth(args: List[String], default: A)(success: A => Unit)(error: String => Unit): Int =
+  def dispatch(args: List[String], default: A)(success: A => Unit)(error: String => Unit): Int =
     parse(args, default) match {
       case Success(applied) => success(applied); 0
       case Failure(msg) => error(msg); 1

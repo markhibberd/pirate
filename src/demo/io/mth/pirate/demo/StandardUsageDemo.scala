@@ -18,7 +18,7 @@ object StandardUsageDemo {
 
     val default = DemoArgs(false, false, false, List())
 
-    val exitcode = cmd.dispatch(args, default) { demo =>
+    val exitcode = cmd.dispatchOrUsage(args, default) { demo =>
       assert(!demo.version)
       assert(!demo.help)
       assert(demo.verbose)

@@ -7,7 +7,7 @@ object HelloWorldDemo {
           flag1('g', "greeting", "greeting to print", "GREETING")((_, s) => Some(s))
 
    def main(args: Array[String]) {
-     helloworld.dispatch(args.toList, None, System.err) { greeting =>
+     helloworld.dispatchOrUsage(args.toList, None, System.err) { greeting =>
        println(greeting.getOrElse("hello world!"))
      }
    }
