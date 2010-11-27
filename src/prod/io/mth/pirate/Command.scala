@@ -92,7 +92,7 @@ sealed trait Command[A] {
    * a convenience only.
    */
   def dispatchOrUsage(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Int =
-    dispatch(args, default)(f)(err.println(_ + "\n\n" + usage))
+    dispatch(args, default)(f)(msg => err.println(msg + "\n\n" + usage))
 
   /**
    * Higher order function to handle parse and dispatch. This is
