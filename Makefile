@@ -1,5 +1,5 @@
 MODULE = pirate
-VERSION = 0.2
+VERSION = 0.3
 
 GEN = gen
 
@@ -16,10 +16,6 @@ CP_PROD = ${CP_BASE}:${CLS_PROD}
 CP_TEST = ${CP_PROD}:${CLS_TEST}
 
 DOC_PROD = ${GEN}/doc/prod
-
-XRAY = lib/compile/sxr_2.8.0-0.2.7-SNAPSHOT.jar
-XRAY_PROD = ${CLS_PROD}.sxr
-XRAY_DEMO = ${CLS_DEMO}.sxr
 
 PROGUARD = lib/build/proguard.jar
 PROGUARD_CONF = etc/proguard.conf
@@ -46,7 +42,7 @@ DIST_MANIFEST = ${GEN}/MANIFEST.MF
 TAR_IMAGE = ${GEN}/image/${MODULE}-${VERSION}
 RELEASE_DIR = ${GEN}/release/${VERSION}
 
-DIRECTORIES = ${GEN} ${GEN}/tmp ${CLS_DEMO} ${CLS_PROD} ${CLS_TEST} ${DIST} ${TAR_IMAGE} ${TAR_IMAGE}/lib ${DOC_PROD} ${RELEASE_DIR} ${TAR_IMAGE}/doc/xray ${DEMO_TARGET}
+DIRECTORIES = ${GEN} ${GEN}/tmp ${CLS_DEMO} ${CLS_PROD} ${CLS_TEST} ${DIST} ${TAR_IMAGE} ${TAR_IMAGE}/lib ${DOC_PROD} ${RELEASE_DIR} ${TAR_IMAGE}/doc ${DEMO_TARGET}
 
 
 .PHONY: clean dist doc compile www size repl publish release
@@ -54,9 +50,9 @@ DIRECTORIES = ${GEN} ${GEN}/tmp ${CLS_DEMO} ${CLS_PROD} ${CLS_TEST} ${DIST} ${TA
 default: test dist
 
 compile: clean ${CLS_PROD} ${CLS_TEST} ${CLS_DEMO}
-	find ${SRC_PROD} -name "*.scala" | xargs -s 30000 fsc -Xplugin:${XRAY} -P:sxr:base-directory:${SRC_PROD}  -classpath ${CP_BASE} -d ${CLS_PROD} && \
-	find ${SRC_DEMO} -name "*.scala" | xargs -s 30000 fsc -Xplugin:${XRAY} -P:sxr:base-directory:${SRC_DEMO}  -classpath ${CP_PROD} -d ${CLS_DEMO} && \
-	find ${SRC_TEST} -name "*.scala" | xargs -s 30000 fsc -classpath ${CP_PROD} -d ${CLS_TEST} 
+	find ${SRC_PROD} -name "*.scala" | xargs -s 30000 scalac -classpath ${CP_BASE} -d ${CLS_PROD} && \
+	find ${SRC_DEMO} -name "*.scala" | xargs -s 30000 scalac -classpath ${CP_PROD} -d ${CLS_DEMO} && \
+	find ${SRC_TEST} -name "*.scala" | xargs -s 30000 scalac -classpath ${CP_PROD} -d ${CLS_TEST} 
 
 test: compile
 	scala -cp ${CP_TEST} org.scalatest.tools.Runner -p ${CLS_TEST} -oDFW && \
@@ -77,11 +73,9 @@ ${JAR_MIN}: ${JAR}
 		-injars lib/run/scala-library.jar:lib/run/scalaz-core_2.8.0-5.0.jar:${JAR} \
 		-outjar ${JAR_MIN} @${PROGUARD_CONF}
 
-${TAR}: doc ${JAR} ${JAR_SRC} ${TAR_IMAGE} ${TAR_IMAGE}/lib ${TAR_IMAGE}/doc/xray ${DEMO_TARGET}
+${TAR}: doc ${JAR} ${JAR_SRC} ${TAR_IMAGE} ${TAR_IMAGE}/lib ${TAR_IMAGE}/doc ${DEMO_TARGET}
 	cp -r ${DOC_PROD} ${TAR_IMAGE}/doc/api && \
 	cp -r ${SRC_DEMO} ${TAR_IMAGE}/. && \
-	cp -r ${XRAY_PROD} ${TAR_IMAGE}/doc/xray/prod && \
-	cp -r ${XRAY_DEMO} ${TAR_IMAGE}/doc/xray/demo && \
 	cp lib/run/*.jar ${TAR_IMAGE}/lib && \
 	cp ${JAR} ${JAR_SRC} ${TAR_IMAGE} && \
 	cp LICENSE COPYING README ${TAR_IMAGE} && \
@@ -96,7 +90,6 @@ doc: ${DOC_PROD}
 		scaladoc \
 			-doc-title "scaladoc for [${MODULE} ${VERSION}]" \
 			-doc-version ${VERSION} \
-			-doc-source-url http://pirate.mth.io/release/${VERSION}/doc/xray/prod \
 			-classpath ../../lib/run/\*:../../${CLS_PROD} \
 			-d ../../${DOC_PROD})
 
