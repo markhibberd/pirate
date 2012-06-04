@@ -30,9 +30,9 @@ object CommandParsers {
     (s, l, d, f) => both(s, l) map (_ => f),
     (s, d, f) => short(s) map (_ => f),
     (l, d, f) => long(l) map (_ => f),
-    (s, l, d, m, f) => (both(s, l) >>=| string) map (v => f(_, v)),
-    (s, d, m, f) => (short(s) >>=| string) map (v => f(_, v)),
-    (l, d, m, f) =>  (long(l) >>=| string) map (v => f(_, v))
+    (s, l, d, m, f) => (both(s, l) >> string) map (v => f(_, v)),
+    (s, d, m, f) => (short(s) >> string) map (v => f(_, v)),
+    (l, d, m, f) =>  (long(l) >> string) map (v => f(_, v))
   )
 
   /**
