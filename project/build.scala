@@ -25,7 +25,7 @@ object build extends Build {
   , settings = Defaults.defaultSettings ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
-    , version := "0.4-SNAPSHOT"
+    , version := "0.5-SNAPSHOT"
     , scalaVersion := "2.9.2"
     , scalacOptions := Seq(
         "-deprecation"
@@ -38,7 +38,8 @@ object build extends Build {
     , testOptions in Test += Tests.Setup(() => System.setProperty("specs2.outDir", "gen/sbt/target/specs2-reports"))
     , publishSetting
     , libraryDependencies ++= Seq(
-        "org.specs2" % "specs2_2.9.2" % "1.9" % "test" withSources
+        "org.scalaz" % "scalaz-core_2.9.2" % "7.0-SNAPSHOT" withSources
+      , "org.specs2" % "specs2_2.9.2" % "1.9" % "test" withSources
       , "org.scalacheck" %% "scalacheck" % "1.9" % "test" withSources
       )
     )
