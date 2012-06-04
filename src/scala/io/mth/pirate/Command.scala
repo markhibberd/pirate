@@ -99,8 +99,8 @@ sealed trait Command[A] {
    * a convenience only.
    */
   def dispatchOrDie(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Unit =
-    exit(dispatchOrUsage(args, default)(f))
-  
+    sys.exit(dispatchOrUsage(args, default)(f))
+
   /**
    * Higher order function to handle parse and dispatch. This is
    * a convenience only.
