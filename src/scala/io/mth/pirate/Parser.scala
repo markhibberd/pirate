@@ -84,45 +84,32 @@ object Parser {
    */
   def failure[A](msg: String): Parser[A] = parser(_ => Failure(msg))
 
-
   /**
-   * Scalaz Functor instance, for monad MA pimps.
+   * Scalaz Monad instance, for monad MA.
    */
-  implicit def ParserFunctor: Functor[Parser] = new Functor[Parser] {
-    def fmap[A, B](a: Parser[A], f: A => B) = parser(a.parse(_) map (_ map f))
-  }
-
-  /**
-   * Scalaz Pure instance, for monad MA pimps.
-   */
-  implicit def ParserPure: Pure[Parser] = new Pure[Parser] {
-    def pure[A](a: => A) = value(a)
-  }
-
-  /**
-   * Scalaz Bind instance, for monad MA pimps.
-   */
-  implicit def ParserBind: Bind[Parser] = new Bind[Parser] {
+  implicit def ParserMonad: Monad[Parser] = new Monad[Parser] {
+    def point[A](a: => A) = value(a)
     def bind[A, B](p: Parser[A], f: A => Parser[B]) = parser(p.parse(_) match {
       case Success((rest, value)) => f(value).parse(rest)
       case Failure(error) => Failure(error)
     })
+    override def fmap[A, B](a: Parser[A], f: A => B) = parser(a.parse(_) map (_ map f))
   }
 
   /**
-   * Scalaz Apply instance, for applicative functor MA pimps.
+   * Scalaz Apply instance, for applicative functor MA.
    */
   implicit def ParserApply: Apply[Parser] = new Apply[Parser] {
     def apply[A, B](f: Parser[A => B], a: Parser[A]) = f flatMap { k => a map (k(_)) }
   }
 
   /**
-   * Scalaz Zero instance, for monad plus MA pimps.
+   * Scalaz Zero instance, for monad plus MA.
    */
   implicit def ParserZero[A]: Zero[Parser[A]] = zero(failure[A]("empty"))
 
   /**
-   * Scalaz Plus instance, for monad plus MA pimps.
+   * Scalaz Plus instance, for monad plus MA.
    */
   implicit def ParserPlus[A]: Plus[Parser] = new Plus[Parser] {
     def plus[A](p1: Parser[A], p2: => Parser[A]) =
