@@ -4,8 +4,13 @@ import Keys._
 object build extends Build {
   type Sett = Project.Setting[_]
 
-  resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
-                    "releases"  at "http://oss.sonatype.org/content/repositories/releases")
+  override lazy val settings = super.settings ++
+        Seq(resolvers := Seq(
+          "mth.io snapshots" at "http://repo.mth.io/snapshots"
+        , "mth.io releases" at "http://repo.mth.io/releases"
+        , "snapshots" at "http://oss.sonatype.org/content/repositories/snapshots"
+        , "releases" at "http://oss.sonatype.org/content/repositories/releases"
+        ))
 
   lazy val publishSetting = publishTo <<= (version).apply{
     v => {
