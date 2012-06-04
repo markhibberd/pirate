@@ -1,4 +1,7 @@
-*.iws
-gen
-tmp
-out
+/gen
+/project/target
+/dist
+/dependency
+/scratch
+*~
+*#

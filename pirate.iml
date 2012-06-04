@@ -1,37 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="scala" name="Scala">
-      <configuration>
-        <option name="compilerLibraryLevel" value="Global" />
-        <option name="compilerLibraryName" value="scala-compiler-2.8.0 (1)" />
-      </configuration>
-    </facet>
-  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/test" isTestSource="true" />
-      <sourceFolder url="file://$MODULE_DIR$/src/prod" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test/scala" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/scala" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/dependency" />
+      <excludeFolder url="file://$MODULE_DIR$/dist" />
+      <excludeFolder url="file://$MODULE_DIR$/scratch" />
       <excludeFolder url="file://$MODULE_DIR$/gen" />
-      <excludeFolder url="file://$MODULE_DIR$/out" />
+      <excludeFolder url="file://$MODULE_DIR$/project/target" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library name="libs">
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/lib/test" />
-          <root url="file://$MODULE_DIR$/lib/run" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/src/scalaz-core_2.8.0-5.0-sources.jar!/" />
-        </SOURCES>
-        <jarDirectory url="file://$MODULE_DIR$/lib/run" recursive="false" />
-        <jarDirectory url="file://$MODULE_DIR$/lib/test" recursive="false" />
-      </library>
-    </orderEntry>
   </component>
 </module>
 

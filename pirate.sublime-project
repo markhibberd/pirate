@@ -1,0 +1,19 @@
+{
+	"folders":
+	[
+		{
+			"file_exclude_patterns":
+			[
+			],
+			"folder_exclude_patterns":
+			[
+				"dist",
+				"scratch",
+				"dependency",
+				"gen",
+				"project/target"
+			],
+			"path": "."
+		}
+	]
+}
