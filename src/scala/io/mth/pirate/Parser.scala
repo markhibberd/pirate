@@ -29,7 +29,7 @@ sealed trait Parser[A] {
   /**
    * Fixed repitition combinator, exactly n times.
    */
-  def rep(n: Int) = this.replicateM[List](n)
+  def rep(n: Int) = this.replicate[List](n)
 
   /**
    * Symbolic representation of list combinator, zero or more times.
@@ -89,30 +89,31 @@ object Parser {
    */
   implicit def ParserMonad: Monad[Parser] = new Monad[Parser] {
     def point[A](a: => A) = value(a)
-    def bind[A, B](p: Parser[A], f: A => Parser[B]) = parser(p.parse(_) match {
+    def bind[A, B](p: Parser[A])(f: A => Parser[B]) = parser(p.parse(_) match {
       case Success((rest, value)) => f(value).parse(rest)
       case Failure(error) => Failure(error)
     })
-    override def fmap[A, B](a: Parser[A], f: A => B) = parser(a.parse(_) map (_ map f))
+    override def map[A, B](a: Parser[A])(f: A => B) = parser(a.parse(_) map (_ map f))
   }
 
   /**
-   * Scalaz Apply instance, for applicative functor MA.
+   * Scalaz Monoid instance, for monoid MA..
    */
-  implicit def ParserApply: Apply[Parser] = new Apply[Parser] {
-    def apply[A, B](f: Parser[A => B], a: Parser[A]) = f flatMap { k => a map (k(_)) }
+  implicit def ParserMonoid[A]: Monoid[Parser[A]] = new Monoid[Parser[A]] {
+    def zero = failure[A]("empty")
+
+    def append(p1: Parser[A], p2: => Parser[A]): Parser[A] =
+      parser((args: List[String]) => p1.parse(args) match {
+        case Success((rest, value)) => Success((rest, value))
+        case Failure(_) => p2.parse(args)
+      })
   }
 
   /**
-   * Scalaz Zero instance, for monad plus MA.
+   * Scalaz Plus instance, for monoid MA..
    */
-  implicit def ParserZero[A]: Zero[Parser[A]] = zero(failure[A]("empty"))
-
-  /**
-   * Scalaz Plus instance, for monad plus MA.
-   */
-  implicit def ParserPlus[A]: Plus[Parser] = new Plus[Parser] {
-    def plus[A](p1: Parser[A], p2: => Parser[A]) =
+  implicit def ParserPlus: Plus[Parser] = new Plus[Parser] {
+    def plus[A](p1: Parser[A], p2: => Parser[A]): Parser[A] =
       parser((args: List[String]) => p1.parse(args) match {
         case Success((rest, value)) => Success((rest, value))
         case Failure(_) => p2.parse(args)
