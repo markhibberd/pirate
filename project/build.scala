@@ -15,7 +15,8 @@ object build extends Build {
   lazy val publishSetting = publishTo <<= (version).apply{
     v => {
       val flavour = if (v.trim.endsWith("SNAPSHOT")) "snapshots" else "releases"
-      Some(Resolver.sftp("repo.mth.io","repo.mth.io", "repo.mth.io/data/snapshots") as ("web", new java.io.File("/home/mth/.ssh/id_dsa_publish")))
+      Some(Resolver.sftp("repo.mth.io","repo.mth.io", "repo.mth.io/data/snapshots") as ("web", new java.io.File(
+        System.getProperty("user.home") + "/.ssh/id_dsa_publish")))
     }
   }
 
