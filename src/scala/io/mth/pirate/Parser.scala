@@ -27,11 +27,6 @@ sealed trait Parser[A] {
   def many1: Parser[List[A]]  = lift2(list)(_::_)
 
   /**
-   * Fixed repitition combinator, exactly n times.
-   */
-  def rep(n: Int) = this.replicate[List](n)
-
-  /**
    * Symbolic representation of list combinator, zero or more times.
    *
    * See: list.
