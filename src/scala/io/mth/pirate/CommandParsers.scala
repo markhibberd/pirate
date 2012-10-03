@@ -46,7 +46,7 @@ object CommandParsers {
    */
   def untilEndOfFlags[A](p: Parser[A]): Parser[List[A]] =
     (is("--") map (_ => List[A]())) |
-       (p.lift2(untilEndOfFlags(p))(_::_) | empty[A])
+       (p.lift2(untilEndOfFlags(p))((x, y) => y ++ List(x)) | empty[A])
 
   /**
    * Constructs a parser that will match any flag.
@@ -80,8 +80,6 @@ object CommandParsers {
    * Constructs a parser that will consume all flags then all positional
    * parameters.
    */
-  def commandline[A](f: Flags[A], p: Positionals[A]) = {
-    println("asfas")
+  def commandline[A](f: Flags[A], p: Positionals[A]) =
     flags(f).lift2(positionals(p))(_:::_).map(_.foldLeft(identity[A]_)(_ compose _))
-  }
 }
