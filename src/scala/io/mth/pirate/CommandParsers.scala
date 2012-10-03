@@ -80,6 +80,8 @@ object CommandParsers {
    * Constructs a parser that will consume all flags then all positional
    * parameters.
    */
-  def commandline[A](f: Flags[A], p: Positionals[A]) =
-    flags(f).lift2(positionals(p))(_:::_).map(_.foldRight(identity[A]_)(_ compose _))
+  def commandline[A](f: Flags[A], p: Positionals[A]) = {
+    println("asfas")
+    flags(f).lift2(positionals(p))(_:::_).map(_.foldLeft(identity[A]_)(_ compose _))
+  }
 }

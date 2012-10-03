@@ -143,5 +143,5 @@ object Parser {
    * Multi-way choice, first success proceeds.
    */
   def choiceN[A](ps: List[Parser[A]]): Parser[A] =
-    ps.foldRight(failure[A]("empty"))(_ | _)
+    ps.foldLeft(failure[A]("empty"))(_ | _)
 }
