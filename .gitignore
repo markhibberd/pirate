@@ -3,5 +3,6 @@
 /dist
 /dependency
 /scratch
+/.lib
 *~
 *#
