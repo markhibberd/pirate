@@ -80,6 +80,14 @@ object CommandParsers {
    * Constructs a parser that will consume all flags then all positional
    * parameters.
    */
-  def commandline[A](f: Flags[A], p: Positionals[A]) =
+  def commandline[A](f: Flags[A], p: Positionals[A]): Parser[A => A] =
     flags(f).lift2(positionals(p))(_:::_).map(_.foldLeft(identity[A]_)(_ compose _))
+
+  /**
+   * Constructs a parser that will switch on commands.
+   */
+  def commands[A](cs: List[Command[A]]): Parser[A => A] =
+    cs.foldLeft(failure[A => A]("No possible sub-commands."))((acc, c) =>
+      acc | (is(c.name) >> c.toParser)
+    )
 }

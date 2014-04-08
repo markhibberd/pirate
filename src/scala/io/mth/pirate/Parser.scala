@@ -63,7 +63,7 @@ sealed trait Parser[A] {
 
 object Parser {
   /**
-   * Type constructor for parser.
+   * Data constructor for parser.
    */
   def parser[A](f: List[String] => Validation[String, (List[String], A)]): Parser[A] = new Parser[A] {
     def parse(args: List[String]) = f(args)

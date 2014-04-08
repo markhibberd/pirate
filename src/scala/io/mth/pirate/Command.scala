@@ -24,12 +24,33 @@ sealed trait Command[A] {
   ): X
 
   /**
+   * The name of this command.
+   */
+  def name: String =
+    fold((n, _, _, _) => n)
+
+  /**
+   * The description of this command.
+   */
+  def description: Option[String] =
+    fold((_, d, _, _) => d)
+
+  /**
    * Combine this command with a new flag, and return the
    * the new command. The operation to combine flags is
-   * associative, i.e. not order dependant.
+   * associative.
    */
   def <|>(flag: Flag[A]): Command[A] = fold(
     (n, d, f, p) => commandline(n, d, f <|> flag, p)
+  )
+
+  /**
+   * Combine this command with a new set of flags, and return the
+   * the new command. The operation to combine flags is
+   * associative.
+   */
+  def <<|>>(flag: Flags[A]): Command[A] = fold(
+    (n, d, f, p) => commandline(n, d, f <<|>> flag, p)
   )
 
   /**
@@ -42,6 +63,18 @@ sealed trait Command[A] {
    */
   def >|(positional: Positional[A]): Command[A] = fold(
     (n, d, f, p) => commandline(n, d, f, p >| positional)
+  )
+
+  /**
+   * Combine this command with a set of positional parameters,
+   * and return the new command. The operation to combine
+   * positional parameters is NOT associative. Parsing and
+   * generating a usage string is heavily dependent on the
+   * order in which positional parameters added to the
+   * command.
+   */
+  def >|(positionals: Positionals[A]): Command[A] = fold(
+    (n, d, f, p) => commandline(n, d, f, p >>| positionals)
   )
 
   /**
@@ -63,7 +96,7 @@ sealed trait Command[A] {
    * The usage string for this command using the specified
    * usage mode.
    */
-  def usageForMode(mode: UsageMode) = Usage.usage(mode)(this)
+  def usageForMode(mode: UsageMode) = Usage.commandusage(mode)(this)
 
   /**
    * Create an argument parser for this command. This is for advanced
@@ -114,7 +147,7 @@ sealed trait Command[A] {
 
 object Command {
   /**
-   *  Type constructor for the most basic command. It is recommended that this
+   * Data constructor for the most basic command. It is recommended that this
    * constructor is used with the combinators on Command to build up a command.
    *
    * It is also recommended to explicitly specify a type parameter when using
@@ -126,7 +159,7 @@ object Command {
     commandline(name,None, Flags.emptyflags, Positionals.emptypositionals)
 
   /**
-   * Type constructor for a complete command. This is for advanced usage only.
+   * Data constructor for a complete command. This is for advanced usage only.
    * The equivalent commands can be built using the `command` constructor
    * and the combinators.
    */

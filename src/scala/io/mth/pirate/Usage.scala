@@ -2,10 +2,29 @@ package io.mth.pirate
 
 object Usage {
   /**
-   * Build the usage string for the specified command and mode
-   * configuration
+   * Build the usage string for the specified commands and mode
+   * configuration.
    */
-  def usage[A](mode: UsageMode)(pirate: Command[A]): String = {
+  def commandsusage[A](mode: UsageMode)(pirate: Commands[A]): String = {
+    import Text._
+
+    val flagspace = space(mode.flagIndent)
+
+    def subcommand(c: Command[A]) =
+      flagspace + c.name + "\n" +
+        wrap(c.description.getOrElse(""),  mode.width - mode.descIndent,  mode.descIndent)
+    "Usage:\n" +
+      flagspace + pirate.name + " <command> [<args>]\n"  +
+    pirate.description.map(_ + "\n").getOrElse("") +
+    "Commands: \n" +
+      pirate.subcommands.map(c => subcommand(c)).mkString("\n") + "\n"
+  }
+
+  /**
+   * Build the usage string for the specified command and mode
+   * configuration.
+   */
+  def commandusage[A](mode: UsageMode)(pirate: Command[A]): String = {
     import Text._
 
     val flagspace = space(mode.flagIndent)

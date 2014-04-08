@@ -11,7 +11,7 @@ object StandardUsageDemo {
       flag('h', "help", "display usage.")(_.copy(help = true)) <|>
       flag('V', "version", "display version.")(_.copy(version = true)) <|>
       flag('v', "verbose", "verbose output.")(_.copy(verbose = true)) >|
-      positional0plus("THINGS")((d, ss) => d.copy(things = ss))
+      positional0plus[DemoArgs]("THINGS")((d, ss) => d.copy(things = ss))
 
   def main(ignored: Array[String]) {
     val args = List("--verbose", "thing.one", "thing.two", "cat", "hat")
@@ -25,6 +25,6 @@ object StandardUsageDemo {
       assert(demo.things == List("config1.file", "config2.file"))
     }
 
-    exit(exitcode)
+    sys.exit(exitcode)
   }
 }

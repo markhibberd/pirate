@@ -32,6 +32,14 @@ sealed trait Positional[A] {
    */
   def >|(p: Positional[A]): Positionals[A] = toPositionals >| p
 
+  /**
+   * Combine this positional parameter with a new positional,
+   * parameter and return the positional parameters. The operation
+   * to combine positional parameters is NOT associative. Parsing
+   * is heavily dependent on the order in which positional parameters
+   * added to the command.
+   */
+  def >>|(p: Positionals[A]): Positionals[A] = toPositionals >>| p
 
   /**
    * Convert this Positional into a Positionals.
@@ -41,7 +49,7 @@ sealed trait Positional[A] {
 
 object Positional {
   /**
-   * Type constructor for a single positional parameter.
+   * Data constructor for a single positional parameter.
    */
   def positional[A](meta: String)(f: (A, String) => A): Positional[A] = new Positional[A] {
     def fold[X](
@@ -53,7 +61,7 @@ object Positional {
   }
 
   /**
-   * Type constructor for a fixed n positional parameter.
+   * Data constructor for a fixed n positional parameter.
    */
   def positionalN[A](number: Int, meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {
     def fold[X](
@@ -65,7 +73,7 @@ object Positional {
   }
 
   /**
-   * Type constructor for a variable positional parameter that
+   * Data constructor for a variable positional parameter that
    * can occur 0 or more times.
    */
   def positional0plus[A](meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {
@@ -78,7 +86,7 @@ object Positional {
   }
 
   /**
-   * Type constructor for a variable positional parameter that
+   * Data constructor for a variable positional parameter that
    * can occur 1 or more times.
    */
   def positional1plus[A](meta: String)(f: (A, List[String]) => A): Positional[A] = new Positional[A] {

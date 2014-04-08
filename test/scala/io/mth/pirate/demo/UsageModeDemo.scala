@@ -10,13 +10,13 @@ object UsageModeDemo {
       flag('h', "help", "display usage.")(_.copy(help = true)) <|>
       flag('V', "version", "display version.")(_.copy(version = true)) <|>
       flag('v', "verbose", "verbose output, this has a really long description to demonstrate wrapping.")(_.copy(verbose = true)) >|
-      positional0plus("THINGS")((d, ss) => d.copy(things = ss))
+      positional0plus[DemoArgs]("THINGS")((d, ss) => d.copy(things = ss))
 
   val customMode = DefaultUsageMode.copy(
         condenseSynopsis = true,
         width = 120
     )
-    
+
 
   def main(ignored: Array[String]) {
     println("Default usage string --")
@@ -26,4 +26,3 @@ object UsageModeDemo {
     println(cmd.usageForMode(customMode))
   }
 }
-

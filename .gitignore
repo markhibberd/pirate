@@ -1,3 +1,5 @@
+build.sbt
+project/project
 /gen
 /project/target
 /dist
