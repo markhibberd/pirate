@@ -9,6 +9,7 @@ import pirate.{Flags, Command, Flag, Positional}
  */
 package object pirate {
   def command[A] = Command.command[A] _
+  def commands[A] = Commands.commands[A] _
 
   def short[A] = Flag.short[A] _
   def long[A] = Flag.long[A] _

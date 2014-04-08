@@ -10,7 +10,7 @@ package io.mth.pirate
  *  - flag with only long identifier, and an argument
  *
  * Each of the variants of this type include a function
- * for transforming a type if it is succeeds in parsing. 
+ * for transforming a type if it is succeeds in parsing.
  */
 sealed trait Flag[A] {
   import scalaz._
@@ -34,9 +34,17 @@ sealed trait Flag[A] {
   /**
    * Combine this flag with a new flag, and return as
    * a new flags. The operation to combine flags is
-   * associative, i.e. not order dependant.
+   * associative.
    */
   def <|>(flag: Flag[A]) = toFlags <|> flag
+
+  /**
+   * Combine this flag with a set of flags, and return as
+   * a new flags. The operation to combine flags is
+   * associative.
+   */
+  def <<|>>(flags: Flags[A]) = toFlags <<|>> flags
+
 
   /**
    * Convert this Flag into a Flags.
@@ -58,7 +66,7 @@ sealed trait Flag[A] {
 
 object Flag {
   /**
-   *  Type constructor for a Flag with only a short identifier, and no argument.
+   * Data constructor for a Flag with only a short identifier, and no argument.
    */
   def short[A](short: Char, desc: String)(f: A => A): Flag[A] = new Flag[A] {
     def fold[B](
@@ -72,7 +80,7 @@ object Flag {
   }
 
   /**
-   * Type constructor for a Flag with only a long identifier, and no argument.
+   * Data constructor for a Flag with only a long identifier, and no argument.
    */
   def long[A](long: String, desc: String)(f: A => A): Flag[A] = new Flag[A] {
     def fold[B](
@@ -86,7 +94,7 @@ object Flag {
   }
 
   /**
-   * Type constructor for a Flag with both a short and long identifier, and no argument.
+   * Data constructor for a Flag with both a short and long identifier, and no argument.
    */
   def flag[A](short: Char, long: String, desc: String)(f: A => A): Flag[A] = new Flag[A] {
     def fold[B](
@@ -100,7 +108,7 @@ object Flag {
   }
 
   /**
-   * Type constructor for a Flag with only a short identifier, and with an argument.
+   * Data constructor for a Flag with only a short identifier, and with an argument.
    */
   def short1[A](short: Char, desc: String, meta: String)(f: (A, String) => A): Flag[A] = new Flag[A] {
     def fold[B](
@@ -114,7 +122,7 @@ object Flag {
   }
 
   /**
-   * Type constructor for a Flag with only a long identifier, and with an argument.
+   * Data constructor for a Flag with only a long identifier, and with an argument.
    */
   def long1[A](long: String, desc: String, meta: String)(f: (A, String) => A): Flag[A] = new Flag[A] {
     def fold[B](
@@ -128,7 +136,7 @@ object Flag {
   }
 
   /**
-   * Type constructor for a Flag with both a long and short identifier, and with an argument.
+   * Data constructor for a Flag with both a long and short identifier, and with an argument.
    */
   def flag1[A](short: Char, long: String, desc: String, meta: String)(f: (A, String) => A): Flag[A] = new Flag[A] {
     def fold[B](
@@ -142,4 +150,3 @@ object Flag {
   }
 
 }
-

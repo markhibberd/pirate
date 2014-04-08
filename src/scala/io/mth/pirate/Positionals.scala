@@ -23,8 +23,18 @@ sealed trait Positionals[A] {
    * is heavily dependent on the order in which positional parameters
    * added to the command.
    */
-  def >|(positional: Positional[A]): Positionals[A] = fold(
-    positionals => positionalz(positionals ::: List(positional))
+  def >|(positional: Positional[A]): Positionals[A] =
+    this >>| positionals(positional)
+
+  /**
+   * Combine this positional parameters with a set of positionals,
+   * parameter and return the positional parameters. The operation
+   * to combine positional parameters is NOT associative. Parsing
+   * is heavily dependent on the order in which positional parameters
+   * added to the command.
+   */
+  def >>|(positionals: Positionals[A]): Positionals[A] = fold(
+    current => positionalz(current ::: positionals.toList)
   )
 
   /**
@@ -35,12 +45,12 @@ sealed trait Positionals[A] {
 
 object Positionals {
   /**
-   *  Type constructor for the empty set of positional parameters.
+   * Data constructor for the empty set of positional parameters.
    */
   def emptypositionals[A] = positionalz[A](List())
 
   /**
-   * Type constructor for a single positional parameter.
+   * Data constructor for a single positional parameter.
    */
   def positionals[A](positional: Positional[A]) = emptypositionals >| positional
 

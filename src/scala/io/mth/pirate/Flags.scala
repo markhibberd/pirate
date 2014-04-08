@@ -19,10 +19,18 @@ sealed trait Flags[A] {
   /**
    * Combine this flags with a new flag, and return as
    * a new flags. The operation to combine flags is
-   * associative, i.e. not order dependant.
+   * associative.
    */
-  def <|>(flag: Flag[A]): Flags[A] = fold(
-      flags => flagz(flags ::: List(flag))
+  def <|>(flag: Flag[A]): Flags[A] =
+    this <<|>> flags(flag)
+
+  /**
+   * Combine this flags with a new flag, and return as
+   * a new flags. The operation to combine flags is
+   * associative.
+   */
+  def <<|>>(flags: Flags[A]): Flags[A] = fold(
+      current => flagz(current ::: flags.toList)
     )
 
   /**
@@ -33,12 +41,12 @@ sealed trait Flags[A] {
 
 object Flags {
   /**
-   * Type constructor for the empty set of flags.
+   * Data constructor for the empty set of flags.
    */
   def emptyflags[A] = flagz[A](List())
 
   /**
-   * Type constructor for a single flag.
+   * Data constructor for a single flag.
    */
   def flags[A](flag: Flag[A]) = emptyflags <|> flag
 
@@ -48,6 +56,6 @@ object Flags {
   private def flagz[A](flagz: List[Flag[A]]): Flags[A] = new Flags[A] {
     def fold[X](
       flags: List[Flag[A]] => X
-    ):X = flags(flagz) 
+    ):X = flags(flagz)
   }
 }
