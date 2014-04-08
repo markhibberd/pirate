@@ -3,19 +3,7 @@ package io.mth.pirate
 import java.io.PrintStream
 
 
-trait SubCommand[A] {
-  type B <: A
-  def seed: B
-  def command: Command[B]
-}
-
-object SubCommand {
-  def apply[A, AA <: A](c: Command[AA], s: AA): SubCommand[A] = new SubCommand[A] {
-    type B = AA
-    def seed = s
-    def command = c
-  }
-}
+case class SubCommand[A](name: String, description: Option[String], toParser: Parser[A], usage: UsageMode => String)
 
 /**
  * Commands data type. Represents a command with sub-commands.
@@ -28,7 +16,7 @@ sealed trait Commands[A] {
    * Catamorphism for Command data type.
    */
   def fold[X](
-    x: (String, Option[String], List[(A, Command[A])]) => X
+    x: (String, Option[String], List[SubCommand[A]]) => X
   ): X
 
   /**
@@ -46,11 +34,19 @@ sealed trait Commands[A] {
   /**
    * The subcommands of this command.
    */
-  def subcommands: List[Command[A]] =
+  def subcommands: List[SubCommand[A]] =
     fold((_, _, cs) => cs)
 
-  def withSubcommand[B <: A](command: Command[B], seed: B): Commands[A] =
+  def withSubCommand[B](seed: B, command: Command[B], unifier: B => A): Commands[A] = {
+    val sub = SubCommand[A](command.name,
+                         command.description,
+                          CommandParsers.subcommand(seed, command).lift(unifier),
+                          mode => command.usageForMode(mode))
+    fold((n, d, cs) => supercommand(n, d, cs ::: List(sub)))
+  }
 
+  def withSubtypeCommand[B <: A](seed: B, command: Command[B]) =
+    withSubCommand[B](seed, command, x => x)
 
   /**
    * Combine this command with the specified description and
@@ -78,7 +74,7 @@ sealed trait Commands[A] {
    * usage only. It is expected that the `parse` method is sufficient
    * for most cases.
    */
-  def toParser: Parser[A => A] = fold(
+  def toParser: Parser[A] = fold(
     (n, d, cs) => CommandParsers.commands(cs)
   )
 
@@ -86,10 +82,10 @@ sealed trait Commands[A] {
    * Parse a list of arguments based on this command and apply the resultant
    * function to the data object.
    */
-  def parse(args: List[String], default: A): Validation[String, A] =
+  def parse(args: List[String]): Validation[String, A] =
     toParser.parse(args) match {
-      case Success((rest, f)) =>
-        if (rest.isEmpty) Success(f(default))
+      case Success((rest, a)) =>
+        if (rest.isEmpty) Success(a)
         else Failure("Too many arguments / Arguments could not be parsed: " + rest)
       case Failure(msg) => Failure(msg)
     }
@@ -98,22 +94,22 @@ sealed trait Commands[A] {
    * Higher order function to handle parse and dispatch. This is
    * a convenience only.
    */
-  def dispatchOrUsage(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Int =
-    dispatch(args, default)(f)(msg => err.println(msg + "\n\n" + usage))
+  def dispatchOrUsage(args: List[String], err: PrintStream = System.err)(f: A => Unit): Int =
+    dispatch(args)(f)(msg => err.println(msg + "\n\n" + usage))
 
   /**
    * Higher order function to handle parse and dispatch. This is
    * a convenience only.
    */
-  def dispatchOrDie(args: List[String], default: A, err: PrintStream = System.err)(f: A => Unit): Unit =
-    sys.exit(dispatchOrUsage(args, default)(f))
+  def dispatchOrDie(args: List[String], err: PrintStream = System.err)(f: A => Unit): Unit =
+    sys.exit(dispatchOrUsage(args)(f))
 
   /**
    * Higher order function to handle parse and dispatch. This is
    * a convenience only.
    */
-  def dispatch(args: List[String], default: A)(success: A => Unit)(error: String => Unit): Int =
-    parse(args, default) match {
+  def dispatch(args: List[String])(success: A => Unit)(error: String => Unit): Int =
+    parse(args) match {
       case Success(applied) => success(applied); 0
       case Failure(msg) => error(msg); 1
     }
@@ -137,10 +133,10 @@ object Commands {
    * The equivalent commands can be built using the `command` constructor and the
    * combinators.
    */
-  def supercommand[A](name: String, description: Option[String], commands: List[Command[A]]): Commands[A] =
+  def supercommand[A](name_ : String, description_ : Option[String], commands: List[SubCommand[A]]): Commands[ A] =
     new Commands[A] {
       def fold[X](
-        x: (String, Option[String], List[Command[A]]) => X
-      ): X = x(name, description, commands)
+        x: (String, Option[String], List[SubCommand[A]]) => X
+      ): X = x(name_, description_, commands)
     }
 }

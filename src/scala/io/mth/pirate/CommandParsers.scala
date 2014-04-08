@@ -84,10 +84,16 @@ object CommandParsers {
     flags(f).lift2(positionals(p))(_:::_).map(_.foldLeft(identity[A]_)(_ compose _))
 
   /**
-   * Constructs a parser that will switch on commands.
+   * Constructs a parser that will switch on sub command.
    */
-  def commands[A](cs: List[Command[A]]): Parser[A => A] =
-    cs.foldLeft(failure[A => A]("No possible sub-commands."))((acc, c) =>
-      acc | (is(c.name) >> c.toParser)
-    )
+  def subcommand[A](seed: A, command: Command[A]): Parser[A] =
+    (is(command.name) >> command.toParser).map(f => f(seed))
+
+  /**
+   * Constructs a parser that will switch on sub commands.
+   */
+  def commands[A](commands: List[SubCommand[A]]): Parser[A] =
+    commands.foldLeft(failure[A]("No possible sub-commands"))((acc, c) =>
+      acc | c.toParser)
+
 }

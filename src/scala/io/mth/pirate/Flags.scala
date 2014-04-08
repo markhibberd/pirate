@@ -21,8 +21,9 @@ sealed trait Flags[A] {
    * a new flags. The operation to combine flags is
    * associative.
    */
-  def <|>(flag: Flag[A]): Flags[A] =
-    this <<|>> flags(flag)
+  def <|>(flag: Flag[A]): Flags[A] = fold(
+    current => flagz(current ::: List(flag))
+  )
 
   /**
    * Combine this flags with a new flag, and return as

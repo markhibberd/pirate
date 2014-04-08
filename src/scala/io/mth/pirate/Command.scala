@@ -9,8 +9,6 @@ import java.io.PrintStream
  *
  * The data type includes combinators for building up more
  * complex commands from a simple command name.
- *
- * TODO: multi-form and multi-modal commands.
  */
 sealed trait Command[A] {
   import scalaz._
@@ -163,10 +161,10 @@ object Command {
    * The equivalent commands can be built using the `command` constructor
    * and the combinators.
    */
-  def commandline[A](name: String, description: Option[String], flags: Flags[A], positionals: Positionals[A]): Command[A] =
+  def commandline[A](name_ : String, description_ : Option[String], flags: Flags[A], positionals: Positionals[A]): Command[A] =
     new Command[A] {
       def fold[X](
         x: (String, Option[String], Flags[A], Positionals[A]) => X
-      ): X = x(name, description, flags, positionals)
+      ): X = x(name_, description_, flags, positionals)
     }
 }

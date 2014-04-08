@@ -23,8 +23,9 @@ sealed trait Positionals[A] {
    * is heavily dependent on the order in which positional parameters
    * added to the command.
    */
-  def >|(positional: Positional[A]): Positionals[A] =
-    this >>| positionals(positional)
+  def >|(positional: Positional[A]): Positionals[A] = fold(
+    current => positionalz(current ::: List(positional))
+  )
 
   /**
    * Combine this positional parameters with a set of positionals,
