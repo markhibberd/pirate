@@ -10,7 +10,7 @@ object Usage {
 
     val flagspace = space(mode.flagIndent)
 
-    def subcommand(c: Command[A]) =
+    def subcommand(c: SubCommand[A]) =
       flagspace + c.name + "\n" +
         wrap(c.description.getOrElse(""),  mode.width - mode.descIndent,  mode.descIndent)
     "Usage:\n" +

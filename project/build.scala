@@ -43,7 +43,7 @@ object build extends Build {
   , settings = Defaults.defaultSettings ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
-    , version := "0.7"
+    , version := "0.8"
     , scalaVersion := "2.10.3"
     , scalacOptions := Seq(
         "-deprecation"
