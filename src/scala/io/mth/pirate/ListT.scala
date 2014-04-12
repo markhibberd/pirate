@@ -2,25 +2,6 @@ package io.mth.pirate
 
 import scalaz._, Scalaz._
 
-sealed trait TStep[+A, +X] {
-  def bimap[B, Y](f: A => B, g: X => Y): TStep[B, Y] =
-    this match {
-      case TNil() => TNil()
-      case TCons(a, x) => TCons(f(a), g(x))
-    }
-}
-
-object TStep {
-  def nil[A, X]: TStep[A, X] =
-    TNil[A, X]()
-
-  def cons[A, X](a: A, x: X): TStep[A, X] =
-    TCons(a, x)
-}
-
-case class TNil[A, X]() extends TStep[A, X]
-case class TCons[A, X](a: A, x: X) extends TStep[A, X]
-
 case class ListT[F[+_], +A](stepListT: F[TStep[A, ListT[F, A]]]) {
   def ++[AA >: A](other: ListT[F, AA])(implicit F: Monad[F]): ListT[F, AA] = ListT(for {
     s <- stepListT
@@ -83,4 +64,39 @@ object ListT {
     def empty[A] = nil[F, A]
     def plus[A](a: ListT[F, A], b: => ListT[F, A]) = a ++ b
   }
+
+  implicit def ListTEqual[F[+_], A](implicit E: Equal[F[List[A]]], F: Monad[F]): Equal[ListT[F, A]] =
+    Equal.equal[ListT[F, A]]((a, b) => a.run === b.run)
+}
+
+sealed trait TStep[+A, +X] {
+  def bimap[B, Y](f: A => B, g: X => Y): TStep[B, Y] =
+    this match {
+      case TNil() => TNil()
+      case TCons(a, x) => TCons(f(a), g(x))
+    }
+}
+
+case class TNil[A, X]() extends TStep[A, X]
+case class TCons[A, X](a: A, x: X) extends TStep[A, X]
+
+object TStep {
+  def nil[A, X]: TStep[A, X] =
+    TNil[A, X]()
+
+  def cons[A, X](a: A, x: X): TStep[A, X] =
+    TCons(a, x)
+
+  implicit def TStepBifunctor: Bifunctor[TStep] = new Bifunctor[TStep] {
+    def bimap[A, B, C, D](ab: TStep[A, B])(f: A => C, g: B => D) =
+      ab.bimap(f, g)
+  }
+
+  implicit def TStepEqual[A: Equal, X: Equal]: Equal[TStep[A, X]] =
+    Equal.equal[TStep[A, X]]((a, b) => (a, b) match {
+      case (TNil(), TNil()) => true
+      case (TNil(), TCons(_, _)) => false
+      case (TCons(_, _), TNil()) => false
+      case (TCons(aa, ax), TCons(ba, bx)) => aa === ba && ax === bx
+    })
 }

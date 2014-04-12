@@ -72,7 +72,7 @@ object Parser {
   /**
    * Value/Pure implementation of Parser monad.
    */
-  def value[A](v: A): Parser[A] = parser(Success(_, v))
+  def value[A](v: A): Parser[A] = parser(x => Success(x -> v))
 
   /**
    * Failure/Zero implementation of Parser.

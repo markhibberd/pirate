@@ -3,7 +3,7 @@ package io.mth.pirate.demo
 import io.mth.pirate._
 
 object ModalDemo {
-
+/*
   sealed trait Mode
   case class WinMode(flag: Option[String]) extends Mode
   case class LoseMode(flag: Option[String]) extends Mode
@@ -36,4 +36,6 @@ object ModalDemo {
       case HelpMode(flag) => println("help: " + flag)
     }
   }
+
+*/
 }
