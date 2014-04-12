@@ -1,6 +1,6 @@
 package io.mth
 
-import pirate.{Flags, Command, Flag, Positional}
+//import pirate.{Flags, Command, Flag, Positional}
 
 /**
  * Pirate argument parser.
@@ -8,6 +8,7 @@ import pirate.{Flags, Command, Flag, Positional}
  * This package object exports everything required for normal usage.
  */
 package object pirate {
+/*
   def command[A] = Command.command[A] _
   def commands[A] = Commands.commands[A] _
 
@@ -22,4 +23,5 @@ package object pirate {
   def positionalN[A] = Positional.positionalN[A] _
   def positional0plus[A] = Positional.positional0plus[A] _
   def positional1plus[A] = Positional.positional1plus[A] _
+  */
 }

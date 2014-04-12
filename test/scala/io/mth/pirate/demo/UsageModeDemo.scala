@@ -3,6 +3,7 @@ package io.mth.pirate.demo
 import io.mth.pirate._
 
 object UsageModeDemo {
+/*
   case class DemoArgs(help: Boolean, version: Boolean, verbose: Boolean, things: List[String])
 
   val cmd =
@@ -25,4 +26,5 @@ object UsageModeDemo {
     println("Custom usage string --")
     println(cmd.usageForMode(customMode))
   }
+*/
 }

@@ -4,6 +4,7 @@ import scalaz.{Failure, Success}
 import io.mth.pirate._
 
 object StandardUsageDemo {
+/*
   case class DemoArgs(help: Boolean, version: Boolean, verbose: Boolean, things: List[String])
 
   val cmd =
@@ -27,4 +28,5 @@ object StandardUsageDemo {
 
     sys.exit(exitcode)
   }
+*/
 }
