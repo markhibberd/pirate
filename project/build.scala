@@ -26,10 +26,11 @@ object build extends Build {
     , target <<= baseDirectory { _ / "gen/sbt/target" }
     , testOptions in Test += Tests.Setup(() => System.setProperty("specs2.outDir", "gen/sbt/target/specs2-reports"))
     , libraryDependencies ++= Seq(
-        ("org.scalaz" %% "scalaz-core" % "7.0.6")
-      , ("org.specs2" %% "specs2" % "2.3.4" % "test")
-      , ("org.specs2" %% "specs2-scalacheck" % "2.3.4" % "test")
-      , ("org.scalacheck" %% "scalacheck" % "1.11.1" % "test")
+        "org.scalaz" %% "scalaz-core" % "7.0.6"
+      , "com.chuusai" % "shapeless_2.10.2" % "2.0.0"
+      , "org.specs2" %% "specs2" % "2.3.4" % "test"
+      , "org.specs2" %% "specs2-scalacheck" % "2.3.4" % "test"
+      , "org.scalacheck" %% "scalacheck" % "1.11.1" % "test"
       )
     )
   )
