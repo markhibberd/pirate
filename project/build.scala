@@ -20,11 +20,6 @@ object build extends Build {
       , "-Ywarn-all"
       , "-Xlint"
       )
-    , sourceDirectory in Compile <<= baseDirectory { _ / "src" }
-    , sourceDirectory in Test <<= baseDirectory { _ / "test" }
-    , historyPath <<= baseDirectory { b => Some(b / "gen/sbt/.history") }
-    , target <<= baseDirectory { _ / "gen/sbt/target" }
-    , testOptions in Test += Tests.Setup(() => System.setProperty("specs2.outDir", "gen/sbt/target/specs2-reports"))
     , libraryDependencies ++= Seq(
         "org.scalaz" %% "scalaz-core" % "7.0.6"
       , "com.chuusai" % "shapeless_2.10.2" % "2.0.0"
