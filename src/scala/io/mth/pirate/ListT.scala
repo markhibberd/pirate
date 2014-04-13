@@ -64,9 +64,6 @@ object ListT {
     def empty[A] = nil[F, A]
     def plus[A](a: ListT[F, A], b: => ListT[F, A]) = a ++ b
   }
-
-  implicit def ListTEqual[F[+_], A](implicit E: Equal[F[List[A]]], F: Monad[F]): Equal[ListT[F, A]] =
-    Equal.equal[ListT[F, A]]((a, b) => a.run === b.run)
 }
 
 sealed trait TStep[+A, +X] {

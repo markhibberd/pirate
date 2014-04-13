@@ -16,4 +16,13 @@ object Arbitraries {
       n <- Gen.choose(0, 10)
       x <- Gen.listOfN(n, arbitrary[A])
     } yield x.foldRight(ListT.nil[Identity, A])(ListT.cons[Identity, A]))
+
+  implicit def NondetTArbitrary[A: Arbitrary]: Arbitrary[NondetT[Identity, A]] = {
+    type S[+A] = StateT[Identity, Boolean, A]
+    Arbitrary(for {
+      n <- Gen.choose(0, 10)
+      x <- Gen.listOfN(n, arbitrary[A])
+    } yield NondetT(x.foldRight(ListT.nil[S, A])(ListT.cons[S, A])))
+  }
+
 }
