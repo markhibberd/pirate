@@ -2,43 +2,6 @@ package io.mth.pirate
 
 import scalaz._, Scalaz._, \&/._
 
-object NewApi {
-  object switch {
-    def short(c: Char): Parse[Boolean] =
-      PiratedParse(
-        FlagParser(This(c), true),
-        PirateMeta(None, true)) ||| false.pure[Parse]
-  }
-
-  object option {
-    def short(c: Char, meta: String): Parse[String] =
-      PiratedParse(
-        OptionParser(This(c), List(meta), Parser.string),
-        PirateMeta(None, true)) ||| ValueParse(None)
-  }
-
-  object positional {
-    def one(meta: String): Parse[String] =
-      PiratedParse(
-        ArgumentParser(Parser.string),
-        PirateMeta(None, true)) ||| ValueParse(None)
-
-  }
-
-  object command {
-    def of[A](name: String, p: Parse[A]): Parse[A] =
-      PiratedParse(SubCommandParser(name, p), PirateMeta(None, true)) ||| ValueParse(None)
-
-  }
-  object Interpret {
-    def run[A](p: Parse[A], args: List[String], s: ParseState) =
-      ParseTools.runParserFully(s, p, args).run(NullPPrefs)
-  }
-}
-
-
-
-
 sealed trait PPrefs
 case object NullPPrefs extends PPrefs
 sealed trait PError
@@ -63,6 +26,7 @@ object P {
   }
 }
 
+/* A universally qualified function for handling the existantial parsers in the tree */
 trait OptionRunner[F[+_]] {
   def run[A](options: PirateParser[A]): NondetT[F, A]
 }
@@ -142,16 +106,16 @@ object ParseTools {
       w.name match {
         case ShortName(c) =>
           if (flag.a.exists(_ == c))
-            Some(update[A](args => p.parse(args).disjunction match {
-              case -\/(e) => errorP(PErrorMessage(e))
+            Some(update[A](args => p.read(args) match {
+              case -\/(e) => errorP(PErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
           else
             None
         case LongName(s) =>
           if (flag.b.exists(_ == s))
-            Some(update[A](args => p.parse(args).disjunction match {
-              case -\/(e) => errorP(PErrorMessage(e))
+            Some(update[A](args => p.read(args) match {
+              case -\/(e) => errorP(PErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
         else None
@@ -163,7 +127,7 @@ object ParseTools {
 
   def argMatches[A](p: PirateParser[A], arg: String): Option[StateArg[A]] = p match {
     case ArgumentParser(p) =>
-      p.parse(arg :: Nil).disjunction match {
+      p.read(arg :: Nil) match {
         case -\/(e) => None
         case \/-((Nil, a)) => Some(a.pure[StateArg])
         case \/-((_ :: _, _)) => None
@@ -234,6 +198,9 @@ case class ShortName(c: Char) extends OptName
 case class OptWord(name: OptName, value: Option[String])
 
 sealed trait Parse[A] {
+  def ~(description: String): Command[A] =
+    Command(Some(description), this)
+
   def map[B](f: A => B): Parse[B] = this match {
     case ValueParse(o) =>
       ValueParse(o.map(f))
@@ -301,9 +268,9 @@ sealed trait PirateParser[A] {
 
 case class FlagParser[A](flag: These[Char, String], a: A)
   extends PirateParser[A]
-case class OptionParser[A](flag: These[Char, String], metas: List[String], p: Parser[A])
+case class OptionParser[A](flag: These[Char, String], metas: List[String], p: Read[A])
   extends PirateParser[A]
-case class ArgumentParser[A](p: Parser[A])
+case class ArgumentParser[A](p: Read[A])
   extends PirateParser[A]
 case class SubCommandParser[A](name: String, p: Parse[A])
   extends PirateParser[A]

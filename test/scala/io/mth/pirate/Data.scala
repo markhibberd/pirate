@@ -6,7 +6,6 @@ import org.scalacheck.Gen.{frequency, choose, listOfN, value, oneOf}
 
 import scalaz._
 import Scalaz._
-import Parser._
 
 object Data {
 
