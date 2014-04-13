@@ -12,11 +12,11 @@ object ParseDemo {
     val complicated = List("fred", "-g", "-f", "asfasf", "asfasfzzzz")
     val complicated2 = List("barney", "-f", "asfasf")
 
-    import NewApi._
+    import Flags._
 
     val g = switch.short('g')
-    val f = option.short('f', "X")
-    val p = positional.one("P")
+    val f = option.short[String]('f', "X")
+    val p = positional.one[String]("P")
     val gf = for { gg <- g; ff <- f } yield (gg, ff)
     val gfx = for { ff <- f; gg <- g } yield (gg, ff)
     val gfxx = (f |@| g)(_ -> _)
@@ -30,20 +30,20 @@ object ParseDemo {
     val barney = command.of("barney", f2)
     val fb = fred <+> barney
 
-    println(Interpret.run(g, List("-g"), SkipOpts))
-    println(Interpret.run(g, List(), SkipOpts))
-    println(Interpret.run(f, List(), SkipOpts))
-    println(Interpret.run(f, List("-f"), SkipOpts))
-    println(Interpret.run(f, List("-f", "ok"), SkipOpts))
-    println(Interpret.run(gf, args, SkipOpts))
-    println(Interpret.run(zz, args2, SkipOpts))
-    println(Interpret.run(zz, args3, SkipOpts))
+    println(Interpretter.run(g, List("-g")))
+    println(Interpretter.run(g, List()))
+    println(Interpretter.run(f, List()))
+    println(Interpretter.run(f, List("-f")))
+    println(Interpretter.run(f, List("-f", "ok")))
+    println(Interpretter.run(gf, args ))
+    println(Interpretter.run(zz, args2))
+    println(Interpretter.run(zz, args3))
 
-    println(Interpret.run(fred, complicated, SkipOpts))
-    println(Interpret.run(barney, complicated2, SkipOpts))
+    println(Interpretter.run(fred, complicated))
+    println(Interpretter.run(barney, complicated2))
 
-    println(Interpret.run(fb, complicated, SkipOpts))
-    println(Interpret.run(fb, complicated2, SkipOpts))
+    println(Interpretter.run(fb, complicated))
+    println(Interpretter.run(fb, complicated2))
 
 
 
