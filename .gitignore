@@ -1,10 +1,7 @@
 build.sbt
 project/project
-/gen
 /project/target
-/dist
-/dependency
-/scratch
+/target
 /.lib
 *~
 *#
