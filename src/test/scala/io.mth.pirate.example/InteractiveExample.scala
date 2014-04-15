@@ -9,19 +9,27 @@ object InteractiveExample {
     int: Int
   )
 
-  val command = Example |*| (
+  val example = Example |*| (
     switch.short('s')
   , option.short[String]('c', "STRING")
   , option.short[Int]('n', "INT")
   )
 
-  def main(args: Array[String]): Unit = {
-    println(Interpretter.run(command, List("-s", "-c", "hello", "-n", "12")))
+ val command = example ~ "example" ~~
+  s"""|An interactive example for pirate.
+      |
+      |This will allow you to experiment with different
+      |parsing options and see common usage.""".stripMargin
 
-    println(Interpretter.run(command, List("-c", "hello", "-n", "12")))
+  def main(unused: Array[String]): Unit = {
+    println(Interpretter.run(example, List("-s", "-c", "hello", "-n", "12")))
 
-    println(Interpretter.run(command, List("-n", "21", "-c", "hello")))
+    println(Interpretter.run(example, List("-c", "hello", "-n", "12")))
 
-    println(Interpretter.run(command, List("-n", "21", "-s", "-c", "hello")))
+    println(Interpretter.run(example, List("-n", "21", "-c", "hello")))
+
+    println(Interpretter.run(example, List("-n", "21", "-s", "-c", "hello")))
+
+    println(Usage.print(command))
   }
 }
