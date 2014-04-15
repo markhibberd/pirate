@@ -1,4 +1,4 @@
-package io.mth.pirate
+>package io.mth.pirate
 
 object Usage {
   /**

@@ -2,6 +2,18 @@ package io.mth.pirate
 
 import scalaz._, Scalaz._, \&/._
 
+sealed trait ParseTree[A] {
+  def flatten: List[A] = this match {
+    case ParseTreeLeaf(value) => List(value)
+    case ParseTreeAp(children) => children.flatMap(_.flatten)
+    case ParseTreeAlt(children) => children.flatMap(_.flatten)
+  }
+
+}
+case class ParseTreeLeaf[A](value: A) extends ParseTree[A]
+case class ParseTreeAp[A](children: List[ParseTree[A]]) extends ParseTree[A]
+case class ParseTreeAlt[A](children: List[ParseTree[A]]) extends ParseTree[A]
+
 sealed trait PPrefs
 case object NullPPrefs extends PPrefs
 sealed trait PError
@@ -198,8 +210,8 @@ case class ShortName(c: Char) extends OptName
 case class OptWord(name: OptName, value: Option[String])
 
 sealed trait Parse[A] {
-  def ~(description: String): Command[A] =
-    Command(Some(description), this)
+  def ~(name: String): Command[A] =
+    Command(name, None, this)
 
   def map[B](f: A => B): Parse[B] = this match {
     case ValueParse(o) =>
@@ -232,7 +244,53 @@ sealed trait Parse[A] {
     case BindParse(k, a) =>
       a.eval >>= k.map(_.eval)
   }
+
+  def mapTraverse[B](f: TreeTraverseF[B]): List[B] =
+    treeTraverse(f).flatten
+
+  def treeTraverse[B](f: TreeTraverseF[B]): ParseTree[B] = {
+    def hasDefault[X](p: Parse[X]): Boolean =
+      p.eval.isDefined
+
+    def go[C](multi: Boolean, dfault: Boolean, f: TreeTraverseF[B], p: Parse[C]): ParseTree[B] = p match {
+      case ValueParse(_) =>
+        ParseTreeAp(Nil)
+      case PiratedParse(p, m) =>
+        ParseTreeLeaf(f.run(OptHelpInfo(multi, dfault), p, m))
+      case ApParse(p1, p2) =>
+        ParseTreeAp(List(go(multi, dfault, f, p1), go(multi, dfault, f, p2)))
+      case AltParse(p1, p2) =>
+        val dfaultx = dfault || hasDefault(p1) || hasDefault(p2)
+        ParseTreeAlt(List(go(multi, dfaultx, f, p1), go(multi, dfaultx, f, p2)))
+      case BindParse(k, p) =>
+        go(true, dfault, f, p)
+    }
+
+    def simplify[X](x: ParseTree[X]): ParseTree[X] = x match {
+      case ParseTreeLeaf(a) => ParseTreeLeaf(a)
+      case ParseTreeAp(xs) => ParseTreeAp(xs.map(simplify).flatMap({
+        case ParseTreeAp(ys) => ys
+        case ParseTreeAlt(Nil) => Nil
+        case x => List(x)
+      }))
+      case ParseTreeAlt(xs) => ParseTreeAlt(xs.map(simplify).flatMap({
+        case ParseTreeAlt(ys) => ys
+        case ParseTreeAp(Nil) => Nil
+        case x => List(x)
+      }))
+    }
+
+    simplify(go(false, false, f, this))
+  }
+
 }
+
+trait TreeTraverseF[A] {
+  def run[X](info: OptHelpInfo, p: PirateParser[X], m: PirateMeta): A
+}
+
+
+case class OptHelpInfo(multi: Boolean, dfault: Boolean)
 
 case class ValueParse[A](m: Option[A]) extends Parse[A]
 case class PiratedParse[A](p: PirateParser[A], m: PirateMeta) extends Parse[A]
