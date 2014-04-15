@@ -73,7 +73,7 @@ object Usage {
         (l, d, m, f) =>  "[--" + l + " " + m + "]"
       )
 
-    def paramsynopsis[A](p: Positional[A]): String = p.fold(
+    def paramsyonopsis[A](p: Positional[A]): String = p.fold(
         (m, f) => m,
         (n, m, f) => (for (_ <- 1 to n) yield m).mkString(" "),
         (m, f) => "[" + m + " ...]",
