@@ -7,13 +7,16 @@ object Usage {
     printWith(command, DefaultUsageMode)
 
   def printWith[A](command: Command[A], mode: UsageMode): String =
-    Render.info(command.name, command.description, info(command), mode: UsageMode)
+    Render.infos(command.name, command.description, info(command), mode: UsageMode)
 
-  def info[A](command: Command[A]): Info =
-    command.parse.mapTraverse(new TreeTraverseF[Option[Info]] {
+  def info[A](command: Command[A]): List[Info] =
+    command.parse.treeTraverse(new TreeTraverseF[Option[Info]] {
       def run[X](info: OptHelpInfo, p: PirateParser[X], m: PirateMeta): Option[Info] =
         flags(p, m, info)
-    }).flatten.suml
+    }) match {
+      case ParseTreeAlt(children) => children.map(_.flatten.flatten.suml)
+      case x => List(x.flatten.flatten.suml)
+    }
 
   def flags[X](p: PirateParser[X], m: PirateMeta, info: OptHelpInfo): Option[Info] = p match {
     case FlagParser(flag, a) if m.visible =>
@@ -29,6 +32,9 @@ object Usage {
 
 object Render {
   import Text._
+
+  def infos(name: String, description: Option[String], is: List[Info], mode: UsageMode): String =
+    is.map(info(name, description, _, mode)).mkString("\n")
 
   def info(name: String, description: Option[String], i: Info, mode: UsageMode): String = {
     val flagspace = space(mode.flagIndent)
