@@ -1,4 +1,5 @@
 package io.mth.pirate
+package internal
 
 import scalaz._, Scalaz._
 import io.mth.pirate.test.Laws._

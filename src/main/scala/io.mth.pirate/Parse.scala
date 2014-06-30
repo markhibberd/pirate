@@ -1,5 +1,6 @@
 package io.mth.pirate
 
+import io.mth.pirate.internal._
 import scalaz._, Scalaz._, \&/._
 
 sealed trait ParseTree[A] {

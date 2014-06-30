@@ -1,6 +1,7 @@
 package io.mth.pirate.test
 
 import io.mth.pirate._
+import io.mth.pirate.internal._
 import scalaz.{ListT => _, _}, Scalaz._
 import org.scalacheck.{Arbitrary, Gen}, Arbitrary._
 
