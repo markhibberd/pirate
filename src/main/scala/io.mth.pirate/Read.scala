@@ -56,6 +56,9 @@ case class Read[A](read: List[String] => ReadError \/ (List[String], A)) {
    */
   def lift2[B, C](p: => Read[B])(f: (A, B) => C): Read[C] =
     flatMap((a: A) => p.map(f(a, _)))
+
+  def option: Read[Option[A]] =
+    map(Option.apply) ||| Read.value[Option[A]](None)
 }
 
 object Read extends shapeless.ProductTypeClassCompanion[Read] {
@@ -124,6 +127,9 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
 
   implicit def ReadInt: Read[Int] =
     string flatMap (s => try { value(s.toInt) } catch { case e: NumberFormatException => error(ReadErrorInvalidType(s, "Int")) })
+
+  implicit def ReadOption[A: Read]: Read[Option[A]] =
+    of[A].option
 
   implicit def ReadBoolean: Read[Boolean] =
     string flatMap (s => try { value(s.toBoolean) } catch { case e: NumberFormatException => error(ReadErrorInvalidType(s, "Boolean")) })

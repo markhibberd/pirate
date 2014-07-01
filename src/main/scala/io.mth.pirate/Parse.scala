@@ -112,26 +112,25 @@ object ParseTools {
   def optMatches[A](p: PirateParser[A], w: OptWord): Option[StateArg[A]] = p match {
     case FlagParser(flag, a) =>
       w.name match {
-        case ShortName(c) => if (flag.a.exists(_ == c)) Some(a.pure[StateArg]) else None
-        case LongName(s) => if (flag.b.exists(_ == s)) Some(a.pure[StateArg]) else None
+        case ShortName(c) =>
+          flag.hasShort(c).option(a.pure[StateArg])
+        case LongName(s) =>
+          flag.hasLong(s).option(a.pure[StateArg])
       }
     case OptionParser(flag, metas, p) =>
       w.name match {
         case ShortName(c) =>
-          if (flag.a.exists(_ == c))
-            Some(update[A](args => p.read(args) match {
+          flag.hasShort(c).option(
+            update[A](args => p.read(args) match {
               case -\/(e) => errorP(PErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
-          else
-            None
         case LongName(s) =>
-          if (flag.b.exists(_ == s))
-            Some(update[A](args => p.read(args) match {
+          flag.hasLong(s).option(
+            update[A](args => p.read(args) match {
               case -\/(e) => errorP(PErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
-        else None
       }
     case _ =>
       None
@@ -325,9 +324,9 @@ sealed trait PirateParser[A] {
   }
 }
 
-case class FlagParser[A](flag: These[Char, String], a: A)
+case class FlagParser[A](flag: Name, a: A)
   extends PirateParser[A]
-case class OptionParser[A](flag: These[Char, String], metas: List[String], p: Read[A])
+case class OptionParser[A](flag: Name, metas: List[String], p: Read[A])
   extends PirateParser[A]
 case class ArgumentParser[A](p: Read[A])
   extends PirateParser[A]
