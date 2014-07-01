@@ -22,6 +22,7 @@ object build extends Build {
       )
     , libraryDependencies ++= Seq(
         "org.scalaz" %% "scalaz-core" % "7.0.6"
+      , "org.scalaz" %% "scalaz-effect" % "7.0.6"
       , "com.chuusai" % "shapeless_2.10.2" % "2.0.0"
       , "org.specs2" %% "specs2" % "2.3.4" % "test"
       , "org.specs2" %% "specs2-scalacheck" % "2.3.4" % "test"

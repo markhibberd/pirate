@@ -25,5 +25,4 @@ class ListTSpec extends test.Spec { def is = s2"""
   /* testing only instances */
   implicit def ListTEqual[F[+_], A](implicit E: Equal[F[List[A]]], F: Monad[F]): Equal[ListT[F, A]] =
     Equal.equal[ListT[F, A]]((a, b) => a.run === b.run)
-
 }

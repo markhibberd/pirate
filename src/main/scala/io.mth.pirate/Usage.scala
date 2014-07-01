@@ -1,6 +1,6 @@
 package io.mth.pirate
 
-import scalaz._, Scalaz._, \&/._
+import scalaz._, Scalaz._
 
 object Usage {
   def print[A](command: Command[A]): String =
@@ -53,13 +53,13 @@ object Render {
       option(o.flag, o.metas) + "\n" +
         wrap(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
-    def flag(f: These[Char, String]): String = f match {
-      case This(s) => s"-${s}"
-      case That(l) => s"--${l}"
+    def flag(f: Name): String = f match {
+      case Short(s) => s"-${s}"
+      case Long(l) => s"--${l}"
       case Both(s, l) => "-${s}|--${l}"
     }
 
-    def option(f: These[Char, String], metas: List[String]): String =
+    def option(f: Name, metas: List[String]): String =
       flag(f) + " " + metas.mkString(" ")
 
     s"""|Usage:
@@ -81,9 +81,9 @@ case class Info(
 )
 
 case class CommandInfo(name: String, description: Option[String])
-case class FlagInfo(flag: These[Char, String], description: Option[String])
+case class FlagInfo(flag: Name, description: Option[String])
 case class ArgumentInfo(meta: List[String])
-case class OptionInfo(flag: These[Char, String], description: Option[String], metas: List[String], dfault: Boolean)
+case class OptionInfo(flag: Name, description: Option[String], metas: List[String], dfault: Boolean)
 
 object Info {
   implicit def InfoMonoid: Monoid[Info] = new Monoid[Info] {

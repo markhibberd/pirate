@@ -5,19 +5,25 @@ import scalaz._, Scalaz._, \&/._
 object Flags extends Flags
 
 trait Flags {
-  object switch {
-    def short(c: Char): Parse[Boolean] =
-      PiratedParse(
-        FlagParser(This(c), true),
-        PirateMeta(None, true)) ||| false.pure[Parse]
-  }
+  def terminator[A](n: Name, a: A): Parse[A] =
+    PiratedParse(
+      FlagParser(n, a),
+      PirateMeta(None, true))
 
-  object option {
-    def short[A: Read](c: Char, meta: String): Parse[A] =
-      PiratedParse(
-        OptionParser(This(c), List(meta), Read.of[A]),
-        PirateMeta(None, true)) ||| ValueParse(None)
-  }
+  def terminatorx[A: Read, B](n: Name, f: Option[A] => B): Parse[B] =
+    PiratedParse(
+      OptionParser(n, List(), Read.of[A].option).map(f),
+      PirateMeta(None, true))
+
+  def switch(n: Name): Parse[Boolean] =
+    PiratedParse(
+      FlagParser(n, true),
+      PirateMeta(None, true)) ||| false.pure[Parse]
+
+  def option[A: Read](n: Name, meta: String): Parse[A] =
+    PiratedParse(
+      OptionParser(n, List(meta), Read.of[A]),
+      PirateMeta(None, true)) ||| ValueParse(None)
 
   object positional {
     def one[A: Read](meta: String): Parse[A] =
