@@ -33,7 +33,7 @@ class TextSpec extends test.Spec { def is = s2"""
   def drains(orig: String, modded: String): Boolean = {
     val sb = new StringBuilder(orig)
     modded.foreach(c =>
-      if (sb.length() > 0 && sb.charAt(0) == c)
+      if (sb.length() > 0 && (sb.charAt(0) == c || (sb.charAt(i) == ' ' && c == '\n')))
         sb.deleteCharAt(0)
     )
     sb.length == 0
