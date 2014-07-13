@@ -31,11 +31,11 @@ class TextSpec extends test.Spec { def is = s2"""
     drains(s, wrap(s, 80, 0)) })
 
   def drains(orig: String, modded: String): Boolean = {
-    val sb = new StringBuilder(orig)
+    var i = 0
     modded.foreach(c =>
-      if (sb.length() > 0 && (sb.charAt(0) == c || (sb.charAt(i) == ' ' && c == '\n')))
-        sb.deleteCharAt(0)
+      if (i < orig.length && (orig.charAt(i) == c || (orig.charAt(i) == ' ' && c == '\n')))
+        i += 1
     )
-    sb.length == 0
+    orig.length == i
   }
 }
