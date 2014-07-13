@@ -19,6 +19,7 @@ sealed trait Name {
   def hasLong(l: String): Boolean =
     long.map(_ == l).getOrElse(false)
 }
+// FIX rename these, not sure what I was thinking.
 case class Short(s: Char) extends Name
 case class Long(l: String) extends Name
 case class Both(s: Char, l: String) extends Name

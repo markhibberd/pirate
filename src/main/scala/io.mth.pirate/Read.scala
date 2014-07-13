@@ -1,6 +1,7 @@
 package io.mth.pirate
 
 import scalaz._, Scalaz._
+import scala.util.Try
 
 /**
  * Minimal parser combinator library.
@@ -122,17 +123,47 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
   def choiceN[A](ps: List[Read[A]]): Read[A] =
     ps.foldLeft(error[A](ReadErrorEmpty))(_ ||| _)
 
+  def tryRead[A](f: String => A, expected: String): Read[A] =
+    optionRead(s => Try(f(s)).toOption, expected)
+
+  def optionRead[A](f: String => Option[A], expected: String): Read[A] =
+    string flatMap (s => f(s).cata(v => value(v), error(ReadErrorInvalidType(s, expected))))
+
+  implicit def ReadChar: Read[Char] =
+    optionRead(s => (s.length == 1).option(s.charAt(0)), "Char")
+
   implicit def ReadString: Read[String] =
     string
 
+  implicit def ReadShort: Read[scala.Short] =
+    tryRead(_.toShort, "Short")
+
   implicit def ReadInt: Read[Int] =
-    string flatMap (s => try { value(s.toInt) } catch { case e: NumberFormatException => error(ReadErrorInvalidType(s, "Int")) })
+    tryRead(_.toInt, "Int")
+
+  implicit def ReadLong: Read[scala.Long] =
+    tryRead(_.toLong, "Long")
+
+  implicit def ReadDouble: Read[Double] =
+    tryRead(_.toDouble, "Double")
+
+  implicit def ReadBoolean: Read[Boolean] =
+    tryRead(_.toBoolean, "Boolean")
+
+  implicit def ReadBigInt: Read[BigInt] =
+    tryRead(BigInt(_), "BigInt")
+
+  implicit def ReadFile: Read[java.io.File] =
+    string map(new java.io.File(_))
+
+  implicit def ReadURI: Read[java.net.URI] =
+    tryRead(new java.net.URI(_), "URI")
+
+  implicit def ReadURL: Read[java.net.URL] =
+    tryRead(new java.net.URL(_), "URL")
 
   implicit def ReadOption[A: Read]: Read[Option[A]] =
     of[A].option
-
-  implicit def ReadBoolean: Read[Boolean] =
-    string flatMap (s => try { value(s.toBoolean) } catch { case e: NumberFormatException => error(ReadErrorInvalidType(s, "Boolean")) })
 
   implicit def ReadChar: Read[Char] =
     string flatMap (s => if (s.length > 0) value(s.charAt(0)) else error(ReadErrorInvalidType(s, "Char")) )
@@ -148,7 +179,6 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
     def zero = error(ReadErrorEmpty)
     def append(p1: Read[A], p2: => Read[A]): Read[A] = p1 ||| p2
   }
-
 
   implicit def ReadTypeClass: shapeless.ProductTypeClass[Read] = new shapeless.ProductTypeClass[Read] {
     import shapeless._
