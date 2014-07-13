@@ -10,9 +10,9 @@ object InteractiveExample {
   )
 
   val example = Example |*| (
-    switch(Short('s'))
-  , option[String](Short('c'), "STRING")
-  , option[Int](Short('n'), "INT")
+    switch('s')
+  , option[String]('c', "STRING")
+  , option[Int]('n', "INT")
   )
 
  val command = example ~ "example" ~~

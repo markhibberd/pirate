@@ -19,28 +19,28 @@ case class GitHelp(command: Option[String]) extends GitCommand
 
 object GitExample extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
-    terminator(Long("version"), GitVersion)
+    terminator("version", GitVersion)
 
   val help: Parse[GitCommand] =
-    terminatorx(Long("help"), GitHelp.apply)
+    terminatorx("help", GitHelp.apply)
 
   val cwd: Parse[String] =
-    option(Short('C'), "<path>")
+    option('C', "<path>")
 
   val conf: Parse[String] =
-    option(Short('c'), "<name>=<value>")
+    option('c', "<name>=<value>")
 
   val exec: Parse[String] =
-    option(Long("exec-path"), "<path>") // FIX fork on arg terminator vs option
+    option("exec-path", "<path>") // FIX fork on arg terminator vs option
 
   val html: Parse[GitCommand] =
-    terminator(Long("html-path"), GitHtmlPath)
+    terminator("html-path", GitHtmlPath)
 
   val man: Parse[GitCommand] =
-    terminator(Long("man-path"), GitManPath)
+    terminator("man-path", GitManPath)
 
   val info: Parse[GitCommand] =
-    terminator(Long("info-path"), GitInfoPath)
+    terminator("info-path", GitInfoPath)
 
   def git(cmd: Parse[GitCommand]): Parse[Git] =
     Git |*| (cwd, conf, exec, cmd)
