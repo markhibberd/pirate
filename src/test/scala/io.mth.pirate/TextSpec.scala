@@ -7,7 +7,7 @@ class TextSpec extends test.Spec { def is = s2"""
 
   all spaces                                      $spaces
   correct length                                  $length
-  wrap no longet than width                       $width
+  wrap no longer than width                       $width
   wrap no longer than width + ident               $ident
   never lose content                              $safe
 
