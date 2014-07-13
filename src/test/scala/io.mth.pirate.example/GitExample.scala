@@ -16,7 +16,6 @@ object GitManPath extends GitCommand
 object GitInfoPath extends GitCommand
 case class GitHelp(command: Option[String]) extends GitCommand
 
-
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
     terminator("version", GitVersion)
@@ -101,5 +100,4 @@ class GitExample extends test.Spec { def is = s2"""
     run("--help", "status") must_==
       GitHelp(Some("status"))
   }.pendingUntilFixed
-
 }
