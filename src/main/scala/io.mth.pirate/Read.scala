@@ -165,9 +165,6 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
   implicit def ReadOption[A: Read]: Read[Option[A]] =
     of[A].option
 
-  implicit def ReadChar: Read[Char] =
-    string flatMap (s => if (s.length > 0) value(s.charAt(0)) else error(ReadErrorInvalidType(s, "Char")) )
-
   implicit def ReadMonad: Monad[Read] with MonadPlus[Read] = new Monad[Read] with MonadPlus[Read]{
     def point[A](a: => A) = value(a)
     def bind[A, B](p: Read[A])(f: A => Read[B]) = p flatMap f
