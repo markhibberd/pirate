@@ -129,37 +129,37 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
   def optionRead[A](f: String => Option[A], expected: String): Read[A] =
     string flatMap (s => f(s).cata(v => value(v), error(ReadErrorInvalidType(s, expected))))
 
-  implicit def ReadChar: Read[Char] =
+  implicit val ReadChar: Read[Char] =
     optionRead(s => (s.length == 1).option(s.charAt(0)), "Char")
 
-  implicit def ReadString: Read[String] =
+  implicit val ReadString: Read[String] =
     string
 
-  implicit def ReadShort: Read[Short] =
+  implicit val ReadShort: Read[Short] =
     tryRead(_.toShort, "Short")
 
-  implicit def ReadInt: Read[Int] =
+  implicit val ReadInt: Read[Int] =
     tryRead(_.toInt, "Int")
 
-  implicit def ReadLong: Read[Long] =
+  implicit val ReadLong: Read[Long] =
     tryRead(_.toLong, "Long")
 
-  implicit def ReadDouble: Read[Double] =
+  implicit val ReadDouble: Read[Double] =
     tryRead(_.toDouble, "Double")
 
-  implicit def ReadBoolean: Read[Boolean] =
+  implicit val ReadBoolean: Read[Boolean] =
     tryRead(_.toBoolean, "Boolean")
 
-  implicit def ReadBigInt: Read[BigInt] =
+  implicit val ReadBigInt: Read[BigInt] =
     tryRead(BigInt(_), "BigInt")
 
-  implicit def ReadFile: Read[java.io.File] =
+  implicit val ReadFile: Read[java.io.File] =
     string map(new java.io.File(_))
 
-  implicit def ReadURI: Read[java.net.URI] =
+  implicit val ReadURI: Read[java.net.URI] =
     tryRead(new java.net.URI(_), "URI")
 
-  implicit def ReadURL: Read[java.net.URL] =
+  implicit val ReadURL: Read[java.net.URL] =
     tryRead(new java.net.URL(_), "URL")
 
   implicit def ReadOption[A: Read]: Read[Option[A]] =

@@ -12,7 +12,7 @@ object Usage {
     Render.infos(command.name, command.description, info(command), mode: UsageMode)
 
   def info[A](command: Command[A]): List[Info] =
-    command.parse.treeTraverse(new TreeTraverseF[Option[Info]] {
+    ParseTraversal.treeTraverse(command.parse, new TreeTraverseF[Option[Info]] {
       def run[X](info: OptHelpInfo, p: Parser[X], m: Metadata): Option[Info] =
         flags(p, m, info)
     }) match {
