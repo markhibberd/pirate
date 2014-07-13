@@ -1,6 +1,6 @@
-package io.mth.pirate
+package io.mth.pirate.internal
 
-import Pirate._
+import io.mth.pirate._, Pirate._
 import scalaz._, Scalaz._
 
 class InterpretterSpec extends test.Spec { def is = s2"""
