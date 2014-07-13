@@ -25,7 +25,7 @@ Usage
 
 To get started, import the pirate package:
 
-    import io.mth.pirate._
+    import pirate._
 
 This will expose the required type constructors.
 
