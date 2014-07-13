@@ -33,39 +33,37 @@ Define an argument object, could be anything from
 a simple map or list through to a case class (which
 is recommended).
 
-  case class MyArgs(flag: Boolean, params: List[String])
+```scala
+case class MyArgs(flag: Boolean, author: Option[String], delim: String, dryRun: Boolean, path: String)
+```
 
-Construct a command line, combining in flags and
-positional parameters.
+Construct a command line, combining in flags and positional parameters.
 
 ```scala
-val cmd = (option[Boolean]('f' -> "flag", "enable flag.") |||
-    option[String]("author", "<pattern>").option |||
-    option[String]("delim", "[|]").default("|") |||
-    switch("dry-run") |||
+val cmd = (MyArgs |*| (
+    option[Boolean]('f' -> "flag", "enable flag."),
+    [String]("author", "<pattern>").option,
+    option[String]("delim", "[|]").default("|"),
+    switch("dry-run"),
     positional.one[String]("<path>")
-  ) ~ "myprogram" ~~ "My description"
+  )) ~ "myprogram" ~~ "My description"
 ```
 
 Extend `PirateMain` or `PirateMainIO` to use:
 
 ```scala
-class MyApp extends PirateMain[Boolean, Option[String], String, Boolean, String] {
+class MyApp extends PirateMain[MyArgs] {
 
   def command = cmd
 
-  def run(values: (Boolean, Option[String], String, Boolean, String)): Unit =
-    ???
+  def run(args: MyArgs): Unit = ???
 }
 ```
 
 Or run directly:
 
 ```scala
-Runners.unsafeRunOrFail(args.toList, cmd, {
-   (flag: Boolean, author: Option[String], delim: String, dryRun: Boolean, path: String) =>
-        ???
-  })
+Runners.unsafeRunOrFail(args.toList, cmd, args => ???)
 ````
 
 Consult the api and demos for more advanced/complete documentation.
