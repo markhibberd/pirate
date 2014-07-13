@@ -1,6 +1,6 @@
 package io.mth.pirate
 
-import org.scalacheck._, Prop.forAll
+import io.mth.pirate.test.Arbitraries._
 
 class TextSpec extends test.Spec { def is = s2"""
 
@@ -10,25 +10,22 @@ class TextSpec extends test.Spec { def is = s2"""
   all spaces                                      $spaces
   correct length                                  $length
   wrap no longer than width                       $width
-  wrap no longer than width + ident               $ident
+  wrap no longer than width + indent              $indent
   never lose content                              $safe
 
 """
 
   import Text._
 
-  private val shortInt = Gen.choose(0, 1000)
-  private val longLine = for {i <- Gen.choose(70, 1000); cs <- Gen.listOfN(i, Arbitrary.arbChar.arbitrary)} yield cs.mkString
+  def spaces = prop((n: SmallInt) => space(n.value).forall(_ == ' '))
 
-  def spaces = forAll(shortInt)(i => space(i).forall(_ == ' '))
+  def length = prop((n: SmallInt) => space(n.value).length == n.value)
 
-  def length = forAll(shortInt)(i => space(i).length == i )
+  def width = prop((l: LongLine) => wrap(l.value, 80, 0).split('\n').forall(_.length <= 80))
 
-  def width = forAll(longLine)(s => wrap(s, 80, 0).split('\n').forall(_.length <= 80))
+  def indent = prop((l: LongLine) => wrap(l.value, 80, 10).split('\n').forall(_.length <= 90))
 
-  def ident = forAll(longLine)(s => wrap(s, 80, 10).split('\n').forall(_.length <= 90))
-
-  def safe = forAll(longLine)(s => drains(s, wrap(s, 80, 0)))
+  def safe = prop((l: LongLine) => drains(l.value, wrap(l.value, 80, 0)))
 
   def drains(orig: String, modded: String): Boolean = {
     var i = 0
