@@ -5,8 +5,8 @@ import scalaz._, Scalaz._, \&/._
 object Flags extends Flags
 
 trait Flags {
-  private def parse[A](p: PirateParser[A]): Parse[A] =
-    PiratedParse(p, PirateMeta(None, true))
+  private def parse[A](p: Parser[A]): Parse[A] =
+    PiratedParse(p, Metadata(None, true))
 
   def terminator[A](n: Name, a: A): Parse[A] =
     parse(FlagParser(n, a))

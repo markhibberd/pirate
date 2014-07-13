@@ -2,6 +2,8 @@ package io.mth.pirate.example
 
 import scalaz._, Scalaz._
 import io.mth.pirate._, Pirate._
+// FIX don't use interpretter directly
+import io.mth.pirate.internal._
 
 object MthExample {
   sealed trait Args

@@ -1,5 +1,7 @@
 package io.mth.pirate
 
+import io.mth.pirate.internal._
+
 import scalaz._, Scalaz._
 
 object Usage {
@@ -11,14 +13,14 @@ object Usage {
 
   def info[A](command: Command[A]): List[Info] =
     command.parse.treeTraverse(new TreeTraverseF[Option[Info]] {
-      def run[X](info: OptHelpInfo, p: PirateParser[X], m: PirateMeta): Option[Info] =
+      def run[X](info: OptHelpInfo, p: Parser[X], m: Metadata): Option[Info] =
         flags(p, m, info)
     }) match {
       case ParseTreeAlt(children) => children.map(_.flatten.flatten.suml)
       case x => List(x.flatten.flatten.suml)
     }
 
-  def flags[X](p: PirateParser[X], m: PirateMeta, info: OptHelpInfo): Option[Info] = p match {
+  def flags[X](p: Parser[X], m: Metadata, info: OptHelpInfo): Option[Info] = p match {
     case FlagParser(flag, a) if m.visible =>
       Some(Info(FlagInfo(flag, m.description) :: Nil, Nil, Nil, Nil))
     case OptionParser(flag, metas, p) if m.visible =>

@@ -1,7 +1,9 @@
 package io.mth.pirate.example
 
 import io.mth.pirate._, Pirate._
+import io.mth.pirate.internal._
 
+// FIX actually implement this, currently just some hard coded examples that use the internals.
 object InteractiveExample {
   case class Example(
     switch: Boolean,
