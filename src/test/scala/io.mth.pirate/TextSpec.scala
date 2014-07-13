@@ -1,5 +1,7 @@
 package io.mth.pirate
 
+import org.scalacheck._, Prop.forAll
+
 class TextSpec extends test.Spec { def is = s2"""
 
   Text Properties
@@ -15,20 +17,18 @@ class TextSpec extends test.Spec { def is = s2"""
 
   import Text._
 
-  def spaces = prop((i: Int) => (i >= 0 && i <= 1000) ==> {
-    space(i).forall(_ == ' ') })
+  private val shortInt = Gen.choose(0, 1000)
+  private val longLine = for {i <- Gen.choose(70, 1000); cs <- Gen.listOfN(i, Arbitrary.arbChar.arbitrary)} yield cs.mkString
 
-  def length = prop((i: Int) => (i >= 0 && i <= 1000) ==> {
-    space(i).length == i })
+  def spaces = forAll(shortInt)(i => space(i).forall(_ == ' '))
 
-  def width = prop((s: String) => s.length > 70 ==> {
-    wrap(s, 80, 0).split('\n').forall(_.length <= 80) })
+  def length = forAll(shortInt)(i => space(i).length == i )
 
-  def ident = prop((s: String) => s.length > 70 ==> {
-    wrap(s, 80, 10).split('\n').forall(_.length <= 90) })
+  def width = forAll(longLine)(s => wrap(s, 80, 0).split('\n').forall(_.length <= 80))
 
-  def safe = prop((s: String) => s.length > 70 ==> {
-    drains(s, wrap(s, 80, 0)) })
+  def ident = forAll(longLine)(s => wrap(s, 80, 10).split('\n').forall(_.length <= 90))
+
+  def safe = forAll(longLine)(s => drains(s, wrap(s, 80, 0)))
 
   def drains(orig: String, modded: String): Boolean = {
     var i = 0
