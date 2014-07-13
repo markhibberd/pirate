@@ -14,7 +14,7 @@ object Arbitraries {
   case class LongLine(value: String)
 
   implicit def LongLineArbitrary: Arbitrary[LongLine] =
-    Arbitrary(Gen.resize(1000, Gen.alphaStr) map LongLine.apply)
+    Arbitrary(Gen.resize(1000, arbitrary[String]) map LongLine.apply)
 
   implicit def TStepArbitrary[A: Arbitrary, X: Arbitrary]: Arbitrary[TStep[A, X]] =
     Arbitrary(Gen.oneOf(
