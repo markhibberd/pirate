@@ -39,18 +39,33 @@ Construct a command line, combining in flags and
 positional parameters.
 
 ```scala
-val cmd = command[MyArgs]("myprogram") <|>
-  flag('f', "flag", "enable flag.")(_.copy(flag = true)) >|
-  positional0plus("THINGS")((myargs, list) => myargs.copy(params = list))
+val cmd = (option[Boolean]('f' -> "flag", "enable flag.") |||
+    option[String]("author", "<pattern>").option |||
+    option[String]("delim", "[|]").default("|") |||
+    switch("dry-run") |||
+    positional.one[String]("<path>")
+  ) ~ "myprogram" ~~ "My description"
 ```
 
-Dispatch on that command line for default behaviour.
+Extend `PirateMain` or `PirateMainIO` to use:
 
 ```scala
-val exitcode = cmd.dispatch(args, MyArgs(false, List()) { myargs =>
-  // run program with parsed myargs.
+class MyApp extends PirateMain[Boolean, Option[String], String, Boolean, String] {
+
+  def command = cmd
+
+  def run(values: (Boolean, Option[String], String, Boolean, String)): Unit =
+    ???
 }
-exit(exitcode)
+```
+
+Or run directly:
+
+```scala
+Runners.unsafeRunOrFail(args.toList, cmd, {
+   (flag: Boolean, author: Option[String], delim: String, dryRun: Boolean, path: String) =>
+        ???
+  })
 ````
 
 Consult the api and demos for more advanced/complete documentation.
