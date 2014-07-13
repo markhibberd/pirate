@@ -4,7 +4,7 @@ object Text {
   /**
    * Create a string of spaces exactly n long.
    */
-  def space(width: Int) = (for (_ <- 1 to width) yield " ").mkString
+  def space(width: Int) = " " * width
 
   /**
    * Wrap text at width. Prepend an indent on each line of indent.
