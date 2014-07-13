@@ -5,37 +5,30 @@ import scalaz._, Scalaz._, \&/._
 object Flags extends Flags
 
 trait Flags {
+  private def parse[A](p: PirateParser[A]): Parse[A] =
+    PiratedParse(p, PirateMeta(None, true))
+
   def terminator[A](n: Name, a: A): Parse[A] =
-    PiratedParse(
-      FlagParser(n, a),
-      PirateMeta(None, true))
+    parse(FlagParser(n, a))
 
   def terminatorx[A: Read, B](n: Name, f: Option[A] => B): Parse[B] =
-    PiratedParse(
-      OptionParser(n, List(), Read.of[A].option).map(f),
-      PirateMeta(None, true))
+    parse(OptionParser(n, List(), Read.of[A].option).map(f))
 
   def switch(n: Name): Parse[Boolean] =
-    PiratedParse(
-      FlagParser(n, true),
-      PirateMeta(None, true)) ||| false.pure[Parse]
+    parse(FlagParser(n, true)) ||| false.pure[Parse]
 
   def option[A: Read](n: Name, meta: String): Parse[A] =
-    PiratedParse(
-      OptionParser(n, List(meta), Read.of[A]),
-      PirateMeta(None, true)) ||| ValueParse(None)
+    parse(OptionParser(n, List(meta), Read.of[A])) ||| ValueParse(None)
 
   object positional {
     def one[A: Read](meta: String): Parse[A] =
-      PiratedParse(
-        ArgumentParser(Read.of[A]),
-        PirateMeta(None, true)) ||| ValueParse(None)
+      parse(ArgumentParser(Read.of[A])) ||| ValueParse(None)
 
   }
 
   object command {
     def of[A](name: String, p: Parse[A]): Parse[A] =
-      PiratedParse(SubCommandParser(name, p), PirateMeta(None, true)) ||| ValueParse(None)
+      parse(SubCommandParser(name, p)) ||| ValueParse(None)
 
   }
 }

@@ -56,7 +56,7 @@ object Render {
     def flag(f: Name): String = f match {
       case Short(s) => s"-${s}"
       case Long(l) => s"--${l}"
-      case Both(s, l) => "-${s}|--${l}"
+      case Both(s, l) => s"-${s}|--${l}"
     }
 
     def option(f: Name, metas: List[String]): String =

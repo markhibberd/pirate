@@ -17,6 +17,7 @@ class ReadSpec extends test.Spec { def is = s2"""
   Read.of[Int]
   Read.of[String]
   Read.of[Boolean]
+  Read.of[Char]
 
   import Read.auto._
 

@@ -283,6 +283,11 @@ sealed trait Parse[A] {
     simplify(go(false, false, f, this))
   }
 
+  def option: Parse[Option[A]] =
+    map(_.some) ||| ValueParse(Some(None))
+
+  def default(fallback: => A): Parse[A] =
+    option.map(_.getOrElse(fallback))
 }
 
 trait TreeTraverseF[A] {
