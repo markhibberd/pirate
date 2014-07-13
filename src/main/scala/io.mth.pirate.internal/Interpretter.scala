@@ -4,10 +4,10 @@ import scalaz._, Scalaz._, \&/._
 import io.mth.pirate._
 
 object Interpretter {
-  sealed trait OptName
-  case class LongName(s: String) extends OptName
-  case class ShortName(c: Char) extends OptName
-  case class OptWord(name: OptName, value: Option[String])
+  sealed trait ParsedName
+  case class LongParsedName(s: String) extends ParsedName
+  case class ShortParsedName(c: Char) extends ParsedName
+  case class ParsedWord(name: ParsedName, value: Option[String])
 
   def run[A](p: Parse[A], args: List[String]): ParseError \/ A =
     runParserFully(SkipOpts, p, args).run(NullPrefs)
@@ -37,7 +37,7 @@ object Interpretter {
     parser match {
       case ValueParse(_) =>
         NondetT.nil[F, Parse[A]]
-      case PiratedParse(p, m) =>
+      case ParserParse(p, m) =>
         f.run(p).map(_.pure[Parse])
       case ApParse(k, a) =>
         search(f, k).flatMap(x => (a <*> x).pure[NondetF]) <|>
@@ -55,7 +55,7 @@ object Interpretter {
   type StateArg[+A] = StateT[P, List[String], A]
   type NondetArg[+A] = NondetT[StateArg, A]
 
-  def searchOpt[A](w: OptWord, p: Parse[A]): NondetArg[Parse[A]] =
+  def searchOpt[A](w: ParsedWord, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
       def run[A](options: Parser[A]): NondetT[StateArg, A] =
         optMatches(options, w) match {
@@ -76,23 +76,23 @@ object Interpretter {
   def update[A](run: List[String] => P[(List[String], A)]): StateArg[A] =
     StateT[P, List[String], A](run)
 
-  def optMatches[A](p: Parser[A], w: OptWord): Option[StateArg[A]] = p match {
-    case FlagParser(flag, a) =>
+  def optMatches[A](p: Parser[A], w: ParsedWord): Option[StateArg[A]] = p match {
+    case SwitchParser(flag, a) =>
       w.name match {
-        case ShortName(c) =>
+        case ShortParsedName(c) =>
           flag.hasShort(c).option(a.pure[StateArg])
-        case LongName(s) =>
+        case LongParsedName(s) =>
           flag.hasLong(s).option(a.pure[StateArg])
       }
-    case OptionParser(flag, metas, p) =>
+    case FlagParser(flag, metas, p) =>
       w.name match {
-        case ShortName(c) =>
+        case ShortParsedName(c) =>
           flag.hasShort(c).option(
             update[A](args => p.read(args) match {
               case -\/(e) => errorP(ParseErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
-        case LongName(s) =>
+        case LongParsedName(s) =>
           flag.hasLong(s).option(
             update[A](args => p.read(args) match {
               case -\/(e) => errorP(ParseErrorMessage(e.toString))
@@ -111,7 +111,7 @@ object Interpretter {
         case \/-((Nil, a)) => Some(a.pure[StateArg])
         case \/-((_ :: _, _)) => None
       }
-    case SubCommandParser(name, p) =>
+    case CommandParser(name, p) =>
       if (name == arg)
         Some(
           StateT[P, List[String], A](args =>
@@ -125,11 +125,11 @@ object Interpretter {
   }
 
   // FIX add support for -x=val syntax
-  def parseWord(arg: String): Option[OptWord] = arg.toList match {
+  def parseWord(arg: String): Option[ParsedWord] = arg.toList match {
     case '-' :: '-' :: w =>
-      Some(OptWord(LongName(w.mkString), None))
+      Some(ParsedWord(LongParsedName(w.mkString), None))
     case '-' :: w :: Nil =>
-      Some(OptWord(ShortName(w), None))
+      Some(ParsedWord(ShortParsedName(w), None))
     case _ =>
       None
   }
@@ -141,7 +141,7 @@ object Interpretter {
         case Some(w) => searchOpt(w, p)
       }
       case AllowOpts =>
-        searchArg(arg, p) ++ NondetT.hoistMaybe[StateArg, OptWord](parseWord(arg)).flatMap(searchOpt(_, p))
+        searchArg(arg, p) ++ NondetT.hoistMaybe[StateArg, ParsedWord](parseWord(arg)).flatMap(searchOpt(_, p))
     }
 
   def runParser[A](s: ParseState, p: Parse[A], args: List[String]): P[(A, List[String])] =

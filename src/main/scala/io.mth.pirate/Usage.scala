@@ -21,11 +21,11 @@ object Usage {
     }
 
   def flags[X](p: Parser[X], m: Metadata, info: OptHelpInfo): Option[Info] = p match {
-    case FlagParser(flag, a) if m.visible =>
-      Some(Info(FlagInfo(flag, m.description) :: Nil, Nil, Nil, Nil))
-    case OptionParser(flag, metas, p) if m.visible =>
-      Some(Info(Nil, OptionInfo(flag, m.description, metas, info.dfault) :: Nil, Nil, Nil))
-    case SubCommandParser(name, p) if m.visible =>
+    case SwitchParser(flag, a) if m.visible =>
+      Some(Info(SwitchInfo(flag, m.description) :: Nil, Nil, Nil, Nil))
+    case FlagParser(flag, metas, p) if m.visible =>
+      Some(Info(Nil, FlagInfo(flag, m.description, metas, info.dfault) :: Nil, Nil, Nil))
+    case CommandParser(name, p) if m.visible =>
       Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil))
     case ArgumentParser(p) =>
       Some(Info(Nil, Nil, ArgumentInfo(Nil) :: Nil, Nil))
@@ -45,20 +45,20 @@ object Render {
       if (mode.condenseSynopsis)
         "[OPTIONS] " + i.arguments.map(_.meta).mkString(" ")
       else
-        (i.flags.map(f => flag(f.flag)) ++ i.options.map(o => option(o.flag, o.metas)) ++ i.arguments.map(_.meta)).mkString(" ")
+        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.metas)) ++ i.arguments.map(_.meta)).mkString(" ")
 
-    def flaginfo(f: FlagInfo): String =
+    def flaginfo(f: SwitchInfo): String =
       flag(f.flag) + "\n" +
         wrap(f.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
-    def optioninfo(o: OptionInfo): String =
+    def optioninfo(o: FlagInfo): String =
       option(o.flag, o.metas) + "\n" +
         wrap(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def flag(f: Name): String = f match {
-      case Short(s) => s"-${s}"
-      case Long(l) => s"--${l}"
-      case Both(s, l) => s"-${s}|--${l}"
+      case ShortName(s) => s"-${s}"
+      case LongName(l) => s"--${l}"
+      case BothName(s, l) => s"-${s}|--${l}"
     }
 
     def option(f: Name, metas: List[String]): String =
@@ -69,28 +69,27 @@ object Render {
         |
         |${description.map(_ + "\n").getOrElse("")}
         |Options:
-        |${flagspace}${(i.flags.map(flaginfo) ++ i.options.map(optioninfo)).mkString("\n" + flagspace)}
+        |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
         |""".stripMargin
   }
 }
 
 
 case class Info(
+  switches: List[SwitchInfo],
   flags: List[FlagInfo],
-  options: List[OptionInfo],
   arguments: List[ArgumentInfo],
   commands: List[CommandInfo]
 )
 
-case class CommandInfo(name: String, description: Option[String])
-case class FlagInfo(flag: Name, description: Option[String])
+case class SwitchInfo(flag: Name, description: Option[String])
+case class FlagInfo(flag: Name, description: Option[String], metas: List[String], dfault: Boolean)
 case class ArgumentInfo(meta: List[String])
-case class OptionInfo(flag: Name, description: Option[String], metas: List[String], dfault: Boolean)
-
+case class CommandInfo(name: String, description: Option[String])
 object Info {
   implicit def InfoMonoid: Monoid[Info] = new Monoid[Info] {
     def zero = Info(Nil, Nil, Nil, Nil)
-    def append(i1: Info, i2: => Info) = Info(i1.flags ++ i2.flags, i1.options ++ i2.options, i1.arguments ++ i2.arguments, i1.commands ++ i2.commands)
+    def append(i1: Info, i2: => Info) = Info(i1.switches ++ i2.switches, i1.flags ++ i2.flags, i1.arguments ++ i2.arguments, i1.commands ++ i2.commands)
   }
 }
 

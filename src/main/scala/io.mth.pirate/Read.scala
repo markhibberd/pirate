@@ -135,13 +135,13 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
   implicit def ReadString: Read[String] =
     string
 
-  implicit def ReadShort: Read[scala.Short] =
+  implicit def ReadShort: Read[Short] =
     tryRead(_.toShort, "Short")
 
   implicit def ReadInt: Read[Int] =
     tryRead(_.toInt, "Int")
 
-  implicit def ReadLong: Read[scala.Long] =
+  implicit def ReadLong: Read[Long] =
     tryRead(_.toLong, "Long")
 
   implicit def ReadDouble: Read[Double] =

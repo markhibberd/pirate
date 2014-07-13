@@ -25,13 +25,13 @@ object GitExample extends PirateMainIO[Git] {
     terminatorx("help", GitHelp.apply)
 
   val cwd: Parse[String] =
-    option('C', "<path>")
+    flag('C', "<path>")
 
   val conf: Parse[String] =
-    option('c', "<name>=<value>")
+    flag('c', "<name>=<value>")
 
   val exec: Parse[String] =
-    option("exec-path", "<path>") // FIX fork on arg terminator vs option
+    flag("exec-path", "<path>") // FIX fork on arg terminator vs option
 
   val html: Parse[GitCommand] =
     terminator("html-path", GitHtmlPath)

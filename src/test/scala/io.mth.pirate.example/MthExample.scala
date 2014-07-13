@@ -17,8 +17,8 @@ object MthExample {
 
   val example: Parse[Args] = (Example |*| (
     switch('s')
-  , option[String]('c', "STRING")
-  , option[Int]('n', "INT")
+  , flag[String]('c', "STRING")
+  , flag[Int]('n', "INT")
   )).map(x => x)
 
   val all = switch('h').as[Args](Help) ||| switch('v').as(Version) ||| example

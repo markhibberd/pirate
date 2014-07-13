@@ -5,22 +5,22 @@ package io.mth.pirate
  *
  * eg.
  * {{{
- *   option[Int]('x') |||
- *     option[String]("something") |||
- *     option[String]('e' -> "example")
+ *   flag[Int]('x') |||
+ *     flag[String]("something") |||
+ *     flag[String]('e' -> "example")
  * }}}
  *
  * Instead of:
  *
  * {{{
- *   option[Int](Short('x')) |||
- *     option[String](Long("something")) |||
- *     option[String](Both('e', "example"))
+ *   flag[Int](ShortName('x')) |||
+ *     flag[String](LongName("something")) |||
+ *     flag[String](BothName('e', "example"))
  * }}}
  */
 trait Syntax {
 
-  implicit def ShortNameSyntax(s: Char) = Short(s)
-  implicit def LongNameSyntax(l: String) = Long(l)
-  implicit def BothNameSyntax(b: (Char, String)) = Both(b._1, b._2)
+  implicit def ShortNameSyntax(s: Char) = ShortName(s)
+  implicit def LongNameSyntax(l: String) = LongName(l)
+  implicit def BothNameSyntax(b: (Char, String)) = BothName(b._1, b._2)
 }

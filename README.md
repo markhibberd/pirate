@@ -41,9 +41,9 @@ Construct a command line, combining in flags and positional parameters.
 
 ```scala
 val cmd = (MyArgs |*| (
-    option[Boolean]('f' -> "flag", "enable flag."),
-    [String]("author", "<pattern>").option,
-    option[String]("delim", "[|]").default("|"),
+    flag[Boolean]('f' -> "flag", "enable flag."),
+    flag[String]("author", "<pattern>").option,
+    flag[String]("delim", "[|]").default("|"),
     switch("dry-run"),
     positional.one[String]("<path>")
   )) ~ "myprogram" ~~ "My description"
