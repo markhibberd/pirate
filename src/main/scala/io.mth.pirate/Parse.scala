@@ -10,8 +10,8 @@ sealed trait Parse[A] {
   def map[B](f: A => B): Parse[B] = this match {
     case ValueParse(o) =>
       ValueParse(o.map(f))
-    case PiratedParse(p, m) =>
-      PiratedParse(p.map(f), m)
+    case ParserParse(p, m) =>
+      ParserParse(p.map(f), m)
     case ApParse(k, a) =>
       ApParse(k.map(ff => ff.map(f)), a)
     case AltParse(a, b) =>
@@ -29,7 +29,7 @@ sealed trait Parse[A] {
   def eval: Option[A] = this match {
     case ValueParse(o) =>
       o
-    case PiratedParse(p, m) =>
+    case ParserParse(p, m) =>
       None
     case ApParse(k, a) =>
       a.eval <*> k.eval
@@ -49,7 +49,7 @@ sealed trait Parse[A] {
     def go[C](multi: Boolean, dfault: Boolean, f: TreeTraverseF[B], p: Parse[C]): ParseTree[B] = p match {
       case ValueParse(_) =>
         ParseTreeAp(Nil)
-      case PiratedParse(p, m) =>
+      case ParserParse(p, m) =>
         ParseTreeLeaf(f.run(OptHelpInfo(multi, dfault), p, m))
       case ApParse(p1, p2) =>
         ParseTreeAp(List(go(multi, dfault, f, p1), go(multi, dfault, f, p2)))
@@ -85,7 +85,7 @@ sealed trait Parse[A] {
 }
 
 case class ValueParse[A](m: Option[A]) extends Parse[A]
-case class PiratedParse[A](p: Parser[A], m: Metadata) extends Parse[A]
+case class ParserParse[A](p: Parser[A], m: Metadata) extends Parse[A]
 case class ApParse[A, B](f: Parse[A => B], a: Parse[A]) extends Parse[B]
 case class AltParse[A](a: Parse[A], b: Parse[A]) extends Parse[A]
 case class BindParse[A, B](f: A => Parse[B], a: Parse[A]) extends Parse[B]

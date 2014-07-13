@@ -13,8 +13,8 @@ object InteractiveExample {
 
   val example = Example |*| (
     switch('s')
-  , option[String]('c', "STRING")
-  , option[Int]('n', "INT")
+  , flag[String]('c', "STRING")
+  , flag[Int]('n', "INT")
   )
 
  val command = example ~ "example" ~~

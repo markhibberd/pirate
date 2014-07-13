@@ -19,9 +19,9 @@ class ReadSpec extends test.Spec { def is = s2"""
   Symmetric
     Char                              ${symmetric[Char]}
     String                            ${symmetric[String]}
-    Short                             ${symmetric[scala.Short]}
+    Short                             ${symmetric[Short]}
     Int                               ${symmetric[Int]}
-    Long                              ${symmetric[scala.Long]}
+    Long                              ${symmetric[Long]}
     Double                            ${symmetric[Double]}
     Boolean                           ${symmetric[Boolean]}
     BigInt                            ${symmetric[BigInt]}
@@ -56,9 +56,9 @@ class ReadSpec extends test.Spec { def is = s2"""
 
   Read.of[Char]
   Read.of[String]
-  Read.of[scala.Short]
+  Read.of[Short]
   Read.of[Int]
-  Read.of[scala.Long]
+  Read.of[Long]
   Read.of[Double]
   Read.of[Boolean]
   Read.of[BigInt]

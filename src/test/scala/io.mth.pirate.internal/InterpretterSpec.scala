@@ -19,20 +19,20 @@ class InterpretterSpec extends test.Spec { def is = s2"""
   import Interpretter._
 
   def requiredFound =
-    run(option[String]('a', ""), List("-a", "b")) ==== "b".right
+    run(flag[String]('a', ""), List("-a", "b")) ==== "b".right
 
   def requiredMissing =
-    run(option[String]('a', ""), List()).toEither must beLeft
+    run(flag[String]('a', ""), List()).toEither must beLeft
 
   def defaultFound =
-    run(option[String]('a', "").default("c"), List("-a", "b")) ==== "b".right
+    run(flag[String]('a', "").default("c"), List("-a", "b")) ==== "b".right
 
   def defaultMissing =
-    run(option[String]('a', "").default("c"), List()) ==== "c".right
+    run(flag[String]('a', "").default("c"), List()) ==== "c".right
 
   def optionFound =
-    run(option[String]('a', "").option, List("-a", "b")) ==== Some("b").right
+    run(flag[String]('a', "").option, List("-a", "b")) ==== Some("b").right
 
   def optionMissing =
-    run(option[String]('a', "").option, List()) ==== None.right
+    run(flag[String]('a', "").option, List()) ==== None.right
 }
