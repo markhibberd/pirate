@@ -1,7 +1,7 @@
-package io.mth.pirate.internal
+package io.mth.pirate
 
 import scalaz._, Scalaz._, \&/._
-import io.mth.pirate._
+import io.mth.pirate.internal._
 
 object Interpretter {
   def run[A](p: Parse[A], args: List[String]): ParseError \/ A =

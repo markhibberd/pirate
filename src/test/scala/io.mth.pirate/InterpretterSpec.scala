@@ -1,4 +1,4 @@
-package io.mth.pirate.internal
+package io.mth.pirate
 
 import io.mth.pirate._, Pirate._
 import scalaz._, Scalaz._

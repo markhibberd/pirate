@@ -19,3 +19,10 @@ case class SwitchParser[A](flag: Name, a: A) extends Parser[A]
 case class FlagParser[A](flag: Name, metas: List[String], p: Read[A]) extends Parser[A]
 case class ArgumentParser[A](p: Read[A]) extends Parser[A]
 case class CommandParser[A](name: String, p: Parse[A]) extends Parser[A]
+
+object Parser {
+  implicit def ParserFunctor: Functor[Parser] = new Functor[Parser] {
+    def map[A, B](a: Parser[A])(f: A => B): Parser[B] = a map f
+  }
+
+}

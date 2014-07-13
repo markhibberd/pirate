@@ -20,10 +20,9 @@ trait Flags {
   def flag[A: Read](n: Name, meta: String): Parse[A] =
     parse(FlagParser(n, List(meta), Read.of[A])) ||| ValueParse(None)
 
-  object positional {
+  object arguments {
     def one[A: Read](meta: String): Parse[A] =
       parse(ArgumentParser(Read.of[A])) ||| ValueParse(None)
-
   }
 
   object command {
