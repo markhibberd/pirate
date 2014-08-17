@@ -1,7 +1,7 @@
 package pirate.example
 
 import pirate._, Pirate._
-import scalaz._, Scalaz._, effect.IO
+import scalaz._, Scalaz.{test => _, _}, effect.IO
 import java.io.File
 
 sealed trait Cut

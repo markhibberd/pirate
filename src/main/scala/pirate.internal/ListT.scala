@@ -2,8 +2,8 @@ package pirate.internal
 
 import scalaz._, Scalaz._
 
-case class ListT[F[+_], +A](stepListT: F[TStep[A, ListT[F, A]]]) {
-  def ++[AA >: A](other: ListT[F, AA])(implicit F: Monad[F]): ListT[F, AA] = ListT(for {
+case class ListT[F[_], A](stepListT: F[TStep[A, ListT[F, A]]]) {
+  def ++(other: ListT[F, A])(implicit F: Monad[F]): ListT[F, A] = ListT(for {
     s <- stepListT
     r <- s match {
       case TNil() =>
@@ -42,19 +42,19 @@ case class ListT[F[+_], +A](stepListT: F[TStep[A, ListT[F, A]]]) {
 }
 
 object ListT {
-  def singleton[F[+_]: Monad, A](a: A): ListT[F, A] =
+  def singleton[F[_]: Monad, A](a: A): ListT[F, A] =
     cons(a, nil[F, A])
 
-  def nil[F[+_]: Monad, A]: ListT[F, A] =
+  def nil[F[_]: Monad, A]: ListT[F, A] =
     ListT(TStep.nil[A, ListT[F, A]].pure[F])
 
-  def cons[F[+_]: Monad, A](a: A, as: ListT[F, A]): ListT[F, A]  =
+  def cons[F[_]: Monad, A](a: A, as: ListT[F, A]): ListT[F, A]  =
     ListT(TStep.cons[A, ListT[F, A]](a, as).pure[F])
 
-  def hoist[F[+_]: Monad, A](xs: List[A]): ListT[F, A] =
+  def hoist[F[_]: Monad, A](xs: List[A]): ListT[F, A] =
     xs.foldRight(nil[F, A])((el, acc) => cons(el, acc))
 
-  def lift[F[+_]: Monad, A](f: F[A]): ListT[F, A] =
+  def lift[F[_]: Monad, A](f: F[A]): ListT[F, A] =
     ListT(f.map(x => TStep.cons(x, nil[F, A])))
 
   implicit def ListTInstances[F[+_]: Monad]: Monad[({ type l[a] = ListT[F, a] })#l] with MonadPlus[({ type l[a] = ListT[F, a] })#l]  = new Monad[({ type l[a] = ListT[F, a] })#l] with MonadPlus[({ type l[a] = ListT[F, a] })#l]{
@@ -66,7 +66,7 @@ object ListT {
   }
 }
 
-sealed trait TStep[+A, +X] {
+sealed trait TStep[A, X] {
   def bimap[B, Y](f: A => B, g: X => Y): TStep[B, Y] =
     this match {
       case TNil() => TNil()

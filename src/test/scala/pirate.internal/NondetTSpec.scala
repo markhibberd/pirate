@@ -1,7 +1,7 @@
 package pirate
 package internal
 
-import scalaz._, Scalaz._
+import scalaz._, Scalaz.{test => _, _}
 import pirate.test.Laws._
 import pirate.test.Arbitraries._
 
@@ -20,7 +20,7 @@ class NondetTSpec extends test.Spec { def is = s2"""
   type NondetX[A] = NondetT[Identity, A]
 
   /* testing only instances */
-  implicit def NondetTEqual[F[+_], A](implicit E: Equal[F[(Boolean, List[A])]], F: Monad[F]): Equal[NondetT[F, A]] =
+  implicit def NondetTEqual[F[_], A](implicit E: Equal[F[(Boolean, List[A])]], F: Monad[F]): Equal[NondetT[F, A]] =
     Equal.equal[NondetT[F, A]]((a, b) => a.runNondetT.run.run(true) === b.runNondetT.run.run(true) && a.runNondetT.run.run(false) === b.runNondetT.run.run(false))
 
 }

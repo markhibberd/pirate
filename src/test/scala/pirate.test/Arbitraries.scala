@@ -36,7 +36,7 @@ object Arbitraries {
     } yield x.foldRight(ListT.nil[Identity, A])(ListT.cons[Identity, A]))
 
   implicit def NondetTArbitrary[A: Arbitrary]: Arbitrary[NondetT[Identity, A]] = {
-    type S[+A] = StateT[Identity, Boolean, A]
+    type S[B] = StateT[Identity, Boolean, B]
     Arbitrary(for {
       n <- Gen.choose(0, 10)
       x <- Gen.listOfN(n, arbitrary[A])

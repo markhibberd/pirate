@@ -1,7 +1,7 @@
 package pirate
 package internal
 
-import scalaz._, Scalaz._
+import scalaz._, Scalaz.{test => _, _}
 import pirate.test.Laws._
 import pirate.test.Arbitraries._
 
