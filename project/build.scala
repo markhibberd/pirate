@@ -7,7 +7,7 @@ object build extends Build {
   val pirate = Project(
     id = "pirate"
   , base = file(".")
-  , settings = Defaults.defaultSettings ++ publishSettings ++ Seq[Sett](
+  , settings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
     , version := "1.0-M1"
