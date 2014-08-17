@@ -39,7 +39,7 @@ object ParseTraversal {
   type NondetP[+A] = NondetT[P, A]
 
   def search[F[+_]: Monad, A](f: OptionRunner[F], parser: Parse[A]): NondetT[F, Parse[A]] =  {
-    type NondetF[A] = NondetT[F, A]
+    type NondetF[B] = NondetT[F, B]
     parser match {
       case ValueParse(_) =>
         NondetT.nil[F, Parse[A]]
@@ -63,26 +63,26 @@ object ParseTraversal {
 
   def searchOpt[A](w: ParsedWord, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
-      def run[A](options: Parser[A]): NondetT[StateArg, A] =
+      def run[B](options: Parser[B]): NondetT[StateArg, B] =
         optMatches(options, w) match {
-          case None => NondetT.nil[StateArg, A]
-          case Some(a) => NondetT.lift[StateArg, A](a)
+          case None => NondetT.nil[StateArg, B]
+          case Some(a) => NondetT.lift[StateArg, B](a)
         }
     }, p)
 
   def searchArg[A](arg: String, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
-      def run[A](options: Parser[A]): NondetT[StateArg, A] =
+      def run[B](options: Parser[B]): NondetT[StateArg, B] =
         argMatches(options, arg) match {
-          case None => NondetT.nil[StateArg, A]
-          case Some(a) => NondetT.lift[StateArg, A](a)
+          case None => NondetT.nil[StateArg, B]
+          case Some(a) => NondetT.lift[StateArg, B](a)
         }
     }, p)
 
   def update[A](run: List[String] => P[(List[String], A)]): StateArg[A] =
     StateT[P, List[String], A](run)
 
-  def optMatches[A](p: Parser[A], w: ParsedWord): Option[StateArg[A]] = p match {
+  def optMatches[A](parser: Parser[A], w: ParsedWord): Option[StateArg[A]] = parser match {
     case SwitchParser(flag, a) =>
       w.name match {
         case ShortParsedName(c) =>
@@ -110,7 +110,7 @@ object ParseTraversal {
   }
 
 
-  def argMatches[A](p: Parser[A], arg: String): Option[StateArg[A]] = p match {
+  def argMatches[A](parser: Parser[A], arg: String): Option[StateArg[A]] = parser match {
     case ArgumentParser(p) =>
       p.read(arg :: Nil) match {
         case -\/(e) => None
@@ -157,14 +157,14 @@ object ParseTraversal {
     args match {
       case Nil => exitP(p, ParseTraversal.eval(p).map(_ -> args))
       case "--" :: rest => runParser(s, p, rest)
-      case arg :: rest =>
-        stepParser(s, arg, p).disamb.run(rest).flatMap({
-          case (rest, None) =>
+      case arg :: restArgs =>
+        stepParser(s, arg, p).disamb.run(restArgs).flatMap({
+          case (r, None) =>
             ParseTraversal.eval(p) match {
               case None =>
                 zeroP
               case Some(a) =>
-                (a, rest).pure[P]
+                (a, r).pure[P]
             }
           case (rest, Some(pp)) =>
             runParser(s, pp, rest)
@@ -191,7 +191,7 @@ object ParseTraversal {
     def hasDefault[X](p: Parse[X]): Boolean =
       eval(p).isDefined
 
-    def go[C](multi: Boolean, dfault: Boolean, f: TreeTraverseF[B], p: Parse[C]): ParseTree[B] = p match {
+    def go[C](multi: Boolean, dfault: Boolean, f: TreeTraverseF[B], parse: Parse[C]): ParseTree[B] = parse match {
       case ValueParse(_) =>
         ParseTreeAp(Nil)
       case ParserParse(p, m) =>
@@ -205,7 +205,7 @@ object ParseTraversal {
         go(true, dfault, f, p)
     }
 
-    def simplify[X](x: ParseTree[X]): ParseTree[X] = x match {
+    def simplify[X](pt: ParseTree[X]): ParseTree[X] = pt match {
       case ParseTreeLeaf(a) => ParseTreeLeaf(a)
       case ParseTreeAp(xs) => ParseTreeAp(xs.map(simplify).flatMap({
         case ParseTreeAp(ys) => ys
