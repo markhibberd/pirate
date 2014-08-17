@@ -94,13 +94,13 @@ object ParseTraversal {
       w.name match {
         case ShortParsedName(c) =>
           flag.hasShort(c).option(
-            update[A](args => p.read(args) match {
+            update[A](args => p.read(w.value.toList ++ args) match {
               case -\/(e) => errorP(ParseErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
         case LongParsedName(s) =>
           flag.hasLong(s).option(
-            update[A](args => p.read(args) match {
+            update[A](args => p.read(w.value.toList ++ args) match {
               case -\/(e) => errorP(ParseErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
@@ -130,10 +130,13 @@ object ParseTraversal {
       None
   }
 
-  // FIX add support for -x=val syntax
   def parseWord(arg: String): Option[ParsedWord] = arg.toList match {
-    case '-' :: '-' :: w =>
-      Some(ParsedWord(LongParsedName(w.mkString), None))
+    case '-' :: '-' :: w => w.indexOf('=') match {
+      case -1 => Some(ParsedWord(LongParsedName(w.mkString), None))
+      case i  =>
+        val (cmd, value) = w.splitAt(i)
+        Some(ParsedWord(LongParsedName(cmd.mkString), Some(value.tail.mkString)))
+    }
     case '-' :: w :: Nil =>
       Some(ParsedWord(ShortParsedName(w), None))
     case _ =>
