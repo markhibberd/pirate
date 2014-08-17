@@ -1,4 +1,4 @@
-package pirate.test
+package pirate.spec
 
 import pirate._
 import pirate.internal._

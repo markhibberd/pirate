@@ -1,8 +1,8 @@
 package pirate
 
-import pirate.test.Arbitraries._
+import pirate.spec.Arbitraries._
 
-class TextSpec extends test.Spec { def is = s2"""
+class TextSpec extends spec.Spec { def is = s2"""
 
   Text Properties
   ===============

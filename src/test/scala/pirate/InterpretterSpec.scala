@@ -4,7 +4,7 @@ import org.scalacheck.{Arbitrary, Gen}, Arbitrary.arbitrary
 import pirate._, Pirate._
 import scalaz._, Scalaz._, scalaz.scalacheck.ScalaCheckBinding._
 
-class InterpretterSpec extends test.Spec { def is = s2"""
+class InterpretterSpec extends spec.Spec { def is = s2"""
 
   Interpretter Properties
   =======================

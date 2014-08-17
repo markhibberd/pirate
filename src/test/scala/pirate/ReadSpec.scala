@@ -6,12 +6,12 @@ import java.net.{URI, URL}
 import shapeless._
 import scalaz._, Scalaz._
 
-import pirate.test.Laws._
-import pirate.test.Arbitraries._
+import pirate.spec.Laws._
+import pirate.spec.Arbitraries._
 
 import org.scalacheck._
 
-class ReadSpec extends test.Spec { def is = s2"""
+class ReadSpec extends spec.Spec { def is = s2"""
 
   Read Properties
   ===============

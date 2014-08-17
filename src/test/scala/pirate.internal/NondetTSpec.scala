@@ -1,11 +1,11 @@
 package pirate
 package internal
 
-import scalaz._, Scalaz.{test => _, _}
-import pirate.test.Laws._
-import pirate.test.Arbitraries._
+import scalaz._, Scalaz._
+import pirate.spec.Laws._
+import pirate.spec.Arbitraries._
 
-class NondetTSpec extends test.Spec { def is = s2"""
+class NondetTSpec extends spec.Spec { def is = s2"""
 
   NondetT Laws
   ============

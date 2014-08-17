@@ -1,7 +1,7 @@
 package pirate.example
 
 import pirate._, Pirate._
-import scalaz._, Scalaz.{test => _, _}, effect.IO
+import scalaz._, Scalaz._, effect.IO
 
 case class Git(
   cwd: String,
@@ -64,7 +64,7 @@ object GitMain extends PirateMainIO[Git] {
   }
 }
 
-class GitExample extends test.Spec { def is = s2"""
+class GitExample extends spec.Spec { def is = s2"""
 
   Git Examples
   ============
