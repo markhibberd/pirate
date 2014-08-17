@@ -36,9 +36,9 @@ object ParseTraversal {
   def tryP[A](p: P[A]): P[ParseError \/ A] =
     P(prefs => p.run(prefs).right)
 
-  type NondetP[+A] = NondetT[P, A]
+  type NondetP[A] = NondetT[P, A]
 
-  def search[F[+_]: Monad, A](f: OptionRunner[F], parser: Parse[A]): NondetT[F, Parse[A]] =  {
+  def search[F[_]: Monad, A](f: OptionRunner[F], parser: Parse[A]): NondetT[F, Parse[A]] =  {
     type NondetF[B] = NondetT[F, B]
     parser match {
       case ValueParse(_) =>
@@ -58,8 +58,8 @@ object ParseTraversal {
     }
   }
 
-  type StateArg[+A] = StateT[P, List[String], A]
-  type NondetArg[+A] = NondetT[StateArg, A]
+  type StateArg[A] = StateT[P, List[String], A]
+  type NondetArg[A] = NondetT[StateArg, A]
 
   def searchOpt[A](w: ParsedWord, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
@@ -239,7 +239,7 @@ case class ParseTreeAp[A](children: List[ParseTree[A]]) extends ParseTree[A]
 case class ParseTreeAlt[A](children: List[ParseTree[A]]) extends ParseTree[A]
 
 /* A universally qualified function for handling the existantial parsers in the tree */
-trait OptionRunner[F[+_]] {
+trait OptionRunner[F[_]] {
   def run[A](options: Parser[A]): NondetT[F, A]
 }
 

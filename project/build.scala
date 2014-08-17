@@ -7,26 +7,27 @@ object build extends Build {
   val pirate = Project(
     id = "pirate"
   , base = file(".")
-  , settings = Defaults.defaultSettings ++ publishSettings ++ Seq[Sett](
+  , settings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
     , version := "1.0-M1"
-    , scalaVersion := "2.10.4"
+    , scalaVersion := "2.11.2"
     , scalacOptions := Seq(
         "-deprecation"
       , "-unchecked"
       , "-feature"
       , "-language:_"
-      , "-Ywarn-all"
       , "-Xlint"
       )
     , libraryDependencies ++= Seq(
-        "org.scalaz" %% "scalaz-core" % "7.0.6"
-      , "org.scalaz" %% "scalaz-effect" % "7.0.6"
-      , "org.scalaz" %% "scalaz-scalacheck-binding" % "7.0.6"
-      , "com.chuusai" % "shapeless_2.10.4" % "2.0.0"
-      , "org.specs2" %% "specs2-core" % "2.3.12" % "test"
-      , "org.specs2" %% "specs2-scalacheck" % "2.3.12" % "test"
+        "org.scalaz" %% "scalaz-core" % "7.1.0"
+      , "org.scalaz" %% "scalaz-effect" % "7.1.0"
+      , "org.scalaz" %% "scalaz-scalacheck-binding" % "7.1.0"
+      , "org.specs2" %% "specs2-core" % "2.4" % "test"
+      , "org.specs2" %% "specs2-scalacheck" % "2.4" % "test"
+      ) ++ (
+        if (scalaVersion.value.contains("2.10")) Seq("com.chuusai"  % s"shapeless_${scalaVersion.value}" % "2.0.0")
+        else                                     Seq("com.chuusai" %% s"shapeless"                       % "2.0.0")
       )
     )
   )

@@ -2,11 +2,11 @@ package pirate
 
 import scalaz._, Scalaz._
 
-import pirate.test.Arbitraries._
+import pirate.spec.Arbitraries._
 
 import org.scalacheck._
 
-class ParseSpec extends test.Spec { def is = s2"""
+class ParseSpec extends spec.Spec { def is = s2"""
 
   Parse Properties
   ================

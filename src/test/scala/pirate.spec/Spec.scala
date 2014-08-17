@@ -1,4 +1,4 @@
-package pirate.test
+package pirate.spec
 
 import scalaz._, Scalaz._
 import org.specs2._, matcher._, specification._

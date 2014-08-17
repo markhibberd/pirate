@@ -64,7 +64,7 @@ object GitMain extends PirateMainIO[Git] {
   }
 }
 
-class GitExample extends test.Spec { def is = s2"""
+class GitExample extends spec.Spec { def is = s2"""
 
   Git Examples
   ============

@@ -47,7 +47,7 @@ object CutMain extends PirateMainIO[Cut] {
   }
 }
 
-class CutExample extends test.Spec { def is = s2"""
+class CutExample extends spec.Spec { def is = s2"""
 
   Cut Examples
   ============
