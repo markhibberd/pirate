@@ -1,11 +1,5 @@
 package pirate
 
-import scalaz._, Scalaz._
-
-import pirate.spec.Arbitraries._
-
-import org.scalacheck._
-
 class ParseSpec extends spec.Spec { def is = s2"""
 
   Parse Properties

@@ -1,6 +1,6 @@
 package pirate
 
-import scalaz._, Scalaz._, \&/._
+import scalaz._, Scalaz._
 
 object Flags extends Flags
 

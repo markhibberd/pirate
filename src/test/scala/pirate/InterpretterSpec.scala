@@ -1,7 +1,7 @@
 package pirate
 
 import org.scalacheck.{Arbitrary, Gen}, Arbitrary.arbitrary
-import pirate._, Pirate._
+import Pirate._
 import scalaz._, Scalaz._, scalaz.scalacheck.ScalaCheckBinding._
 
 class InterpretterSpec extends spec.Spec { def is = s2"""

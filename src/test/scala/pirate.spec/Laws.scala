@@ -1,8 +1,6 @@
 package pirate.spec
 
-
 import scalaz._, Scalaz._
-import org.specs2._, matcher._, specification._
 import org.scalacheck.{Arbitrary, Gen, Prop, Properties}, Prop.forAll
 
 /* ripped from scalaz-scalacheck-binding due to binary compatability issues */
@@ -138,7 +136,7 @@ object Laws {
       new Properties("traverse") {
         property("identity traverse") = identityTraverse[F, Int, Int]
 
-        import std.list._, std.option._, std.stream._, std.anyVal._
+        import std.list._, std.option._
 
         property("purity.option") = purity[F, Option, Int]
         property("purity.stream") = purity[F, Stream, Int]

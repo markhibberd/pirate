@@ -1,7 +1,6 @@
 package pirate
 
-import scalaz._, Scalaz._, effect.IO
-import pirate.internal._
+import scalaz._, effect.IO
 
 trait Runners {
   def run[A, B](args: List[String], command: Command[A], f: A => B): ParseError \/ B  =
