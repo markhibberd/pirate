@@ -12,6 +12,7 @@ object build extends Build {
     , organization := "io.mth"
     , version := "1.0-M1"
     , scalaVersion := "2.11.2"
+    , crossScalaVersions := Seq("2.10.4", scalaVersion.value)
     , scalacOptions := Seq(
         "-deprecation"
       , "-unchecked"
