@@ -3,11 +3,7 @@ package pirate
 import java.io.File
 import java.net.{URI, URL}
 
-import shapeless._
 import scalaz._, Scalaz._
-
-import pirate.spec.Laws._
-import pirate.spec.Arbitraries._
 
 import org.scalacheck._
 

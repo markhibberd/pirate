@@ -19,9 +19,10 @@ object Text {
     @annotation.tailrec
     def wrapit(o: Int, w: Int): Unit = {
       val i = o + w
-      if (s.length <= i)
+      if (s.length <= i) {
         sb ++= s.substring(o)
-      else if (w <= 0) {
+        ()
+      } else if (w <= 0) {
         sb ++= s.substring(o, o + width - 1) ++= "-\n" ++= spacer
         wrapit(o + width - 1, width)
       } else if (s.charAt(i) == ' ') {

@@ -1,6 +1,6 @@
 package pirate.internal
 
-import scalaz._, Scalaz._, \&/._
+import scalaz._
 import pirate._
 
 object Interpretter {

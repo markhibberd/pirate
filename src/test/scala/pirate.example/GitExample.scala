@@ -1,7 +1,7 @@
 package pirate.example
 
 import pirate._, Pirate._
-import scalaz._, Scalaz._, effect.IO
+import scalaz._, effect.IO
 
 case class Git(
   cwd: String,

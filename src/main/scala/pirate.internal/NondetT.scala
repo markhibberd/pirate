@@ -2,7 +2,7 @@ package pirate.internal
 
 import scalaz._, Scalaz._
 
-import NondetT.{Cut, CutT}
+import NondetT.CutT
 
 case class NondetT[F[_], A](runNondetT: ListT[CutT[F]#l, A]) {
   def ++(other: NondetT[F, A])(implicit F: Monad[F]): NondetT[F, A] =

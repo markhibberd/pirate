@@ -1,6 +1,5 @@
 package pirate
 
-import pirate.internal._
 import scalaz._, Scalaz._
 
 sealed trait Parse[A] {
