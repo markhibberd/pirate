@@ -20,6 +20,7 @@ object build extends Build {
       , "-language:_"
       , "-Ywarn-value-discard"
       , "-Xlint"
+      , "-Xfatal-warnings"
       )
     , libraryDependencies ++= Seq(
         "org.scalaz" %% "scalaz-core" % "7.1.0"
