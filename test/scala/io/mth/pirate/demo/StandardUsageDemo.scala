@@ -14,7 +14,7 @@ object StandardUsageDemo {
       positional0plus[DemoArgs]("THINGS")((d, ss) => d.copy(things = ss))
 
   def main(ignored: Array[String]) {
-    val args = List("--verbose", "thing.one", "thing.two", "cat", "hat")
+    val args = List("--verbose", "config1.file", "config2.file")
 
     val default = DemoArgs(false, false, false, List())
 
