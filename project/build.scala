@@ -43,8 +43,8 @@ object build extends Build {
   , settings = Defaults.defaultSettings ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
-    , version := "0.8"
-    , scalaVersion := "2.10.3"
+    , version := "0.8-scalaz-7.1.0"
+    , scalaVersion := "2.11.2"
     , scalacOptions := Seq(
         "-deprecation"
       , "-unchecked"
@@ -62,9 +62,9 @@ object build extends Build {
     , licenses := Seq("BSD-3-Clause" -> url("http://www.opensource.org/licenses/BSD-3-Clause"))
     , homepage := Some(url("http://pirate.mth.io"))
     , libraryDependencies ++= Seq(
-        ("org.scalaz" %% "scalaz-core" % "7.0.4")
-      , ("org.specs2" %% "specs2" % "2.3.4" % "test")
-      , ("org.specs2" %% "specs2-scalacheck" % "2.3.4" % "test")
+        ("org.scalaz" %% "scalaz-core" % "7.1.0")
+      , ("org.specs2" %% "specs2" % "2.4.6" % "test")
+      , ("org.specs2" %% "specs2-scalacheck" % "2.4.6" % "test")
       , ("org.scalacheck" %% "scalacheck" % "1.11.1" % "test")
       )
     )
