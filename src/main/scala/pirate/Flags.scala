@@ -23,6 +23,14 @@ trait Flags {
   object arguments {
     def one[A: Read](meta: String): Parse[A] =
       parse(ArgumentParser(Read.of[A])) ||| ValueParse(None)
+
+    def some[A: Read](meta: String): Parse[List[A]] = for {
+      a <- one(meta)
+      b <- many(meta)
+    } yield (a :: b)
+
+    def many[A: Read](meta: String): Parse[List[A]] =
+      some(meta) ||| ValueParse(Some(Nil))
   }
 
   object command {
