@@ -5,12 +5,10 @@ import Pirate._
 import scalaz._, Scalaz._, scalaz.scalacheck.ScalaCheckBinding._
 
 
-case class TestWrapper(
-  cmd: TestCommand
-)
 sealed trait TestCommand
-case class TestA(list: String) extends TestCommand
-case class TestB(list: String) extends TestCommand
+case class TestWrapper(cmd: TestCommand)
+case object TestA extends TestCommand
+case object TestB extends TestCommand
 
 class InterpretterSpec extends spec.Spec { def is = s2"""
 
@@ -44,16 +42,14 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
 
   import Interpretter._
 
-  def testA(name: String): Parse[TestCommand] = (TestA |*| (
-    flag[String](name, "")
-  )).map(x => x)
+  def testA(name: String): Parse[TestCommand] =
+    terminator(name, TestA)
 
-  def testB(name: String): Parse[TestCommand] = (TestB |*| (
-    flag[String](name, "")
-  )).map(x => x)
+  def testB(name: String): Parse[TestCommand] =
+    terminator(name, TestB)
 
   def wrap(cmd: Parse[TestCommand]): Parse[TestWrapper] =
-    cmd.map(TestWrapper(_))
+    cmd.map(TestWrapper)
 
   def requiredFound =
     run(flag[String]('a', ""), List("-a", "b")) ==== "b".right
@@ -100,16 +96,16 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
 
   def someFailsOnEmpty = run(arguments.some[String]("files"), List()).toEither must beLeft
 
-  def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString, value: String) => nameOne.s != nameTwo.s ==> {
-    run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameOne.s}=$value")) must_== TestA(value).right
+  def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
+    run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameOne.s}")) must_== TestA.right
   })
 
-  def orSecond = prop((nameOne: LongNameString, nameTwo: LongNameString, value: String) => nameOne.s != nameTwo.s ==> {
-    run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameTwo.s}=$value")) must_== TestB(value).right
+  def orSecond = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
+    run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameTwo.s}")) must_== TestB.right
   })
 
-  def wrappers = prop((name: LongNameString, value: String) => {
-    run(wrap(testA(name.s)), name.s :: value :: Nil).toEither must_== TestWrapper(TestA(value)).right
+  def wrappers = prop((name: LongNameString) => {
+    run(wrap(testA(name.s)), name.s :: Nil) must_== TestWrapper(TestA).right
   }).pendingUntilFixed
 
   case class LongNameString(s: String)
