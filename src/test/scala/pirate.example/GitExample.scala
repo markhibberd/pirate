@@ -1,7 +1,7 @@
 package pirate.example
 
 import pirate._, Pirate._
-import scalaz._, effect.IO
+import scalaz._, Scalaz._, effect.IO
 
 case class Git(
   cwd: String,
@@ -88,16 +88,16 @@ class GitExample extends spec.Spec { def is = s2"""
 
   def version = {
     run("--version") must_==
-      GitVersion
+      GitVersion.right
   }.pendingUntilFixed
 
   def help = {
     run("--help") must_==
-      GitHelp(None)
+      GitHelp(None).right
   }.pendingUntilFixed
 
   def helpAt = {
     run("--help", "status") must_==
-      GitHelp(Some("status"))
+      GitHelp(Some("status")).right
   }.pendingUntilFixed
 }
