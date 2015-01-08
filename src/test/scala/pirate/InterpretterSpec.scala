@@ -27,6 +27,8 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   Assignment missing                              $assignmentMissing
   Switches toggle on                              $switchesOn
   Switches are off unless toggled                 $switchesOff
+  Multiple switches work in a single entry        $multipleSwitches
+  Short option flag can come at the end of switch $flagAfterSwitch
   Position arguments work                         $positionalArgs
   Many arguments work                             $manyArgs
   Many arguments work after a positional          $positionalFollowMany
@@ -82,6 +84,14 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
 
   def switchesOff =
     run(switch('a'), List("-b")) ==== false.right
+
+  def multipleSwitches = {
+    run((switch('a') |@| switch('b'))(_ -> _), List("-ab")) ==== (true, true).right
+  }.pendingUntilFixed
+
+  def flagAfterSwitch = {
+    run((switch('a') |@| flag[String]('b', ""))(_ -> _), List("-ab", "c")) ==== (true, "c").right
+  }.pendingUntilFixed
 
   def positionalArgs =
     run((arguments.one[String]("src") |@| arguments.one[String]("dst"))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
