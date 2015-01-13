@@ -156,7 +156,7 @@ object ParseTraversal {
   def runParser[A](s: ParseState, p: Parse[A], args: List[String]): P[(A, List[String])] =
     args match {
       case Nil => exitP(p, ParseTraversal.eval(p).map(_ -> args))
-      case "--" :: rest => runParser(s, p, rest)
+      case "--" :: rest => runParser(AllowOpts, p, rest)
       case arg :: restArgs =>
         stepParser(s, arg, p).disamb.run(restArgs).flatMap({
           case (r, None) =>
