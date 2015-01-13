@@ -130,27 +130,28 @@ object ParseTraversal {
       None
   }
 
-  def parseWord(arg: String): Option[ParsedWord] = arg.toList match {
+  def parseWord(arg: String): List[ParsedWord] = arg.toList match {
     case '-' :: '-' :: w => w.indexOf('=') match {
-      case -1 => Some(ParsedWord(LongParsedName(w.mkString), None))
+      case -1 => ParsedWord(LongParsedName(w.mkString), None).pure[List]
       case i  =>
         val (cmd, value) = w.splitAt(i)
-        Some(ParsedWord(LongParsedName(cmd.mkString), Some(value.tail.mkString)))
+        ParsedWord(LongParsedName(cmd.mkString), Some(value.tail.mkString)).pure[List]
     }
-    case '-' :: w :: Nil =>
-      Some(ParsedWord(ShortParsedName(w), None))
-    case _ =>
-      None
+    case '-' :: ws => ws map (w => ParsedWord(ShortParsedName(w), None))
+    case _ => Nil
   }
 
   def stepParser[A](s: ParseState, arg: String, p: Parse[A]): NondetT[StateArg, Parse[A]] =
     s match {
       case SkipOpts => parseWord(arg) match {
-        case None => searchArg(arg, p)
-        case Some(w) => searchOpt(w, p)
+        case Nil     => searchArg(arg, p)
+        case ws      => ws.foldLeft(NondetT.lift(p.pure[StateArg]))((a,b) => a flatMap( p1 => (searchOpt(b, p1) )))
       }
       case AllowOpts =>
-        searchArg(arg, p) ++ NondetT.hoistMaybe[StateArg, ParsedWord](parseWord(arg)).flatMap(searchOpt(_, p))
+        searchArg(arg, p) ++ (parseWord(arg) match {
+          case Nil     => NondetT.nil[StateArg, Parse[A]]
+          case ws      => ws.foldLeft(NondetT.lift(p.pure[StateArg]))((a,b) => a flatMap( p1 => (searchOpt(b, p1) )))
+        })
     }
 
   def runParser[A](s: ParseState, p: Parse[A], args: List[String]): P[(A, List[String])] =
