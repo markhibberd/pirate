@@ -97,11 +97,11 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
     run((arguments.one[String]("src") |@| arguments.one[String]("dst"))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
 
   def manyArgs = prop((args: List[String]) =>
-    run(arguments.many[String]("files"), args) ==== args.right
+    run(arguments.many[String]("files"), "--" :: args) ==== args.right
   )
 
   def positionalFollowMany = prop((args: List[String]) => args.length >= 1 ==> {
-    run((arguments.one[String]("src") |@| arguments.many[String]("dst"))(_ -> _), args) ==== (args.head, args.tail).right
+    run((arguments.one[String]("src") |@| arguments.many[String]("dst"))(_ -> _), "--" :: args) ==== (args.head, args.tail).right
   })
 
   def someFailsOnEmpty = run(arguments.some[String]("files"), List()).toEither must beLeft
