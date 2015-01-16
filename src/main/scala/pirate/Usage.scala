@@ -21,14 +21,14 @@ object Usage {
     }
 
   def flags[X](p: Parser[X], m: Metadata, info: OptHelpInfo): Option[Info] = p match {
-    case SwitchParser(flag, a) if m.visible =>
-      Some(Info(SwitchInfo(flag, m.description) :: Nil, Nil, Nil, Nil))
-    case FlagParser(flag, metas, p) if m.visible =>
-      Some(Info(Nil, FlagInfo(flag, m.description, metas, info.dfault) :: Nil, Nil, Nil))
-    case CommandParser(name, p) if m.visible =>
-      Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil))
-    case ArgumentParser(p) =>
-      Some(Info(Nil, Nil, ArgumentInfo(Nil) :: Nil, Nil))
+    case SwitchParser(flag, a) => if (m.visible)
+      Some(Info(SwitchInfo(flag, m.description) :: Nil, Nil, Nil, Nil)) else None
+    case FlagParser(flag, metas, p) => if (m.visible)
+      Some(Info(Nil, FlagInfo(flag, m.description, metas, info.dfault) :: Nil, Nil, Nil)) else None
+    case CommandParser(name, p) => if (m.visible)
+      Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil)) else None
+    case ArgumentParser(p, m) =>
+      Some(Info(Nil, Nil, ArgumentInfo(m) :: Nil, Nil))
   }
 }
 
@@ -43,9 +43,9 @@ object Render {
 
     def synopsis =
       if (mode.condenseSynopsis)
-        "[OPTIONS] " + i.arguments.map(_.meta).mkString(" ")
+        "[OPTIONS] " + i.arguments.map(_.metas).mkString(" ")
       else
-        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.metas)) ++ i.arguments.map(_.meta)).mkString(" ")
+        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.metas)) ++ i.arguments.flatMap(_.metas)).mkString(" ")
 
     def flaginfo(f: SwitchInfo): String =
       flag(f.flag) + "\n" +
@@ -84,7 +84,7 @@ case class Info(
 
 case class SwitchInfo(flag: Name, description: Option[String])
 case class FlagInfo(flag: Name, description: Option[String], metas: List[String], dfault: Boolean)
-case class ArgumentInfo(meta: List[String])
+case class ArgumentInfo(metas: List[String])
 case class CommandInfo(name: String, description: Option[String])
 object Info {
   implicit def InfoMonoid: Monoid[Info] = new Monoid[Info] {

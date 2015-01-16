@@ -33,6 +33,22 @@ sealed trait Parse[A] {
 
   def not(implicit ev: A =:= Boolean): Parse[Boolean] =
     map(!_)
+
+  def hidden: Parse[A] = this match {
+    case ValueParse(o) => this
+    case ParserParse(p, m) => ParserParse(p, m.copy(visible = false))
+    case ApParse(k, a) => ApParse(k, a hidden)
+    case AltParse(a, b) => AltParse(a hidden, b hidden)
+    case BindParse(k, a) => BindParse(k, a hidden)
+  }
+
+  def <> (d: String): Parse[A] = this match {
+    case ValueParse(o) => this
+    case ParserParse(p, m) => ParserParse(p, m.copy(description = d.some))
+    case ApParse(k, a) => ApParse(k, a <> d)
+    case AltParse(a, b) => AltParse(a <> d, b <> d)
+    case BindParse(k, a) => BindParse(k, a <> d)
+  }
 }
 
 case class ValueParse[A](m: Option[A]) extends Parse[A]

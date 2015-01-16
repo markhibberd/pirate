@@ -111,7 +111,7 @@ object ParseTraversal {
 
 
   def argMatches[A](parser: Parser[A], arg: String): Option[StateArg[A]] = parser match {
-    case ArgumentParser(p) =>
+    case ArgumentParser(p, _) =>
       p.read(arg :: Nil) match {
         case -\/(e) => None
         case \/-((Nil, a)) => Some(a.pure[StateArg])
