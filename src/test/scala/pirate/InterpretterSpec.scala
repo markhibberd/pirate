@@ -4,7 +4,6 @@ import org.scalacheck.{Arbitrary, Gen}, Arbitrary.arbitrary
 import Pirate._
 import scalaz._, Scalaz._, scalaz.scalacheck.ScalaCheckBinding._
 
-
 sealed trait TestCommand
 case class TestWrapper(cmd: TestCommand)
 case object TestA extends TestCommand
@@ -45,66 +44,66 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   import Interpretter._
 
   def testA(name: String): Parse[TestCommand] =
-    terminator(name, TestA)
+    terminator(long(name), TestA)
 
   def testB(name: String): Parse[TestCommand] =
-    terminator(name, TestB)
+    terminator(long(name), TestB)
 
   def wrap(cmd: Parse[TestCommand]): Parse[TestWrapper] =
     cmd.map(TestWrapper)
 
   def requiredFound =
-    run(flag[String]('a', ""), List("-a", "b")) ==== "b".right
+    run(flag[String]( short('a')), List("-a", "b")) ==== "b".right
 
   def requiredMissing =
-    run(flag[String]('a', ""), List()).toEither must beLeft
+    run(flag[String](short('a')), List()).toEither must beLeft
 
   def defaultFound =
-    run(flag[String]('a', "").default("c"), List("-a", "b")) ==== "b".right
+    run(flag[String](short('a')).default("c"), List("-a", "b")) ==== "b".right
 
   def defaultMissing =
-    run(flag[String]('a', "").default("c"), List()) ==== "c".right
+    run(flag[String](short('a')).default("c"), List()) ==== "c".right
 
   def optionFound =
-    run(flag[String]('a', "").option, List("-a", "b")) ==== Some("b").right
+    run(flag[String](short('a')).option, List("-a", "b")) ==== Some("b").right
 
   def optionMissing =
-    run(flag[String]('a', "").option, List()) ==== None.right
+    run(flag[String](short('a')).option, List()) ==== None.right
 
   def assignmentFound = prop((name: LongNameString, value: String) => {
-    run(flag[String](LongName(name.s), ""), List(s"--${name.s}=$value")) ==== value.right
+    run(flag[String](long(name.s)), List(s"--${name.s}=$value")) ==== value.right
   })
 
   def assignmentMissing = prop((name: Name, lname: LongNameString, value: String) => name.long != Some(lname.s) ==> {
-    run(flag[String](name, ""), List(s"--${lname.s}=$value")).toEither must beLeft
+    run(flag[String](name), List(s"--${lname.s}=$value")).toEither must beLeft
   })
 
   def switchesOn =
-    run(switch('a'), List("-a")) ==== true.right
+    run(switch(short('a')), List("-a")) ==== true.right
 
   def switchesOff =
-    run(switch('a'), List("-b")) ==== false.right
+    run(switch(short('a')), List("-b")) ==== false.right
 
   def multipleSwitches = {
-    run((switch('a') |@| switch('b'))(_ -> _), List("-ab")) ==== (true, true).right
+    run((switch(short('a')) |@| switch(short('b')))(_ -> _), List("-ab")) ==== (true, true).right
   }
 
   def flagAfterSwitch = {
-    run((switch('a') |@| flag[String]('b', ""))(_ -> _), List("-ab", "c")) ==== (true, "c").right
+    run((switch(short('a')) |@| flag[String](short('b')))(_ -> _), List("-ab", "c")) ==== (true, "c").right
   }
 
   def positionalArgs =
-    run((arguments.one[String]("src") |@| arguments.one[String]("dst"))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
+    run((arguments.one[String](metavar("src")) |@| arguments.one[String](metavar("dst")))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
 
   def manyArgs = prop((args: List[String]) =>
-    run(arguments.many[String]("files"), "--" :: args) ==== args.right
+    run(arguments.many[String](metavar("files")), "--" :: args) ==== args.right
   )
 
   def positionalFollowMany = prop((args: List[String]) => args.length >= 1 ==> {
-    run((arguments.one[String]("src") |@| arguments.many[String]("dst"))(_ -> _), "--" :: args) ==== (args.head, args.tail).right
+    run((arguments.one[String](metavar("src")) |@| arguments.many[String](metavar("dst")))(_ -> _), "--" :: args) ==== (args.head, args.tail).right
   })
 
-  def someFailsOnEmpty = run(arguments.some[String]("files"), List()).toEither must beLeft
+  def someFailsOnEmpty = run(arguments.some[String](metavar("files")), List()).toEither must beLeft
 
   def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
     run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameOne.s}")) must_== TestA.right

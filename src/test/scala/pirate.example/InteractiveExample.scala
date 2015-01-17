@@ -2,6 +2,8 @@ package pirate.example
 
 import pirate._, Pirate._
 
+import scalaz._, Scalaz._
+
 // FIX actually implement this, currently just some hard coded examples that use the internals.
 object InteractiveExample {
   case class Example(
@@ -11,9 +13,9 @@ object InteractiveExample {
   )
 
   val example = Example |*| (
-    switch('s')
-  , flag[String]('c', "STRING")
-  , flag[Int]('n', "INT")
+    switch(short('s'))
+  , flag[String](short('c') |+| description("STRING"))
+  , flag[Int](short('n') |+| description("INT"))
   )
 
  val command = example ~ "example" ~~

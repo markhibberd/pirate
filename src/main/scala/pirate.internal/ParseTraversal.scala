@@ -43,7 +43,7 @@ object ParseTraversal {
     parser match {
       case ValueParse(_) =>
         NondetT.nil[F, Parse[A]]
-      case ParserParse(p, m) =>
+      case ParserParse(p) =>
         f.run(p).map(_.pure[Parse])
       case ApParse(k, a) =>
         search(f, k).flatMap(x => (a <*> x).pure[NondetF]) <|>
@@ -83,23 +83,23 @@ object ParseTraversal {
     StateT[P, List[String], A](run)
 
   def optMatches[A](parser: Parser[A], w: ParsedWord): Option[StateArg[A]] = parser match {
-    case SwitchParser(flag, a) =>
+    case SwitchParser(meta, a) =>
       w.name match {
         case ShortParsedName(c) =>
-          flag.hasShort(c).option(a.pure[StateArg])
+          meta.hasShort(c).option(a.pure[StateArg])
         case LongParsedName(s) =>
-          flag.hasLong(s).option(a.pure[StateArg])
+          meta.hasLong(s).option(a.pure[StateArg])
       }
-    case FlagParser(flag, metas, p) =>
+    case FlagParser(meta, p) =>
       w.name match {
         case ShortParsedName(c) =>
-          flag.hasShort(c).option(
+          meta.hasShort(c).option(
             update[A](args => p.read(w.value.toList ++ args) match {
               case -\/(e) => errorP(ParseErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
             }))
         case LongParsedName(s) =>
-          flag.hasLong(s).option(
+          meta.hasLong(s).option(
             update[A](args => p.read(w.value.toList ++ args) match {
               case -\/(e) => errorP(ParseErrorMessage(e.toString))
               case \/-(r) => r.pure[P]
@@ -111,7 +111,7 @@ object ParseTraversal {
 
 
   def argMatches[A](parser: Parser[A], arg: String): Option[StateArg[A]] = parser match {
-    case ArgumentParser(p, _) =>
+    case ArgumentParser(_, p) =>
       p.read(arg :: Nil) match {
         case -\/(e) => None
         case \/-((Nil, a)) => Some(a.pure[StateArg])
@@ -175,7 +175,7 @@ object ParseTraversal {
   def eval[A](p: Parse[A]): Option[A] = p match {
     case ValueParse(o) =>
       o
-    case ParserParse(p, m) =>
+    case ParserParse(p) =>
       None
     case ApParse(k, a) =>
       eval(a) <*> eval(k)
@@ -195,8 +195,8 @@ object ParseTraversal {
     def go[C](multi: Boolean, dfault: Boolean, f: TreeTraverseF[B], parse: Parse[C]): ParseTree[B] = parse match {
       case ValueParse(_) =>
         ParseTreeAp(Nil)
-      case ParserParse(p, m) =>
-        ParseTreeLeaf(f.run(OptHelpInfo(multi, dfault), p, m))
+      case ParserParse(p) =>
+        ParseTreeLeaf(f.run(OptHelpInfo(multi, dfault), p))
       case ApParse(p1, p2) =>
         ParseTreeAp(List(go(multi, dfault, f, p1), go(multi, dfault, f, p2)))
       case AltParse(p1, p2) =>
@@ -245,5 +245,5 @@ trait OptionRunner[F[_]] {
 }
 
 trait TreeTraverseF[A] {
-  def run[X](info: OptHelpInfo, p: Parser[X], m: Metadata): A
+  def run[X](info: OptHelpInfo, p: Parser[X]): A
 }

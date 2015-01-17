@@ -16,21 +16,21 @@ case class FieldCut(list: String, suppress: Boolean, delimiter: Char, files: Lis
 // FIX descriptions on fields
 object CutMain extends PirateMainIO[Cut] {
   val byte: Parse[Cut] = (ByteCut |*| (
-    flag[String]('b', "list")
-  , switch('n').not
-  , arguments.many[File]("file")
+    flag[String](short('b') |+| long("list"))
+  , switch(short('n')).not
+  , arguments.many[File](metavar("file"))
   )).map(x => x)
 
   val char: Parse[Cut] = (CharCut |*| (
-    flag[String]('c', "list")
-  , arguments.many[File]("file")
+    flag[String](short('c') |+| long("list"))
+  , arguments.many[File](metavar("file"))
   )).map(x => x)
 
   val field: Parse[Cut] = (FieldCut |*| (
-    flag[String]('f', "list")
-  , switch('s')
-  , flag[Char]('d', "delimiter").default('\t')
-  , arguments.many[File]("file")
+    flag[String](short('f') |+| long("list"))
+  , switch(short('s'))
+  , flag[Char](short('d') |+| long("delimiter")).default('\t')
+  , arguments.many[File](metavar("file"))
   )).map(x => x)
 
   def command: Command[Cut] =

@@ -13,22 +13,22 @@ object Usage {
 
   def info[A](command: Command[A]): List[Info] =
     ParseTraversal.treeTraverse(command.parse, new TreeTraverseF[Option[Info]] {
-      def run[X](info: OptHelpInfo, p: Parser[X], m: Metadata): Option[Info] =
-        flags(p, m, info)
+      def run[X](info: OptHelpInfo, p: Parser[X]): Option[Info] =
+        flags(p, info)
     }) match {
       case ParseTreeAlt(children) => children.map(_.flatten.flatten.suml)
       case x => List(x.flatten.flatten.suml)
     }
 
-  def flags[X](p: Parser[X], m: Metadata, info: OptHelpInfo): Option[Info] = p match {
-    case SwitchParser(flag, a) => if (m.visible)
-      Some(Info(SwitchInfo(flag, m.description) :: Nil, Nil, Nil, Nil)) else None
-    case FlagParser(flag, metas, p) => if (m.visible)
-      Some(Info(Nil, FlagInfo(flag, m.description, metas, info.dfault) :: Nil, Nil, Nil)) else None
-    case CommandParser(name, p) => if (m.visible)
-      Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil)) else None
-    case ArgumentParser(p, m) =>
-      Some(Info(Nil, Nil, ArgumentInfo(m) :: Nil, Nil))
+  def flags[X](p: Parser[X], info: OptHelpInfo): Option[Info] = p match {
+    case SwitchParser(meta, a) => if (meta.visible)
+      Some(Info(SwitchInfo(meta.names.get, meta.description) :: Nil, Nil, Nil, Nil)) else None
+    case FlagParser(meta, p) => if (meta.visible)
+      Some(Info(Nil, FlagInfo(meta.names.get, meta.description, meta.metavar, info.dfault) :: Nil, Nil, Nil)) else None
+    case CommandParser(name, p) =>
+      Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil))
+    case ArgumentParser(m, p) =>
+      Some(Info(Nil, Nil, ArgumentInfo(m.metavar) :: Nil, Nil))
   }
 }
 
@@ -43,16 +43,16 @@ object Render {
 
     def synopsis =
       if (mode.condenseSynopsis)
-        "[OPTIONS] " + i.arguments.map(_.metas).mkString(" ")
+        "[OPTIONS] " + i.arguments.map(_.meta).mkString(" ")
       else
-        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.metas)) ++ i.arguments.flatMap(_.metas)).mkString(" ")
+        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.meta)) ++ i.arguments.flatMap(_.meta)).mkString(" ")
 
     def flaginfo(f: SwitchInfo): String =
       flag(f.flag) + "\n" +
         wrap(f.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def optioninfo(o: FlagInfo): String =
-      option(o.flag, o.metas) + "\n" +
+      option(o.flag, o.meta) + "\n" +
         wrap(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def flag(f: Name): String = f match {
@@ -61,8 +61,8 @@ object Render {
       case BothName(s, l) => s"-${s}|--${l}"
     }
 
-    def option(f: Name, metas: List[String]): String =
-      flag(f) + " " + metas.mkString(" ")
+    def option(f: Name, meta: Option[String]): String =
+      flag(f) + " " + meta.cata(x => x, "")
 
     s"""|Usage:
         |${flagspace}${name} ${synopsis}
@@ -83,8 +83,8 @@ case class Info(
 )
 
 case class SwitchInfo(flag: Name, description: Option[String])
-case class FlagInfo(flag: Name, description: Option[String], metas: List[String], dfault: Boolean)
-case class ArgumentInfo(metas: List[String])
+case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], dfault: Boolean)
+case class ArgumentInfo(meta: Option[String])
 case class CommandInfo(name: String, description: Option[String])
 object Info {
   implicit def InfoMonoid: Monoid[Info] = new Monoid[Info] {
