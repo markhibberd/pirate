@@ -47,7 +47,7 @@ object ParseTraversal {
         f.run(p).map(_.pure[Parse])
       case ApParse(k, a) =>
         search(f, k).flatMap(x => (a <*> x).pure[NondetF]) <|>
-      search(f, a).flatMap(x => (x <*> k).pure[NondetF])
+          search(f, a).flatMap(x => (x <*> k).pure[NondetF])
       case AltParse(p1, p2) =>
         search(f, p1) ++ search(f, p2)
       case BindParse(k, a) =>
@@ -73,10 +73,13 @@ object ParseTraversal {
   def searchArg[A](arg: String, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
       def run[B](options: Parser[B]): NondetT[StateArg, B] =
-        argMatches(options, arg) match {
-          case None => NondetT.nil[StateArg, B]
-          case Some(a) => NondetT.lift[StateArg, B](a)
-        }
+        (if (options.isArg) NondetT.cut[StateArg]
+         else NondetT.singleton[StateArg, Parse[A]](p)).flatMap(_ =>
+          argMatches(options, arg) match {
+            case None => NondetT.nil[StateArg, B]
+            case Some(a) => NondetT.lift[StateArg, B](a)
+          }
+        )
     }, p)
 
   def update[A](run: List[String] => P[(List[String], A)]): StateArg[A] =
@@ -119,11 +122,8 @@ object ParseTraversal {
       }
     case CommandParser(name, p) =>
       if (name === arg)
-        Some(
-          StateT[P, List[String], A](args =>
-            runParserFully(SkipOpts, p, args).map(Nil -> _)
-          )
-        )
+        StateT[P, List[String], A](args =>
+          runParser(SkipOpts, p, args).map(_.swap)).pure[Option]
       else
         None
     case _ =>
@@ -160,12 +160,12 @@ object ParseTraversal {
       case "--" :: rest => runParser(AllowOpts, p, rest)
       case arg :: restArgs =>
         stepParser(s, arg, p).disamb.run(restArgs).flatMap({
-          case (r, None) =>
+          case (_, None) =>
             ParseTraversal.eval(p) match {
               case None =>
                 zeroP
               case Some(a) =>
-                (a, r).pure[P]
+                (a, args).pure[P]
             }
           case (rest, Some(pp)) =>
             runParser(s, pp, rest)

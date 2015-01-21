@@ -29,7 +29,7 @@ case class ListT[F[_], A](stepListT: F[TStep[A, ListT[F, A]]]) {
   def run(implicit F: Monad[F]): F[List[A]] = for {
     s <- stepListT
     r <- s match {
-      case TNil() => List().pure[F]
+      case TNil() => Nil.pure[F]
       case TCons(a, x) => x.run.map(a :: _)
     }
   } yield r

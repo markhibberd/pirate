@@ -82,7 +82,7 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
     run(switch(short('a')), List("-a")) ==== true.right
 
   def switchesOff =
-    run(switch(short('a')), List("-b")) ==== false.right
+    run(switch(short('a')), Nil) ==== false.right
 
   def multipleSwitches = {
     run((switch(short('a')) |@| switch(short('b')))(_ -> _), List("-ab")) ==== (true, true).right

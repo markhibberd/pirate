@@ -13,6 +13,11 @@ sealed trait Parser[A] {
     case CommandParser(name, p) =>
       CommandParser(name, p.map(f))
   }
+
+  def isArg: Boolean = this match {
+    case ArgumentParser(_, _) => true
+    case _                    => false
+  }
 }
 
 case class SwitchParser[A](meta: Metadata, a: A) extends Parser[A]
