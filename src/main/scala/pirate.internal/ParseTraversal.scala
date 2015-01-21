@@ -118,7 +118,7 @@ object ParseTraversal {
         case \/-((_ :: _, _)) => None
       }
     case CommandParser(name, p) =>
-      if (name == arg)
+      if (name === arg)
         Some(
           StateT[P, List[String], A](args =>
             runParserFully(SkipOpts, p, args).map(Nil -> _)

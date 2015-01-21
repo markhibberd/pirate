@@ -114,8 +114,8 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   })
 
   def wrappers = prop((name: LongNameString) => {
-    run(wrap(testA(name.s)), name.s :: Nil) must_== TestWrapper(TestA).right
-  }).pendingUntilFixed
+    run(wrap(testA(name.s)), List(s"--${name.s}")) must_== TestWrapper(TestA).right
+  })
 
   case class LongNameString(s: String)
   implicit def NonEmptyStringArbitrary: Arbitrary[LongNameString] = Arbitrary(

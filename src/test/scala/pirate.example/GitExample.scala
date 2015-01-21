@@ -3,10 +3,12 @@ package pirate.example
 import pirate._, Pirate._
 import scalaz._, Scalaz._, effect.IO
 
+import java.io.File
+
 case class Git(
-  cwd: String,
-  conf: String, // FIX support a read like thing for x=y
-  exec: String,
+  cwd: Option[String],
+  conf: Option[String],
+  exec: Option[String],
   cmd: GitCommand
 )
 trait GitCommand
@@ -15,6 +17,7 @@ object GitHtmlPath extends GitCommand
 object GitManPath extends GitCommand
 object GitInfoPath extends GitCommand
 case class GitHelp(command: Option[String]) extends GitCommand
+case class GitAdd(force: Boolean, interactive: Boolean, patch: Boolean, edit: Boolean, pathspec: List[File]) extends GitCommand
 
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
@@ -23,14 +26,14 @@ object GitMain extends PirateMainIO[Git] {
   val help: Parse[GitCommand] =
     terminatorx(long("help"), GitHelp.apply)
 
-  val cwd: Parse[String] =
-    flag(short('C') |+| description("<path>"))
+  val cwd: Parse[Option[String]] =
+    flag[String](short('C') |+| description("<path>")).option
 
-  val conf: Parse[String] =
-    flag(short('c') |+| description("<name>=<value>"))
+  val conf: Parse[Option[String]] =
+    flag[String](short('c') |+| description("<name>=<value>")).option
 
-  val exec: Parse[String] =
-    flag(long("exec-path") |+| description("<path>")) // FIX fork on arg terminator vs option
+  val exec: Parse[Option[String]] =
+    flag[String](long("exec-path") |+| description("<path>")).option
 
   val html: Parse[GitCommand] =
     terminator(long("html-path"), GitHtmlPath)
@@ -41,6 +44,13 @@ object GitMain extends PirateMainIO[Git] {
   val info: Parse[GitCommand] =
     terminator(long("info-path"), GitInfoPath)
 
+  // Applicitive style if GitAdd |*| (switch ...) leads to invariance issues.
+  val add: Parse[GitCommand] = (switch(long("force") |+| short('f'))
+                            |@| switch(long("interactive") |+| short('i'))
+                            |@| switch(long("patch") |+| short('p'))
+                            |@| switch(long("edit") |+| short('e'))
+                            |@| arguments.many[File](metavar("paths")))(GitAdd(_, _, _, _, _))
+
   def git(cmd: Parse[GitCommand]): Parse[Git] =
     Git |*| (cwd, conf, exec, cmd)
 
@@ -49,7 +59,8 @@ object GitMain extends PirateMainIO[Git] {
      git { help } |||
      git { html } |||
      git { man } |||
-     git { info }) ~ "git" ~~
+     git { info } |||
+     git { Flags.command.of("add", add) }) ~ "git" ~~
       "This is a demo of the git command line"
 
   def run(a: Git) = a.cmd match {
@@ -72,6 +83,7 @@ class GitExample extends spec.Spec { def is = s2"""
   git --version                            $version
   git --help                               $help
   git --help status                        $helpAt
+  git add files                            $gitAdd
 
   Git Checks
   ==========
@@ -84,20 +96,23 @@ class GitExample extends spec.Spec { def is = s2"""
   def run(args: String*): ParseError \/ Git =
     Interpretter.run(GitMain.command.parse, args.toList)
 
-  // FIX make these work
-
   def version = {
     run("--version") must_==
-      GitVersion.right
-  }.pendingUntilFixed
+      Git(None, None, None, GitVersion).right
+  }
 
   def help = {
     run("--help") must_==
-      GitHelp(None).right
-  }.pendingUntilFixed
+      Git(None, None, None, GitHelp(None)).right
+  }
 
   def helpAt = {
     run("--help", "status") must_==
-      GitHelp(Some("status")).right
-  }.pendingUntilFixed
+      Git(None, None, None, GitHelp(Some("status"))).right
+  }
+
+  def gitAdd = {
+    run("add", "one", "two", "three", "-f", "--interactive") must_==
+      Git(None, None, None, GitAdd(true, true, false, false, List(new File("one"), new File("two"), new File("three")))).right
+  }
 }
