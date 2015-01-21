@@ -22,10 +22,10 @@ case class GitRm(force: Boolean, dryRun: Boolean, recurse: Boolean, cached: Bool
 
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
-    terminator(long("version"), GitVersion)
+    terminator(long("version") |+| description("A whole big description which should probably be wrapped around so one can see that the usage text looks good"), GitVersion)
 
   val help: Parse[GitCommand] =
-    terminatorx(long("help"), GitHelp.apply)
+    terminatorx(long("help") |+| metavar("COMMAND"), GitHelp.apply)
 
   val cwd: Parse[Option[String]] =
     flag[String](short('C') |+| description("<path>")).option
@@ -84,6 +84,7 @@ class GitExample extends spec.Spec { def is = s2"""
   git --version                            $version
   git --help                               $help
   git --help status                        $helpAt
+  git --help status                        $helpAtText
   git add files                            $gitAdd
   git rm --dry-run file                    $gitRm
 
@@ -109,9 +110,13 @@ class GitExample extends spec.Spec { def is = s2"""
   }
 
   def helpAt = {
-    run("--help", "status") must_==
-      Git(None, None, None, GitHelp(Some("status"))).right
+    run("--help", "add") must_==
+      Git(None, None, None, GitHelp(Some("add"))).right
   }
+
+  def helpAtText = {
+    Usage.print(GitMain.command) must_== ""
+  }.pendingUntilFixed
 
   def gitAdd = {
     run("add", "one", "two", "three", "-f", "--interactive") must_==
@@ -119,7 +124,7 @@ class GitExample extends spec.Spec { def is = s2"""
   }
 
   def gitRm = {
-    run("rm", "--dry-run", "file") must_==
-      Git(None, None, None, GitRm(false, true, false, false, List(new File("file")))).right
+    run("rm", "--dry-run", "file", "-c", "thing") must_==
+      Git(None, Some("thing"), None, GitRm(false, true, false, false, List(new File("file")))).right
   }
 }

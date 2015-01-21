@@ -9,10 +9,10 @@ object Usage {
     printWith(command, DefaultUsageMode)
 
   def printWith[A](command: Command[A], mode: UsageMode): String =
-    Render.infos(command.name, command.description, info(command), mode: UsageMode)
+    Render.infos(command.name, command.description, info(command.parse), mode)
 
-  def info[A](command: Command[A]): List[Info] =
-    ParseTraversal.treeTraverse(command.parse, new TreeTraverseF[Option[Info]] {
+  def info[A](parse: Parse[A]): List[Info] =
+    ParseTraversal.treeTraverse(parse, new TreeTraverseF[Option[Info]] {
       def run[X](info: OptHelpInfo, p: Parser[X]): Option[Info] =
         flags(p, info)
     }) match {
@@ -22,11 +22,11 @@ object Usage {
 
   def flags[X](p: Parser[X], info: OptHelpInfo): Option[Info] = p match {
     case SwitchParser(meta, a) => if (meta.visible)
-      Some(Info(SwitchInfo(meta.names.get, meta.description) :: Nil, Nil, Nil, Nil)) else None
+      Some(Info(SwitchInfo(meta.names.get, meta.description, info.dfault) :: Nil, Nil, Nil, Nil)) else None
     case FlagParser(meta, p) => if (meta.visible)
       Some(Info(Nil, FlagInfo(meta.names.get, meta.description, meta.metavar, info.dfault) :: Nil, Nil, Nil)) else None
     case CommandParser(name, p) =>
-      Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil))
+      Some(Info(Nil, Nil, Nil, CommandInfo(name, None, Usage.info(p)) :: Nil))
     case ArgumentParser(m, p) =>
       Some(Info(Nil, Nil, ArgumentInfo(m.metavar) :: Nil, Nil))
   }
@@ -36,24 +36,25 @@ object Render {
   import Text._
 
   def infos(name: String, description: Option[String], is: List[Info], mode: UsageMode): String =
-    is.map(info(name, description, _, mode)).mkString("\n")
+    is.map(info(name, description, _, mode).full).mkString("\n")
 
-  def info(name: String, description: Option[String], i: Info, mode: UsageMode): String = {
+  case class info(name: String, description: Option[String], i: Info, mode: UsageMode) {
     val flagspace = space(mode.flagIndent)
 
     def synopsis =
       if (mode.condenseSynopsis)
         "[OPTIONS] " + i.arguments.map(_.meta).mkString(" ")
       else
-        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.meta)) ++ i.arguments.flatMap(_.meta)).mkString(" ")
+        (i.switches.map(f => flag(f.flag) |> mDfault(f.dfault)) ++ i.flags.map(o => option(o.flag, o.meta) |> mDfault(o.dfault)) ++ i.arguments.flatMap(_.meta)).mkString(" ")
 
     def flaginfo(f: SwitchInfo): String =
-      flag(f.flag) + "\n" +
-        wrap(f.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+      wrap(flag(f.flag), mode.flagIndent)(f.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def optioninfo(o: FlagInfo): String =
-      option(o.flag, o.meta) + "\n" +
-        wrap(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+      wrap(option(o.flag, o.meta), mode.flagIndent)(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+
+    def commandinfo(c: CommandInfo): String =
+      c.info.map(in => wrap(c.name, mode.flagIndent)(info(c.name, None, in, mode).synopsis, mode.width - mode.descIndent, mode.descIndent)).mkString("\n")
 
     def flag(f: Name): String = f match {
       case ShortName(s) => s"-${s}"
@@ -62,14 +63,27 @@ object Render {
     }
 
     def option(f: Name, meta: Option[String]): String =
-      flag(f) + " " + meta.cata(x => x, "")
+      flag(f) + meta.cata(x => " " + x, "")
 
-    s"""|Usage:
+    def mDfault(mark: Boolean)(opt: String): String =
+      if (mark) s"[${opt}]" else opt
+
+    def availableOptions = if (i.switches.length == 0) "" else
+      s"""|Available options:
+          |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+          |""".stripMargin
+
+    def availableCommands = if (i.commands.length == 0) "" else
+      s"""|Available commands:
+          |${flagspace}${(i.commands.map(commandinfo)).mkString("\n" + flagspace)}
+          |""".stripMargin
+
+    def full = s"""|Usage:
         |${flagspace}${name} ${synopsis}
         |
         |${description.map(_ + "\n").getOrElse("")}
-        |Options:
-        |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+        |${availableOptions}
+        |${availableCommands}
         |""".stripMargin
   }
 }
@@ -82,10 +96,10 @@ case class Info(
   commands: List[CommandInfo]
 )
 
-case class SwitchInfo(flag: Name, description: Option[String])
+case class SwitchInfo(flag: Name, description: Option[String], dfault: Boolean)
 case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], dfault: Boolean)
 case class ArgumentInfo(meta: Option[String])
-case class CommandInfo(name: String, description: Option[String])
+case class CommandInfo(name: String, description: Option[String], info: List[Info])
 object Info {
   implicit def InfoMonoid: Monoid[Info] = new Monoid[Info] {
     def zero = Info(Nil, Nil, Nil, Nil)
@@ -114,8 +128,8 @@ case class UsageMode(
  */
 object DefaultUsageMode extends UsageMode(
   condenseSynopsis = false,
-  flagIndent = 8,
-  descIndent = 16,
+  flagIndent = 2,
+  descIndent = 26,
   width = 80,
   tightOneOrManySynopsis = true
 )

@@ -9,12 +9,13 @@ object Text {
   /**
    * Wrap text at width. Prepend an indent on each line of indent.
    */
-  def wrap(text: String, width: Int, indent: Int): String = {
+  def wrap(firstText: String, flagIndent: Int)(text: String, width: Int, indent: Int): String = {
     val spacer = space(indent)
+    val firstSpacer = space(Math.min(1,indent - firstText.length - flagIndent))
 
     // Add 1 for hyphen + newline
     val sb = new StringBuilder(text.length + (text.length / width * (spacer.length + 2)))
-    val s = spacer + text
+    val s = firstText + firstSpacer + text
 
     @annotation.tailrec
     def wrapit(o: Int, w: Int): Unit = {
@@ -34,7 +35,7 @@ object Text {
     }
 
     // Use a bullshit offset because String.substring() copies a new array on Java 1.7+
-    wrapit(0, width)
+    wrapit(0, width + indent)
     sb.toString()
   }
 }

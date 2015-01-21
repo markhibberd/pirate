@@ -21,11 +21,11 @@ class TextSpec extends spec.Spec { def is = s2"""
 
   def length = prop((n: SmallInt) => space(n.value).length == n.value)
 
-  def width = prop((l: LongLine) => wrap(l.value, 80, 0).split('\n').forall(_.length <= 80))
+  def width = prop((l: LongLine) => wrap("", 0)(l.value, 80, 0).split('\n').forall(_.length <= 80))
 
-  def indent = prop((l: LongLine) => wrap(l.value, 80, 10).split('\n').forall(_.length <= 90))
+  def indent = prop((l: LongLine) => wrap("", 0)(l.value, 80, 10).split('\n').forall(_.length <= 90))
 
-  def safe = prop((l: LongLine) => drains(l.value, wrap(l.value, 80, 0)))
+  def safe = prop((l: LongLine) => drains(l.value, wrap("", 0)(l.value, 80, 0)))
 
   def drains(orig: String, modded: String): Boolean = {
     var i = 0
