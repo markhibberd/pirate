@@ -11,7 +11,7 @@ object Text {
    */
   def wrap(firstText: String, flagIndent: Int)(text: String, width: Int, indent: Int): String = {
     val spacer = space(indent)
-    val firstSpacer = space(Math.min(1,indent - firstText.length - flagIndent))
+    val firstSpacer = space(Math.max(1,indent - firstText.length - flagIndent))
 
     // Add 1 for hyphen + newline
     val sb = new StringBuilder(text.length + (text.length / width * (spacer.length + 2)))
