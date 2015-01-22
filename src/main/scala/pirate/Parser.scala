@@ -10,8 +10,8 @@ sealed trait Parser[A] {
       FlagParser(meta, p.map(f))
     case ArgumentParser(meta, p) =>
       ArgumentParser(meta, p.map(f))
-    case CommandParser(name, p) =>
-      CommandParser(name, p.map(f))
+    case CommandParser(sub) =>
+      CommandParser(sub.copy(parse = sub.parse.map(f)))
   }
 
   def isArg: Boolean = this match {
@@ -23,7 +23,7 @@ sealed trait Parser[A] {
 case class SwitchParser[A](meta: Metadata, a: A) extends Parser[A]
 case class FlagParser[A](meta: Metadata, p: Read[A]) extends Parser[A]
 case class ArgumentParser[A](meta: Metadata, p: Read[A]) extends Parser[A]
-case class CommandParser[A](name: String, p: Parse[A]) extends Parser[A]
+case class CommandParser[A](sub: Command[A]) extends Parser[A]
 
 object Parser {
   implicit def ParserFunctor: Functor[Parser] = new Functor[Parser] {

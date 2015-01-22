@@ -25,7 +25,7 @@ trait Flags {
       parse(ArgumentParser(meta, Read.of[A])) ||| ValueParse(None)
 
     def some[A: Read](meta: Metadata): Parse[List[A]] = for {
-      a <- one(meta.copy(metavar = meta.metavar.map(_ + "...")))
+      a <- one(meta)
       b <- many(meta)
     } yield (a :: b)
 
@@ -34,8 +34,8 @@ trait Flags {
   }
 
   object command {
-    def of[A](name: String, p: Parse[A]): Parse[A] =
-      parse(CommandParser(name, p)) ||| ValueParse(None)
+    def of[A](sub: Command[A]): Parse[A] =
+      parse(CommandParser(sub)) ||| ValueParse(None)
   }
 
 

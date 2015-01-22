@@ -120,10 +120,10 @@ object ParseTraversal {
         case \/-((Nil, a)) => Some(a.pure[StateArg])
         case \/-((_ :: _, _)) => None
       }
-    case CommandParser(name, p) =>
-      if (name === arg)
+    case CommandParser(sub) =>
+      if (sub.name === arg)
         StateT[P, List[String], A](args =>
-          runParser(SkipOpts, p, args).map(_.swap)).pure[Option]
+          runParser(SkipOpts, sub.parse, args).map(_.swap)).pure[Option]
       else
         None
     case _ =>

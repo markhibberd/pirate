@@ -22,25 +22,25 @@ case class GitRm(force: Boolean, dryRun: Boolean, recurse: Boolean, cached: Bool
 
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
-    terminator(long("version") |+| description("A whole big description which should probably be wrapped around so one can see that the usage text looks good"), GitVersion)
+    terminator(long("version") |+| description("Prints the Git suite version that the git program came from."), GitVersion)
 
   val help: Parse[GitCommand] =
-    terminatorx(long("help") |+| metavar("COMMAND"), GitHelp.apply)
+    terminatorx(long("help") |+| description("Prints the synopsis and a list of the most commonly used commands. If the option --all or -a is given then all available commands are printed. If a Git command is named this option will bring up the manual page for that command."), GitHelp.apply)
 
   val cwd: Parse[Option[String]] =
-    flag[String](short('C') |+| description("<path>")).option
+    flag[String](short('C') |+| metavar("<path>") |+| description("Run as if git was started in <path> instead of the current working directory.")).option
 
   val conf: Parse[Option[String]] =
-    flag[String](short('c') |+| description("<name>=<value>")).option
+    flag[String](short('c') |+| metavar("<name>=<value>") |+| description("Pass a configuration parameter to the command.")).option
 
   val exec: Parse[Option[String]] =
-    flag[String](long("exec-path") |+| description("<path>")).option
+    flag[String](long("exec-path") |+| metavar("<path>") |+| description("Path to wherever your core Git programs are installed.")).option
 
   val html: Parse[GitCommand] =
-    terminator(long("html-path"), GitHtmlPath)
+    terminator(long("html-path") |+| description("Print the path, without trailing slash, where Git's HTML documentation is installed and exit."), GitHtmlPath)
 
   val man: Parse[GitCommand] =
-    terminator(long("man-path"), GitManPath)
+    terminator(long("man-path") |+| description("Print the manpath (see man(1)) for the man pages for this version of Git and exit."), GitManPath)
 
   val info: Parse[GitCommand] =
     terminator(long("info-path"), GitInfoPath)
@@ -62,7 +62,7 @@ object GitMain extends PirateMainIO[Git] {
     Git |*| (cwd, conf, exec, cmd)
 
   val command: Command[Git] =
-    git { version ||| help ||| html ||| man ||| info ||| Flags.command.of("add", add) ||| Flags.command.of("rm", rm) } ~ "git" ~~ "This is a demo of the git command line"
+    git { version ||| help ||| html ||| man ||| info ||| Flags.command.of(add ~ "add" ~~ "Add file contents to the index") ||| Flags.command.of(rm ~ "rm" ~~ "Remove files from the working tree and from the index") } ~ "git" ~~ "This is a demo of the git command line"
 
   def run(a: Git) = a.cmd match {
     case GitVersion => IO.putStrLn("git the pirate version")
@@ -116,7 +116,7 @@ class GitExample extends spec.Spec { def is = s2"""
 
   def helpAtText = {
     Usage.print(GitMain.command) must_== ""
-  }.pendingUntilFixed
+  }
 
   def gitAdd = {
     run("add", "one", "two", "three", "-f", "--interactive") must_==
