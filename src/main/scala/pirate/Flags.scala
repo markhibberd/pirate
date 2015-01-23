@@ -38,7 +38,6 @@ trait Flags {
       parse(CommandParser(sub)) ||| ValueParse(None)
   }
 
-
   def hidden: Metadata = Metadata(None, None, None, false)
   def metavar(d: String): Metadata = Metadata(None, None, d.some, true)
   def description(d: String): Metadata = Metadata(None, d.some, None, true)

@@ -11,6 +11,14 @@ object Usage {
   def printWith[A](command: Command[A], mode: UsageMode): String =
     Render.infos(command.name, command.description, tree(command.parse), mode)
 
+  def printSub[A](command: Command[A], sub: String) =
+    printSubWith(command: Command[A], sub: String, DefaultUsageMode)
+
+  def printSubWith[A](command: Command[A], sub: String, mode: UsageMode): String =
+    Infos(tree(command.parse).flatten).commands.find(c => c.name === sub).map {
+      x => Render.infos(command.name + " " + x.name, x.description, x.info, mode)
+    }.getOrElse("Invalid subcommand")
+
   def tree[A](parse: Parse[A]): ParseTree[Info] =
     ParseTraversal.treeTraverse(parse, new TreeTraverseF[Info] {
       def run[X](info: OptHelpInfo, p: Parser[X]): Info =

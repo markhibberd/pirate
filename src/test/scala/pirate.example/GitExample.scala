@@ -25,7 +25,7 @@ object GitMain extends PirateMainIO[Git] {
     terminator(long("version") |+| short('v') |+| description("Prints the Git suite version that the git program came from."), GitVersion)
 
   val help: Parse[GitCommand] =
-    terminatorx(long("help") |+| description("Prints the synopsis and a list of the most commonly used commands. If the option --all or -a is given then all available commands are printed. If a Git command is named this option will bring up the manual page for that command."), GitHelp.apply)
+    terminatorx(long("help") |+| description("Prints the synopsis and a list of the most commonly used commands. If a Git command is named this option will bring up the manual page for that command."), GitHelp.apply)
 
   val cwd: Parse[Option[String]] =
     flag[String](short('C') |+| metavar("<path>") |+| description("Run as if git was started in <path> instead of the current working directory.")).option
@@ -71,7 +71,7 @@ object GitMain extends PirateMainIO[Git] {
     case GitInfoPath => IO.putStrLn("info-path")
     case GitHelp(x) => x match {
       case None => IO.putStrLn(Usage.print(command))
-      case Some(c) => sys.error("Implement sub-command usage printing.")
+      case Some(c) => IO.putStrLn(Usage.printSub(command, c))
     }
   }
 }
@@ -83,8 +83,9 @@ class GitExample extends spec.Spec { def is = s2"""
 
   git --version                            $version
   git --help                               $help
-  git --help status                        $helpAt
-  git --help status help text              $helpAtText
+  git --help text                          $helpText
+  git --help add                           $helpAdd
+  git --help add text                      $helpAddText
   git add files                            $gitAdd
   git rm --dry-run file                    $gitRm
 
@@ -109,13 +110,17 @@ class GitExample extends spec.Spec { def is = s2"""
       Git(None, Some("thing"), None, GitHelp(None)).right
   }
 
-  def helpAt = {
+  def helpAdd = {
     run("--help", "add") must_==
       Git(None, None, None, GitHelp(Some("add"))).right
   }
 
-  def helpAtText = {
+  def helpText = {
     Usage.print(GitMain.command) must_== ""
+  }
+
+  def helpAddText = {
+    Usage.printSub(GitMain.command, "add") must_== ""
   }
 
   def gitAdd = {

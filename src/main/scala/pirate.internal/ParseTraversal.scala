@@ -17,7 +17,6 @@ object ParseTraversal {
       case (_, xs)  => errorMessageP("left over arguments: " + xs)
     })
 
-
   def zeroP[A]: P[A] =
     errorP(ParseErrorNoMessage)
 
