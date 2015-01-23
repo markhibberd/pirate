@@ -22,7 +22,7 @@ case class GitRm(force: Boolean, dryRun: Boolean, recurse: Boolean, cached: Bool
 
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
-    terminator(long("version") |+| description("Prints the Git suite version that the git program came from."), GitVersion)
+    terminator(long("version") |+| short('v') |+| description("Prints the Git suite version that the git program came from."), GitVersion)
 
   val help: Parse[GitCommand] =
     terminatorx(long("help") |+| description("Prints the synopsis and a list of the most commonly used commands. If the option --all or -a is given then all available commands are printed. If a Git command is named this option will bring up the manual page for that command."), GitHelp.apply)
@@ -50,13 +50,13 @@ object GitMain extends PirateMainIO[Git] {
                             |@| switch(long("interactive") |+| short('i'))
                             |@| switch(long("patch") |+| short('p'))
                             |@| switch(long("edit") |+| short('e'))
-                            |@| arguments.many[File](metavar("paths")))(GitAdd(_, _, _, _, _))
+                            |@| arguments.many[File](metavar("paths")))(GitAdd)
 
   val rm: Parse[GitCommand] = (switch(long("force") |+| short('f'))
                             |@| switch(long("dry-run") |+| short('n'))
                             |@| switch(short('r'))
                             |@| switch(long("cached"))
-                            |@| arguments.many[File](metavar("paths")))(GitRm(_, _, _, _, _))
+                            |@| arguments.many[File](metavar("paths")))(GitRm)
 
   def git(cmd: Parse[GitCommand]): Parse[Git] =
     Git |*| (cwd, conf, exec, cmd)
@@ -84,7 +84,7 @@ class GitExample extends spec.Spec { def is = s2"""
   git --version                            $version
   git --help                               $help
   git --help status                        $helpAt
-  git --help status                        $helpAtText
+  git --help status help text              $helpAtText
   git add files                            $gitAdd
   git rm --dry-run file                    $gitRm
 
