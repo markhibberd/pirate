@@ -8,6 +8,12 @@ trait Flags {
   private def parse[A](p: Parser[A]): Parse[A] =
     ParserParse(p)
 
+  def helper =
+    abort(short('h') |+| long("help") |+| description("Show help message"), ShowHelpText)
+
+  def abort(meta: Metadata, error: ReadError): Parse[Option[Unit]] =
+    parse(FlagParser(meta, Read.error(error))).option
+
   def terminator[A](meta: Metadata, a: A): Parse[A] =
     parse(SwitchParser(meta, a))
 

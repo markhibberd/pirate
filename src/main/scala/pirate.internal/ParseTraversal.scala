@@ -81,6 +81,11 @@ object ParseTraversal {
         )
     }, p)
 
+  def toParseError(r: ReadError): ParseError = r match {
+    case ShowHelpText => ParseErrorShowHelpText
+    case e            => ParseErrorMessage(e.toString)
+  }
+
   def update[A](run: List[String] => P[(List[String], A)]): StateArg[A] =
     StateT[P, List[String], A](run)
 
@@ -97,13 +102,13 @@ object ParseTraversal {
         case ShortParsedName(c) =>
           meta.hasShort(c).option(
             update[A](args => p.read(w.value.toList ++ args) match {
-              case -\/(e) => errorP(ParseErrorMessage(e.toString))
+              case -\/(e) => errorP(toParseError(e))
               case \/-(r) => r.pure[P]
             }))
         case LongParsedName(s) =>
           meta.hasLong(s).option(
             update[A](args => p.read(w.value.toList ++ args) match {
-              case -\/(e) => errorP(ParseErrorMessage(e.toString))
+              case -\/(e) => errorP(toParseError(e))
               case \/-(r) => r.pure[P]
             }))
       }

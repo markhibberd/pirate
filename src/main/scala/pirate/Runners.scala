@@ -12,6 +12,9 @@ trait Runners {
         case ParseErrorNoMessage => IO {
           Console.err.print(Usage.print(command))
         }
+        case ParseErrorShowHelpText => IO {
+          Console.err.print(Usage.print(command))
+        }
         case ParseErrorMessage(s) => IO {
           Console.err.println(s)
           Console.err.print(Usage.print(command))

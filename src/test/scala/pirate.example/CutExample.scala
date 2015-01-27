@@ -34,7 +34,7 @@ object CutMain extends PirateMainIO[Cut] {
   )).map(x => x)
 
   def command: Command[Cut] =
-    (byte ||| char ||| field) ~ "cut" ~~
+    (helper *> (byte ||| char ||| field)) ~ "cut" ~~
      "This is a demo of the unix cut utlity"
 
   def run(c: Cut) = c match {
@@ -61,6 +61,7 @@ class CutExample extends spec.Spec { def is = s2"""
   cut -f 7 -d x -s seven                   $delimSupress
   cut -f 7 -s -d x seven                   $supressDelim
   cut -b 1 many files                      $manyFiles
+  cut -b 1 one --help                      $validButWithHelp
 
   Cut Checks
   ==========
@@ -108,4 +109,7 @@ class CutExample extends spec.Spec { def is = s2"""
   def manyFiles = 
     run("-b", "1", "many", "files") must_==
       ByteCut("1", true, List(new File("many"), new File("files"))).right
+
+  def validButWithHelp =
+    run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText.left
 }
