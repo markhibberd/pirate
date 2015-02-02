@@ -6,27 +6,48 @@ object Flags extends Flags
 
 trait Flags {
   private def parse[A](p: Parser[A]): Parse[A] =
-    ParserParse(p, Metadata(None, true))
+    ParserParse(p)
 
-  def terminator[A](n: Name, a: A): Parse[A] =
-    parse(SwitchParser(n, a))
+  def helper =
+    abort(short('h') |+| long("help") |+| description("Show help message"), ShowHelpText)
 
-  def terminatorx[A: Read, B](n: Name, f: Option[A] => B): Parse[B] =
-    parse(FlagParser(n, List(), Read.of[A].option).map(f))
+  def abort(meta: Metadata, error: ReadError): Parse[Option[Unit]] =
+    parse(FlagParser(meta, Read.error(error))).option
 
-  def switch(n: Name): Parse[Boolean] =
-    parse(SwitchParser(n, true)) ||| false.pure[Parse]
+  def terminator[A](meta: Metadata, a: A): Parse[A] =
+    parse(SwitchParser(meta, a))
 
-  def flag[A: Read](n: Name, meta: String): Parse[A] =
-    parse(FlagParser(n, List(meta), Read.of[A])) ||| ValueParse(None)
+  def terminatorx[A: Read, B](meta: Metadata, f: Option[A] => B): Parse[B] =
+    parse(FlagParser(meta, Read.of[A].option).map(f))
+
+  def switch(meta: Metadata): Parse[Boolean] =
+    parse(SwitchParser(meta, true)) ||| false.pure[Parse]
+
+  def flag[A: Read](meta: Metadata): Parse[A] =
+    parse(FlagParser(meta, Read.of[A])) ||| ValueParse(None)
 
   object arguments {
-    def one[A: Read](meta: String): Parse[A] =
-      parse(ArgumentParser(Read.of[A])) ||| ValueParse(None)
+    def one[A: Read](meta: Metadata): Parse[A] =
+      parse(ArgumentParser(meta, Read.of[A])) ||| ValueParse(None)
+
+    def some[A: Read](meta: Metadata): Parse[List[A]] = for {
+      a <- one(meta)
+      b <- many(meta)
+    } yield (a :: b)
+
+    def many[A: Read](meta: Metadata): Parse[List[A]] =
+      some(meta) ||| ValueParse(Some(Nil))
   }
 
   object command {
-    def of[A](name: String, p: Parse[A]): Parse[A] =
-      parse(CommandParser(name, p)) ||| ValueParse(None)
+    def of[A](sub: Command[A]): Parse[A] =
+      parse(CommandParser(sub)) ||| ValueParse(None)
   }
+
+  def hidden: Metadata = Metadata(None, None, None, false)
+  def metavar(d: String): Metadata = Metadata(None, None, d.some, true)
+  def description(d: String): Metadata = Metadata(None, d.some, None, true)
+  implicit def NameSyntax(n: Name): Metadata = Metadata(n.some, None, None, true)
+  def short(s: Char) = Metadata(ShortName(s).some, None, None, true)
+  def long(l: String) = Metadata(LongName(l).some, None, None, true)
 }

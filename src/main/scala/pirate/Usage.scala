@@ -9,51 +9,78 @@ object Usage {
     printWith(command, DefaultUsageMode)
 
   def printWith[A](command: Command[A], mode: UsageMode): String =
-    Render.infos(command.name, command.description, info(command), mode: UsageMode)
+    Render.infos(command.name, command.description, tree(command.parse), mode)
 
-  def info[A](command: Command[A]): List[Info] =
-    ParseTraversal.treeTraverse(command.parse, new TreeTraverseF[Option[Info]] {
-      def run[X](info: OptHelpInfo, p: Parser[X], m: Metadata): Option[Info] =
-        flags(p, m, info)
-    }) match {
-      case ParseTreeAlt(children) => children.map(_.flatten.flatten.suml)
-      case x => List(x.flatten.flatten.suml)
-    }
+  def printSub[A](command: Command[A], sub: String) =
+    printSubWith(command: Command[A], sub: String, DefaultUsageMode)
 
-  def flags[X](p: Parser[X], m: Metadata, info: OptHelpInfo): Option[Info] = p match {
-    case SwitchParser(flag, a) if m.visible =>
-      Some(Info(SwitchInfo(flag, m.description) :: Nil, Nil, Nil, Nil))
-    case FlagParser(flag, metas, p) if m.visible =>
-      Some(Info(Nil, FlagInfo(flag, m.description, metas, info.dfault) :: Nil, Nil, Nil))
-    case CommandParser(name, p) if m.visible =>
-      Some(Info(Nil, Nil, Nil, CommandInfo(name, None) :: Nil))
-    case ArgumentParser(p) =>
-      Some(Info(Nil, Nil, ArgumentInfo(Nil) :: Nil, Nil))
+  def printSubWith[A](command: Command[A], sub: String, mode: UsageMode): String =
+    Infos(tree(command.parse).flatten).commands.find(c => c.name === sub).map {
+      x => Render.infos(command.name + " " + x.name, x.description, x.info, mode)
+    }.getOrElse("Invalid subcommand")
+
+  def tree[A](parse: Parse[A]): ParseTree[Info] =
+    ParseTraversal.treeTraverse(parse, new TreeTraverseF[Info] {
+      def run[X](info: OptHelpInfo, p: Parser[X]): Info =
+        flags(p, info)
+    })
+
+  def flags[X](p: Parser[X], info: OptHelpInfo): Info = p match {
+    case SwitchParser(meta, a) =>
+      SwitchInfo(meta.names.get, meta.description, info.dfault)
+    case FlagParser(meta, p) =>
+      FlagInfo(meta.names.get, meta.description, meta.metavar, info.dfault)
+    case CommandParser(sub) =>
+      CommandInfo(sub.name, sub.description, Usage.tree(sub.parse))
+    case ArgumentParser(meta, p) =>
+      ArgumentInfo(meta.metavar, meta.description, info.multi)
   }
 }
 
 object Render {
   import Text._
 
-  def infos(name: String, description: Option[String], is: List[Info], mode: UsageMode): String =
-    is.map(info(name, description, _, mode)).mkString("\n")
+  def infos(name: String, description: Option[String], is: ParseTree[Info], mode: UsageMode): String =
+    info(name, description, is, mode).full
 
-  def info(name: String, description: Option[String], i: Info, mode: UsageMode): String = {
+  case class info(name: String, description: Option[String], tree: ParseTree[Info], mode: UsageMode) {
     val flagspace = space(mode.flagIndent)
+    val i = Infos(tree.flatten)
 
     def synopsis =
       if (mode.condenseSynopsis)
-        "[OPTIONS] " + i.arguments.map(_.meta).mkString(" ")
-      else
-        (i.switches.map(f => flag(f.flag)) ++ i.flags.map(o => option(o.flag, o.metas)) ++ i.arguments.map(_.meta)).mkString(" ")
+        "[OPTIONS] " + i.arguments.map(argx).mkString(" ")
+      else {
+        foldTree(tree)
+      }
+
+    def foldTree(x: ParseTree[Info]): String = x match {
+      case ParseTreeLeaf(value) => anyInfo(value)
+      case ParseTreeAp(children) => children.map(foldTree).mkString(" ")
+      case ParseTreeAlt(children) => children.filterNot(_.flatten.isEmpty).map(foldTree) match {
+        case l  :: Nil => l
+        case ls        => "(" + ls.mkString(" | ") + ")"
+      }
+    }
+
+    def anyInfo(i: Info): String = i match {
+      case f: SwitchInfo   => flagO(f.flag) |> mDfault(f.dfault)
+      case o: FlagInfo     => option(o.flag, o.meta) |> mDfault(o.dfault)
+      case a: ArgumentInfo => argx(a)
+      case c: CommandInfo  => c.name + " ARGS..."
+    }
+
+    def argx(a: ArgumentInfo): String =
+      a.meta.cata(x => x , "ARG") ++ { if (a.multi) "..." else "" }
 
     def flaginfo(f: SwitchInfo): String =
-      flag(f.flag) + "\n" +
-        wrap(f.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+      wrap(flag(f.flag), mode.flagIndent)(f.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def optioninfo(o: FlagInfo): String =
-      option(o.flag, o.metas) + "\n" +
-        wrap(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+      wrap(option(o.flag, o.meta), mode.flagIndent)(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+
+    def commandinfo(c: CommandInfo): String =
+      wrap(c.name, mode.flagIndent)(c.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def flag(f: Name): String = f match {
       case ShortName(s) => s"-${s}"
@@ -61,38 +88,51 @@ object Render {
       case BothName(s, l) => s"-${s}|--${l}"
     }
 
-    def option(f: Name, metas: List[String]): String =
-      flag(f) + " " + metas.mkString(" ")
+    def flagO(f: Name): String = f match {
+      case ShortName(s) => s"-${s}"
+      case LongName(l) => s"--${l}"
+      case BothName(s, l) => s"(-${s}|--${l})"
+    }
 
-    s"""|Usage:
-        |${flagspace}${name} ${synopsis}
+    def option(f: Name, meta: Option[String]): String =
+      flag(f) + meta.cata(x => " " + x, "")
+
+    def mDfault(mark: Boolean)(opt: String): String =
+      if (mark) s"[${opt}]" else opt
+
+    def availableOptions = if (i.switches.length == 0) "" else
+      s"""|Available options:
+          |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+          |""".stripMargin
+
+    def availableCommands = if (i.commands.length == 0) "" else
+      s"""|Available commands:
+          |${flagspace}${(i.commands.map(commandinfo)).mkString("\n" + flagspace)}
+          |""".stripMargin
+
+    def full = s"""|Usage:
+        |${flagspace}${wrap(name,mode.flagIndent)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
         |
         |${description.map(_ + "\n").getOrElse("")}
-        |Options:
-        |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+        |${availableOptions}
+        |${availableCommands}
         |""".stripMargin
   }
 }
 
 
-case class Info(
-  switches: List[SwitchInfo],
-  flags: List[FlagInfo],
-  arguments: List[ArgumentInfo],
-  commands: List[CommandInfo]
-)
-
-case class SwitchInfo(flag: Name, description: Option[String])
-case class FlagInfo(flag: Name, description: Option[String], metas: List[String], dfault: Boolean)
-case class ArgumentInfo(meta: List[String])
-case class CommandInfo(name: String, description: Option[String])
-object Info {
-  implicit def InfoMonoid: Monoid[Info] = new Monoid[Info] {
-    def zero = Info(Nil, Nil, Nil, Nil)
-    def append(i1: Info, i2: => Info) = Info(i1.switches ++ i2.switches, i1.flags ++ i2.flags, i1.arguments ++ i2.arguments, i1.commands ++ i2.commands)
-  }
+case class Infos(l: List[Info]) {
+  def switches  = l.collect { case a: SwitchInfo   => a }
+  def flags     = l.collect { case a: FlagInfo     => a }
+  def arguments = l.collect { case a: ArgumentInfo => a }
+  def commands  = l.collect { case a: CommandInfo  => a }
 }
 
+sealed trait Info
+case class SwitchInfo(flag: Name, description: Option[String], dfault: Boolean) extends Info
+case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], dfault: Boolean) extends Info
+case class ArgumentInfo(meta: Option[String], description: Option[String], multi: Boolean) extends Info
+case class CommandInfo(name: String, description: Option[String], info: ParseTree[Info]) extends Info
 
 /**
  * Usage mode provides configuration options for generating
@@ -114,8 +154,8 @@ case class UsageMode(
  */
 object DefaultUsageMode extends UsageMode(
   condenseSynopsis = false,
-  flagIndent = 8,
-  descIndent = 16,
+  flagIndent = 2,
+  descIndent = 26,
   width = 80,
   tightOneOrManySynopsis = true
 )

@@ -9,8 +9,8 @@ sealed trait Parse[A] {
   def map[B](f: A => B): Parse[B] = this match {
     case ValueParse(o) =>
       ValueParse(o.map(f))
-    case ParserParse(p, m) =>
-      ParserParse(p.map(f), m)
+    case ParserParse(p) =>
+      ParserParse(p.map(f))
     case ApParse(k, a) =>
       ApParse(k.map(ff => ff.map(f)), a)
     case AltParse(a, b) =>
@@ -33,10 +33,11 @@ sealed trait Parse[A] {
 
   def not(implicit ev: A =:= Boolean): Parse[Boolean] =
     map(!_)
+
 }
 
 case class ValueParse[A](m: Option[A]) extends Parse[A]
-case class ParserParse[A](p: Parser[A], m: Metadata) extends Parse[A]
+case class ParserParse[A](p: Parser[A]) extends Parse[A]
 case class ApParse[A, B](f: Parse[A => B], a: Parse[A]) extends Parse[B]
 case class AltParse[A](a: Parse[A], b: Parse[A]) extends Parse[A]
 case class BindParse[A, B](f: A => Parse[B], a: Parse[A]) extends Parse[B]

@@ -33,22 +33,22 @@ class ReadSpec extends spec.Spec { def is = s2"""
 """
 
   def file =
-    Read.parse[File](List("some/file")).toOption must_== Some(new File("some/file"))
+    Read.parse[File](List("some/file")).toOption ==== Some(new File("some/file"))
 
   def uri =
-    Read.parse[URI](List("http://some/file")).toOption must_== Some(new URI("http://some/file"))
+    Read.parse[URI](List("http://some/file")).toOption ==== Some(new URI("http://some/file"))
 
   def url =
-    Read.parse[URL](List("http://some/file")).toOption must_== Some(new URL("http://some/file"))
+    Read.parse[URL](List("http://some/file")).toOption ==== Some(new URL("http://some/file"))
 
   def charerr = prop((c: Char, d: Char, s: String ) =>
-    Read.parse[Char](List(c.toString +  d.toString + s)).toOption == None)
+    Read.parse[Char](List(c.toString +  d.toString + s)).toOption ==== None)
 
   def numericerr = prop((s: String) => !s.parseInt.isSuccess ==> {
-    Read.parse[Int](List(s)).toOption == None})
+    Read.parse[Int](List(s)).toOption ==== None})
 
   def symmetric[A: Read: Arbitrary] = prop((a: A) =>
-    Read.parse[A](List(a.toString)).toOption == Some(a))
+    Read.parse[A](List(a.toString)).toOption ==== Some(a))
 
   Read.of[Char]
   Read.of[String]
