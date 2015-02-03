@@ -1,3 +1,4 @@
+import com.ambiata.promulgate.project.ProjectPlugin.promulgate
 import sbt._
 import Keys._
 
@@ -7,7 +8,7 @@ object build extends Build {
   val pirate = Project(
     id = "pirate"
   , base = file(".")
-  , settings = Defaults.coreDefaultSettings ++ publishSettings ++ Seq[Sett](
+  , settings = Defaults.coreDefaultSettings ++ promulgate.library(s"io.mth.pirate", "ambiata-oss") ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
     , version := "1.0-M1"
@@ -32,35 +33,6 @@ object build extends Build {
         if (scalaVersion.value.contains("2.10")) Seq("com.chuusai"  % s"shapeless_${scalaVersion.value}" % "2.0.0")
         else                                     Seq("com.chuusai" %% s"shapeless"                       % "2.0.0")
       )
-    )
-  )
-
-  lazy val publishSettings = Seq(
-    publishMavenStyle := true
-    , publishArtifact in Test := false
-    , pomIncludeRepository := { _ => false }
-    , licenses := Seq("BSD-3-Clause" -> url("http://www.opensource.org/licenses/BSD-3-Clause"))
-    , homepage := Some(url("https://github.com/markhibberd/pirate"))
-    , publishTo <<= version.apply(v => {
-      val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT"))
-        Some("oss snapshots" at nexus + "content/repositories/snapshots")
-      else
-        Some("oss releases"  at nexus + "service/local/staging/deploy/maven2")
-    })
-
-    , pomExtra := (
-      <scm>
-        <url>git@github.com:markhibberd/pirate.git</url>
-        <connection>scm:git:git@github.com:markhibberd/pirate.git</connection>
-      </scm>
-      <developers>
-        <developer>
-          <id>mth</id>
-          <name>Mark Hibberd</name>
-          <url>http://mth.io</url>
-        </developer>
-      </developers>
     )
   )
 }
