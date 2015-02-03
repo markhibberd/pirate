@@ -8,10 +8,10 @@ object build extends Build {
   val pirate = Project(
     id = "pirate"
   , base = file(".")
-  , settings = Defaults.coreDefaultSettings ++ promulgate.library(s"io.mth.pirate", "ambiata-oss") ++ Seq[Sett](
+  , settings = Defaults.coreDefaultSettings ++ Seq[Sett](
       name := "pirate"
     , organization := "io.mth"
-    , version := "1.0-M1"
+    , version in ThisBuild := "1.0-M1"
     , scalaVersion := "2.11.2"
     , crossScalaVersions := Seq("2.10.4", scalaVersion.value)
     , scalacOptions := Seq(
@@ -33,6 +33,6 @@ object build extends Build {
         if (scalaVersion.value.contains("2.10")) Seq("com.chuusai"  % s"shapeless_${scalaVersion.value}" % "2.0.0")
         else                                     Seq("com.chuusai" %% s"shapeless"                       % "2.0.0")
       )
-    )
+    ) ++ promulgate.library(s"io.mth.pirate", "ambiata-oss")
   )
 }
