@@ -35,6 +35,14 @@ object Usage {
     case ArgumentParser(meta, p) =>
       ArgumentInfo(meta.metavar, meta.description, info.multi)
   }
+
+  def invalid(arg: String, isOption: Boolean) = isOption match {
+    case true  => s"Invalid option `${arg}`"
+    case false => s"Invalid argument `${arg}`"
+  }
+
+  def explain[A](args: List[String], command: Command[A], fails: ParseTree[Info]): String =
+    Render.infos((command.name :: args).mkString(" "), command.description, fails, DefaultUsageMode)
 }
 
 object Render {

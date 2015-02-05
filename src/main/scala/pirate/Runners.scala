@@ -19,6 +19,17 @@ trait Runners {
           Console.err.println(s)
           Console.err.print(Usage.print(command))
         }
+        case ParseErrorMissing(s) => IO {
+          Console.err.print(Usage.explain(args, command, s))
+        }
+        case ParseErrorInvalidOption(s) => IO {
+          Console.err.println(Usage.invalid(s, true))
+          Console.err.print(Usage.print(command))
+        }
+        case ParseErrorInvalidArgument(s) => IO {
+          Console.err.println(Usage.invalid(s, false))
+          Console.err.print(Usage.print(command))
+        }
       }
       case \/-(v) => v
     }

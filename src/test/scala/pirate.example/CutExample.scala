@@ -18,19 +18,19 @@ object CutMain extends PirateMainIO[Cut] {
   val byte: Parse[Cut] = (ByteCut |*| (
     flag[String](short('b') |+| metavar("list"))
   , switch(short('n')).not
-  , arguments.many[File](metavar("file"))
+  , arguments.some[File](metavar("file"))
   )).map(x => x)
 
   val char: Parse[Cut] = (CharCut |*| (
     flag[String](short('c') |+| metavar("list"))
-  , arguments.many[File](metavar("file"))
+  , arguments.some[File](metavar("file"))
   )).map(x => x)
 
   val field: Parse[Cut] = (FieldCut |*| (
     flag[String](short('f') |+| metavar("list"))
   , switch(short('s'))
   , flag[Char](short('d') |+| long("delimiter")).default('\t')
-  , arguments.many[File](metavar("file"))
+  , arguments.some[File](metavar("file"))
   )).map(x => x)
 
   def command: Command[Cut] =
@@ -62,6 +62,7 @@ class CutExample extends spec.Spec { def is = s2"""
   cut -f 7 -s -d x seven                   $supressDelim
   cut -b 1 many files                      $manyFiles
   cut -b 1 one --help                      $validButWithHelp
+  cut                                      $invalid
 
   Cut Checks
   ==========
@@ -112,4 +113,7 @@ class CutExample extends spec.Spec { def is = s2"""
 
   def validButWithHelp =
     run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText.left
+
+  def invalid =
+    Interpretter.run(CutMain.command.parse, nil).toEither must beLeft
 }

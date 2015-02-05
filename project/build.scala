@@ -23,6 +23,8 @@ object build extends Build {
       , "-Xlint"
       , "-Xfatal-warnings"
       ) ++ (if (scalaBinaryVersion.value != "2.10") Seq("-Ywarn-unused-import") else Seq())
+     , scalacOptions in (Compile,console) := Seq("-language:_", "-feature")
+     , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
     , libraryDependencies ++= Seq(
         "org.scalaz" %% "scalaz-core" % "7.1.0"
       , "org.scalaz" %% "scalaz-effect" % "7.1.0"

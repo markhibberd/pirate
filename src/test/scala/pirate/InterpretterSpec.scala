@@ -30,8 +30,13 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   Short option flag can come at the end of switch $flagAfterSwitch
   Position arguments work                         $positionalArgs
   Many arguments work                             $manyArgs
-  Many arguments work after a positional          $positionalFollowMany
+  Many arguments work after a positional          $positionalFollowingMany
+  Many arguments work before a positional         $manyFollowingPositional
   Some fails on empty                             $someFailsOnEmpty
+  Invalid options produces reasonable error       $invalidOpt
+  Invalid argument produces reasonable error      $invalidArg
+  Arguments which parse poorly produces reasonable error  $intArgString
+  Missing arguments produce sane errors           $missingArg
 
   Composite interpretters
   ====
@@ -56,7 +61,7 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
     run(flag[String]( short('a')), List("-a", "b")) ==== "b".right
 
   def requiredMissing =
-    run(flag[String](short('a')), List()).toEither must beLeft
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List()).toEither must beLeft
 
   def defaultFound =
     run(flag[String](short('a')).default("c"), List("-a", "b")) ==== "b".right
@@ -99,11 +104,31 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
     run(arguments.many[String](metavar("files")), "--" :: args) ==== args.right
   )
 
-  def positionalFollowMany = prop((args: List[String]) => args.length >= 1 ==> {
+  def positionalFollowingMany = prop((args: List[String]) => args.length >= 1 ==> {
     run((arguments.one[String](metavar("src")) |@| arguments.many[String](metavar("dst")))(_ -> _), "--" :: args) ==== (args.head, args.tail).right
   })
 
+  def manyFollowingPositional = prop((args: List[String]) => args.length >= 1 ==> {
+    run((arguments.many[String](metavar("dst")) |@| arguments.one[String](metavar("src")))(_ -> _), "--" :: args) ==== (args.init, args.last).right
+  }).pendingUntilFixed
+
   def someFailsOnEmpty = run(arguments.some[String](metavar("files")), List()).toEither must beLeft
+
+  def invalidOpt = {
+    run(flag[String](short('a')), List("-c")) ==== ParseErrorInvalidOption("-c").left
+  }
+
+  def invalidArg = {
+    run(flag[String](short('a')), List("file.txt")) ==== ParseErrorInvalidArgument("file.txt").left
+  }
+
+  def intArgString = {
+    run(arguments.one[Int](metavar("src")), List("file.txt")) ==== ParseErrorMessage("Error parsing `file.txt` as `Int`").left
+  }
+
+  def missingArg = {
+    run(arguments.one[Int](metavar("src")), Nil).toEither must beLeft
+  }
 
   def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
     run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameOne.s}")) must_== TestA.right

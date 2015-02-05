@@ -56,7 +56,7 @@ object GitMain extends PirateMainIO[Git] {
                             |@| switch(long("dry-run") |+| short('n'))
                             |@| switch(short('r'))
                             |@| switch(long("cached"))
-                            |@| arguments.many[File](metavar("paths")))(GitRm)
+                            |@| arguments.some[File](metavar("paths")))(GitRm)
 
   def git(cmd: Parse[GitCommand]): Parse[Git] =
     Git |*| (cwd, conf, exec, cmd)
