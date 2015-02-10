@@ -42,7 +42,11 @@ object Usage {
   }
 
   def explain[A](args: List[String], command: Command[A], fails: ParseTree[Info]): String =
-    Render.infos((command.name :: args).mkString(" "), command.description, fails, DefaultUsageMode)
+    explainWith[A](args, command, fails, DefaultUsageMode)
+
+  def explainWith[A](args: List[String], command: Command[A], fails: ParseTree[Info], mode: UsageMode): String = {
+    Render.info((command.name :: args).mkString(" "), command.description, fails, mode).partial
+  }
 }
 
 object Render {
@@ -124,6 +128,13 @@ object Render {
         |${description.map(_ + "\n").getOrElse("")}
         |${availableOptions}
         |${availableCommands}
+        |""".stripMargin
+
+    def partial = s"""|Missing parameters. 
+        |Usage:
+        |${flagspace}${wrap(name,mode.flagIndent)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
+        |
+        |${description.map(_ + "\n").getOrElse("")}
         |""".stripMargin
   }
 }

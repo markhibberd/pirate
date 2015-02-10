@@ -2,6 +2,7 @@ package pirate
 
 import org.scalacheck.{Arbitrary, Gen}, Arbitrary.arbitrary
 import Pirate._
+import pirate.internal._
 import scalaz._, Scalaz._, scalaz.scalacheck.ScalaCheckBinding._
 
 sealed trait TestCommand
@@ -17,7 +18,10 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   Basic interpretters
   ====
   Required found                                  $requiredFound
-  Required missing                                $requiredMissing
+  Required missing applicitives both              $requiredMissingA
+  Required missing applicitives first             $requiredMissingB
+  Required missing applicitives second            $requiredMissingC
+  Two alternattives missing                       $requiredMissingAlts
   Default found                                   $defaultFound
   Default missing                                 $defaultMissing
   Option found                                    $optionFound
@@ -60,8 +64,17 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   def requiredFound =
     run(flag[String]( short('a')), List("-a", "b")) ==== "b".right
 
-  def requiredMissing =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List()).toEither must beLeft
+  def requiredMissingA =
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false))))))
+
+  def requiredMissingB =
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false))))))
+
+  def requiredMissingC =
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false))))))
+
+  def requiredMissingAlts =
+    run(flag[String](short('a')) ||| flag[String](short('b')), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAlt(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false))))))
 
   def defaultFound =
     run(flag[String](short('a')).default("c"), List("-a", "b")) ==== "b".right

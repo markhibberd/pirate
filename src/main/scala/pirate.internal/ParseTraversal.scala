@@ -188,7 +188,7 @@ object ParseTraversal {
       if (p.isVisible) ParseTreeLeaf(Usage.flags(p, OptHelpInfo(multi, false))).left
       else ParseTreeAp(nil[ParseTree[Info]]).left
     case ApParse(k, a) =>
-      eval(multi,a) <*> eval(multi,k)
+      evalAp(multi,k, a)
     case AltParse(a, b) =>
       evalAlt[A](multi,a, b)
     case BindParse(k, a) =>
@@ -200,6 +200,17 @@ object ParseTraversal {
       case (\/-(a),_) => a.right
       case (_,\/-(b)) => b.right
       case (-\/(a), -\/(b)) => ParseTreeAlt(a :: b :: Nil).left
+    }
+
+  def evalAp[A,B](multi: Boolean, f: Parse[B => A], k: Parse[B]): ParseTree[Info] \/ A =
+    eval(multi,k) <*> eval(multi,f) match {
+      case \/-(a)  => a.right
+      case -\/(xs) => eval(multi,f) -> eval(multi,k) match {
+        case (-\/(a),-\/(b)) => ParseTreeAp(List(a, b)).left
+        case (_,-\/(b)) => ParseTreeAp(List(b)).left
+        case (-\/(a),_) => ParseTreeAp(List(a)).left
+        case _ => ParseTreeAp(nil[ParseTree[Info]]).left
+      }
     }
 
   def mapTraverse[A, B](self: Parse[A], f: TreeTraverseF[B]): List[B] =
