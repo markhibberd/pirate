@@ -24,11 +24,11 @@ trait Flags {
     parse(SwitchParser(meta, true)) ||| false.pure[Parse]
 
   def flag[A: Read](meta: Metadata): Parse[A] =
-    parse(FlagParser(meta, Read.of[A])) ||| ValueParse(None)
+    parse(FlagParser(meta, Read.of[A]))
 
   object arguments {
     def one[A: Read](meta: Metadata): Parse[A] =
-      parse(ArgumentParser(meta, Read.of[A])) ||| ValueParse(None)
+      parse(ArgumentParser(meta, Read.of[A]))
 
     def some[A: Read](meta: Metadata): Parse[List[A]] = for {
       a <- one(meta)
@@ -36,12 +36,12 @@ trait Flags {
     } yield (a :: b)
 
     def many[A: Read](meta: Metadata): Parse[List[A]] =
-      some(meta) ||| ValueParse(Some(Nil))
+      some(meta) ||| nil.pure[Parse]
   }
 
   object command {
     def of[A](sub: Command[A]): Parse[A] =
-      parse(CommandParser(sub)) ||| ValueParse(None)
+      parse(CommandParser(sub))
   }
 
   def hidden: Metadata = Metadata(None, None, None, false)

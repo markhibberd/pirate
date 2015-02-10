@@ -18,6 +18,12 @@ sealed trait Name {
 
   def hasLong(l: String): Boolean =
     long.map(_ == l).getOrElse(false)
+
+  def render: String = this match {
+    case ShortName(s) => s"-${s}"
+    case LongName(l) => s"--${l}"
+    case BothName(s, l) => s"-${s}|--${l}"
+  }
 }
 
 case class ShortName(s: Char) extends Name

@@ -26,11 +26,11 @@ object ParseTraversal {
   def errorMessageP[A](e: String): P[A] =
     errorP(ParseErrorMessage(e))
 
-  def exitP[A, B](p: Parse[B], o: Option[A]): P[A] =
-    hoistMaybe(o)
+  def exitP[A, B](p: Parse[B], o: ParseTree[Info] \/ A): P[A] =
+    hoistDisjunction(o)
 
-  def hoistMaybe[A](o: Option[A]): P[A] =
-    o.map(a => P[A](_ => a.right)).getOrElse(errorP(ParseErrorNoMessage))
+  def hoistDisjunction[A](o: ParseTree[Info] \/ A): P[A] =
+    o.fold(es => errorP(ParseErrorMissing(es)), a => P[A](_ => a.right))
 
   def tryP[A](p: P[A]): P[ParseError \/ A] =
     P(prefs => p.run(prefs).right)
@@ -50,9 +50,9 @@ object ParseTraversal {
       case AltParse(p1, p2) =>
         search(f, p1) ++ search(f, p2)
       case BindParse(k, a) =>
-        search(f, a).flatMap(p => ParseTraversal.eval(p) match {
-          case None => NondetT.nil[F, Parse[A]]
-          case Some(aa) => NondetT.singleton[F, Parse[A]](k(aa))
+        search(f, a).flatMap(p => ParseTraversal.eval(true,p) match {
+          case -\/(_)  => NondetT.nil[F, Parse[A]]
+          case \/-(aa) => NondetT.singleton[F, Parse[A]](k(aa))
         })
     }
   }
@@ -83,6 +83,7 @@ object ParseTraversal {
 
   def toParseError(r: ReadError): ParseError = r match {
     case ShowHelpText => ParseErrorShowHelpText
+    case ReadErrorInvalidType(token,expected) => ParseErrorMessage(s"Error parsing `${token}` as `${expected}`")
     case e            => ParseErrorMessage(e.toString)
   }
 
@@ -116,14 +117,12 @@ object ParseTraversal {
       None
   }
 
-
   def argMatches[A](parser: Parser[A], arg: String): Option[StateArg[A]] = parser match {
     case ArgumentParser(_, p) =>
-      p.read(arg :: Nil) match {
-        case -\/(e) => None
-        case \/-((Nil, a)) => Some(a.pure[StateArg])
-        case \/-((_ :: _, _)) => None
-      }
+      update[A](args => p.read(arg :: args) match {
+        case -\/(e) => errorP(toParseError(e))
+        case \/-(r) => r.pure[P]
+      }).some
     case CommandParser(sub) =>
       if (sub.name === arg)
         StateT[P, List[String], A](args =>
@@ -160,15 +159,15 @@ object ParseTraversal {
 
   def runParser[A](s: ParseState, p: Parse[A], args: List[String]): P[(A, List[String])] =
     args match {
-      case Nil => exitP(p, ParseTraversal.eval(p).map(_ -> args))
+      case Nil => exitP(p, ParseTraversal.eval(false,p).map(_ -> args))
       case "--" :: rest => runParser(AllowOpts, p, rest)
       case arg :: restArgs =>
         stepParser(s, arg, p).disamb.run(restArgs).flatMap({
           case (_, None) =>
-            ParseTraversal.eval(p) match {
-              case None =>
-                zeroP
-              case Some(a) =>
+            ParseTraversal.eval(false,p) match {
+              case -\/(_) =>
+                parseError(arg)
+              case \/-(a) =>
                 (a, args).pure[P]
             }
           case (rest, Some(pp)) =>
@@ -176,31 +175,46 @@ object ParseTraversal {
         })
     }
 
-  def eval[A](p: Parse[A]): Option[A] = p match {
+  def parseError[A](arg: String): P[A] =
+    arg.toList match {
+      case '-' :: _ => errorP(ParseErrorInvalidOption(arg))
+      case _        => errorP(ParseErrorInvalidArgument(arg))
+    }
+
+  def eval[A](multi: Boolean, p: Parse[A]): ParseTree[Info] \/ A = (p match {
     case ValueParse(o) =>
-      o
+      o.right
     case ParserParse(p) =>
-      None
+      if (p.isVisible) ParseTreeLeaf(Usage.flags(p, OptHelpInfo(multi, false))).left
+      else ParseTreeAp(nil[ParseTree[Info]]).left
     case ApParse(k, a) =>
-      eval(a) <*> eval(k)
+      eval(multi,a) <*> eval(multi,k)
     case AltParse(a, b) =>
-      eval(a) <+> eval(b)
+      evalAlt[A](multi,a, b)
     case BindParse(k, a) =>
-      eval(a) >>= k.map(eval)
-  }
+      eval(true,a).flatMap(k.map(eval(true,_)))
+  }).leftMap(_.simplify)
+
+  def evalAlt[A](multi: Boolean, a: Parse[A], b: Parse[A]): ParseTree[Info] \/ A =
+    eval(multi,a) -> eval(multi,b) match {
+      case (\/-(a),_) => a.right
+      case (_,\/-(b)) => b.right
+      case (-\/(a), -\/(b)) => ParseTreeAlt(a :: b :: Nil).left
+    }
 
   def mapTraverse[A, B](self: Parse[A], f: TreeTraverseF[B]): List[B] =
     treeTraverse(self, f).flatten
 
   def treeTraverse[A, B](self: Parse[A], f: TreeTraverseF[B]): ParseTree[B] = {
     def hasDefault[X](p: Parse[X]): Boolean =
-      eval(p).isDefined
+      eval(false,p).isRight
 
     def go[C](multi: Boolean, dfault: Boolean, f: TreeTraverseF[B], parse: Parse[C]): ParseTree[B] = parse match {
       case ValueParse(_) =>
         ParseTreeAp(Nil)
       case ParserParse(p) =>
-        ParseTreeLeaf(f.run(OptHelpInfo(multi, dfault), p))
+        if (p.isVisible) ParseTreeLeaf(f.run(OptHelpInfo(multi, dfault), p))
+        else ParseTreeAp(Nil)
       case ApParse(p1, p2) =>
         ParseTreeAp(List(go(multi, dfault, f, p1), go(multi, dfault, f, p2)))
       case AltParse(p1, p2) =>
@@ -210,23 +224,8 @@ object ParseTraversal {
         go(true, dfault, f, p)
     }
 
-    def simplify[X](pt: ParseTree[X]): ParseTree[X] = pt match {
-      case ParseTreeLeaf(a) => ParseTreeLeaf(a)
-      case ParseTreeAp(xs) => ParseTreeAp(xs.map(simplify).flatMap({
-        case ParseTreeAp(ys) => ys
-        case ParseTreeAlt(Nil) => Nil
-        case x => List(x)
-      }))
-      case ParseTreeAlt(xs) => ParseTreeAlt(xs.map(simplify).flatMap({
-        case ParseTreeAlt(ys) => ys
-        case ParseTreeAp(Nil) => Nil
-        case x => List(x)
-      }))
-    }
-
-    simplify(go(false, false, f, self))
+    go(false, false, f, self).simplify
   }
-
 }
 
 case class OptHelpInfo(multi: Boolean, dfault: Boolean)
@@ -238,6 +237,19 @@ sealed trait ParseTree[A] {
     case ParseTreeAlt(children) => children.flatMap(_.flatten)
   }
 
+  def simplify: ParseTree[A] = this match {
+    case ParseTreeLeaf(a) => ParseTreeLeaf(a)
+    case ParseTreeAp(xs) => ParseTreeAp(xs.map(_.simplify).flatMap({
+      case ParseTreeAp(ys) => ys
+      case ParseTreeAlt(Nil) => Nil
+      case x => List(x)
+    }))
+    case ParseTreeAlt(xs) => ParseTreeAlt(xs.map(_.simplify).flatMap({
+      case ParseTreeAlt(ys) => ys
+      case ParseTreeAp(Nil) => Nil
+      case x => List(x)
+    }))
+  }
 }
 case class ParseTreeLeaf[A](value: A) extends ParseTree[A]
 case class ParseTreeAp[A](children: List[ParseTree[A]]) extends ParseTree[A]

@@ -18,6 +18,12 @@ sealed trait Parser[A] {
     case ArgumentParser(_, _) => true
     case _                    => false
   }
+  def isVisible: Boolean = this match {
+    case SwitchParser(meta, _) => meta.visible
+    case FlagParser(meta, _) => meta.visible
+    case ArgumentParser(meta, _) => meta.visible
+    case CommandParser(sub) => true
+  }
 }
 
 case class SwitchParser[A](meta: Metadata, a: A) extends Parser[A]
