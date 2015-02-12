@@ -12,15 +12,19 @@ trait Runners {
         case ParseErrorNoMessage => IO {
           Console.err.print(Usage.print(command))
         }
-        case ParseErrorShowHelpText => IO {
-          Console.err.print(Usage.print(command))
+        case ParseErrorShowHelpText(s) => IO {
+          s match {
+            case None      => Console.err.print(Usage.print(command))
+            case Some(sub) => Console.err.print(Usage.printSub(command, sub))
+          }
         }
         case ParseErrorMessage(s) => IO {
           Console.err.println(s)
           Console.err.print(Usage.print(command))
         }
         case ParseErrorMissing(s) => IO {
-          Console.err.print(Usage.explain(args, command, s))
+          Console.err.print(Usage.missing(command, s))
+          Console.err.print(Usage.print(command))
         }
         case ParseErrorInvalidOption(s) => IO {
           Console.err.println(Usage.invalid(s, true))

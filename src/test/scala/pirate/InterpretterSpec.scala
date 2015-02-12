@@ -67,16 +67,16 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
     run(flag[String]( short('a')), List("-a", "b")) ==== "b".right
 
   def requiredMissingA =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false))))))
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def requiredMissingB =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false))))))
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false))))))
 
   def requiredMissingC =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false))))))
+    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def requiredMissingAlts =
-    run(flag[String](short('a')) ||| flag[String](short('b')), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAlt(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false))))))
+    run(flag[String](short('a')) ||| flag[String](short('b')), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAlt(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def defaultFound =
     run(flag[String](short('a')).default("c"), List("-a", "b")) ==== "b".right

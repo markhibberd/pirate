@@ -82,7 +82,7 @@ object ParseTraversal {
     }, p)
 
   def toParseError(r: ReadError): ParseError = r match {
-    case ShowHelpText => ParseErrorShowHelpText
+    case ShowHelpText(sub) => ParseErrorShowHelpText(sub)
     case ReadErrorInvalidType(token,expected) => ParseErrorMessage(s"Error parsing `${token}` as `${expected}`")
     case e            => ParseErrorMessage(e.toString)
   }

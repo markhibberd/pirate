@@ -73,6 +73,8 @@ object GitMain extends PirateMainIO[Git] {
       case None => IO.putStrLn(Usage.print(command))
       case Some(c) => IO.putStrLn(Usage.printSub(command, c))
     }
+    case GitAdd(force, interactive, patch, edit, pathspec) => IO.putStrLn("Removing files")
+    case GitRm(force, dryRun, recurse, cached, pathspec) => IO.putStrLn("Removing files")
   }
 }
 

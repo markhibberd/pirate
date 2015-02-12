@@ -27,13 +27,13 @@ object Usage {
 
   def flags[X](p: Parser[X], info: OptHelpInfo): Info = p match {
     case SwitchParser(meta, a) =>
-      SwitchInfo(meta.names.get, meta.description, info.dfault)
+      SwitchInfo(meta.names.get, meta.description, info.multi, info.dfault)
     case FlagParser(meta, p) =>
-      FlagInfo(meta.names.get, meta.description, meta.metavar, info.dfault)
+      FlagInfo(meta.names.get, meta.description, meta.metavar, info.multi, info.dfault)
     case CommandParser(sub) =>
       CommandInfo(sub.name, sub.description, Usage.tree(sub.parse))
     case ArgumentParser(meta, p) =>
-      ArgumentInfo(meta.metavar, meta.description, info.multi)
+      ArgumentInfo(meta.metavar, meta.description, info.multi, info.dfault)
   }
 
   def invalid(arg: String, isOption: Boolean) = isOption match {
@@ -41,11 +41,11 @@ object Usage {
     case false => s"Invalid argument `${arg}`"
   }
 
-  def explain[A](args: List[String], command: Command[A], fails: ParseTree[Info]): String =
-    explainWith[A](args, command, fails, DefaultUsageMode)
+  def missing[A](command: Command[A], fails: ParseTree[Info]): String =
+    missingWith[A](command, fails, DefaultUsageMode)
 
-  def explainWith[A](args: List[String], command: Command[A], fails: ParseTree[Info], mode: UsageMode): String = {
-    Render.info((command.name :: args).mkString(" "), command.description, fails, mode).partial
+  def missingWith[A](command: Command[A], fails: ParseTree[Info], mode: UsageMode): String = {
+    Render.info(command.name, command.description, fails, mode).missing
   }
 }
 
@@ -78,7 +78,7 @@ object Render {
     def anyInfo(i: Info): String = i match {
       case f: SwitchInfo   => flagO(f.flag) |> mDfault(f.dfault)
       case o: FlagInfo     => option(o.flag, o.meta) |> mDfault(o.dfault)
-      case a: ArgumentInfo => argx(a)
+      case a: ArgumentInfo => argx(a) |> mDfault(a.dfault)
       case c: CommandInfo  => c.name + " ARGS..."
     }
 
@@ -90,6 +90,9 @@ object Render {
 
     def optioninfo(o: FlagInfo): String =
       wrap(option(o.flag, o.meta), mode.flagIndent)(o.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
+
+    def argumentinfo(a: ArgumentInfo): String =
+      wrap(argx(a), mode.flagIndent)(a.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def commandinfo(c: CommandInfo): String =
       wrap(c.name, mode.flagIndent)(c.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
@@ -107,7 +110,7 @@ object Render {
     }
 
     def option(f: Name, meta: Option[String]): String =
-      flag(f) + meta.cata(x => " " + x, "")
+      flag(f) + meta.cata(x => " " + x, " OPT")
 
     def mDfault(mark: Boolean)(opt: String): String =
       if (mark) s"[${opt}]" else opt
@@ -115,6 +118,11 @@ object Render {
     def availableOptions = if (i.switches.length == 0) "" else
       s"""|Available options:
           |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+          |""".stripMargin
+
+    def availableArguments = if (i.arguments.length == 0) "" else
+      s"""|Positional arguments:
+          |${flagspace}${i.arguments.map(argumentinfo).mkString("\n" + flagspace)}
           |""".stripMargin
 
     def availableCommands = if (i.commands.length == 0) "" else
@@ -127,14 +135,12 @@ object Render {
         |
         |${description.map(_ + "\n").getOrElse("")}
         |${availableOptions}
+        |${availableArguments}
         |${availableCommands}
         |""".stripMargin
 
-    def partial = s"""|Missing parameters. 
-        |Usage:
-        |${flagspace}${wrap(name,mode.flagIndent)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
-        |
-        |${description.map(_ + "\n").getOrElse("")}
+    def missing = 
+    s"""|${wrap("Missing parameters:",0)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
         |""".stripMargin
   }
 }
@@ -148,9 +154,9 @@ case class Infos(l: List[Info]) {
 }
 
 sealed trait Info
-case class SwitchInfo(flag: Name, description: Option[String], dfault: Boolean) extends Info
-case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], dfault: Boolean) extends Info
-case class ArgumentInfo(meta: Option[String], description: Option[String], multi: Boolean) extends Info
+case class SwitchInfo(flag: Name, description: Option[String], multi: Boolean, dfault: Boolean) extends Info
+case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], multi: Boolean, dfault: Boolean) extends Info
+case class ArgumentInfo(meta: Option[String], description: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class CommandInfo(name: String, description: Option[String], info: ParseTree[Info]) extends Info
 
 /**

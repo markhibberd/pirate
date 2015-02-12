@@ -43,4 +43,50 @@ object Arbitraries {
     } yield NondetT(x.foldRight(ListT.nil[S, A])(ListT.cons[S, A])))
   }
 
+  implicit def ParseArbitrary[A: Arbitrary]: Arbitrary[Parse[A]] =
+    Arbitrary(
+      Gen.lzy(
+        Gen.oneOf(
+          arbitrary[A].map(a => ValueParse(a))
+        , arbitrary[Parser[A]].map(p => ParserParse(p))
+        , for {
+            a <- arbitrary[Parse[A]] 
+            b <- arbitrary[Parse[A]] 
+          } yield(AltParse(a, b))
+        )
+      )
+    )
+
+  implicit def ParserArbitrary[A: Arbitrary]: Arbitrary[Parser[A]] =
+    Arbitrary(
+      Gen.oneOf(
+        arbitrary[SwitchParser[A]]
+      , arbitrary[FlagParser[A]]
+      , arbitrary[ArgumentParser[A]]
+      // , CommandParser[A](n)
+    ))
+
+  implicit def SwitchParserArbitrary[A: Arbitrary]: Arbitrary[SwitchParser[A]] = Arbitrary(for {
+    n <- arbitrary[Name]
+    desc <- arbitrary[Option[String]]
+    mvar <- arbitrary[Option[String]]
+    hid <- arbitrary[Boolean]
+    a <- arbitrary[A]
+  } yield SwitchParser[A](Metadata(Some(n), desc, mvar, hid), a))
+
+  implicit def FlagParserArbitrary[A: Arbitrary]: Arbitrary[FlagParser[A]] = Arbitrary(for {
+    n <- arbitrary[Name]
+    desc <- arbitrary[Option[String]]
+    mvar <- arbitrary[Option[String]]
+    hid <- arbitrary[Boolean]
+    a <- arbitrary[A]
+  } yield FlagParser[A](Metadata(Some(n), desc, mvar, hid), Read.string.map(_ => a)))
+
+  implicit def ArgumentParserArbitrary[A: Arbitrary]: Arbitrary[ArgumentParser[A]] = Arbitrary(for {
+    n <- arbitrary[Option[Name]]
+    desc <- arbitrary[Option[String]]
+    mvar <- arbitrary[Option[String]]
+    hid <- arbitrary[Boolean]
+    a <- arbitrary[A]
+  } yield ArgumentParser[A](Metadata(n, desc, mvar, hid), Read.string.map(_ => a)))
 }
