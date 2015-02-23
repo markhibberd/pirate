@@ -143,10 +143,8 @@ object ParseTraversal {
         val (cmd, value) = w.splitAt(i)
         Some(ParsedWord(LongParsedName(cmd.mkString), Some(value.tail.mkString)))
     }
-    case '-' :: w :: Nil =>
-      Some(ParsedWord(ShortParsedName(w), None))
     case '-' :: w :: rest =>
-      Some(ParsedWord(ShortParsedName(w), Some(rest.mkString)))
+      Some(ParsedWord(ShortParsedName(w), if (rest.isEmpty) None else Some(rest.mkString)))
     case _ =>
       None
   }

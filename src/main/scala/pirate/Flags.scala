@@ -35,7 +35,7 @@ trait Flags {
     parse(ArgumentParser(meta, Read.of[A]))
 
   def arguments[A: Read](meta: Metadata): Parse[List[A]] =
-    parse(ArgumentParser(meta, Read.of[A])).many
+    argument(meta).many
 
   def subcommand[A](sub: Command[A]): Parse[A] =
     parse(CommandParser(sub))

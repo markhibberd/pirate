@@ -114,7 +114,7 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
     run(flag[String]( short('a')), List("-ab")) ==== "b".right
 
   def flagsLength =
-    run(terminator[Unit](short('t'), ()).many.map(_.length), List("-ttt")) ==== 3.right
+    run(terminator(short('t'), ()).many.map(_.length), List("-ttt")) ==== 3.right
 
   def positionalArgs =
     run((argument[String](metavar("src")) |@| argument[String](metavar("dst")))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
