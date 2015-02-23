@@ -50,19 +50,19 @@ object GitMain extends PirateMainIO[Git] {
                             |@| switch(long("interactive") |+| short('i'))
                             |@| switch(long("patch") |+| short('p'))
                             |@| switch(long("edit") |+| short('e'))
-                            |@| arguments.many[File](metavar("paths")))(GitAdd)
+                            |@| arguments[File](metavar("paths")))(GitAdd)
 
   val rm: Parse[GitCommand] = (switch(long("force") |+| short('f'))
                             |@| switch(long("dry-run") |+| short('n'))
                             |@| switch(short('r'))
                             |@| switch(long("cached"))
-                            |@| arguments.some[File](metavar("paths")))(GitRm)
+                            |@| arguments[File](metavar("paths")))(GitRm)
 
   def git(cmd: Parse[GitCommand]): Parse[Git] =
     Git |*| (cwd, conf, exec, cmd)
 
   val command: Command[Git] =
-    git { version ||| help ||| html ||| man ||| info ||| Flags.command.of(add ~ "add" ~~ "Add file contents to the index") ||| Flags.command.of(rm ~ "rm" ~~ "Remove files from the working tree and from the index") } ~ "git" ~~ "This is a demo of the git command line"
+    git { version ||| help ||| html ||| man ||| info ||| subcommand(add ~ "add" ~~ "Add file contents to the index") ||| subcommand(rm ~ "rm" ~~ "Remove files from the working tree and from the index") } ~ "git" ~~ "This is a demo of the git command line"
 
   def run(a: Git) = a.cmd match {
     case GitVersion => IO.putStrLn("git the pirate version")

@@ -18,19 +18,19 @@ object CutMain extends PirateMainIO[Cut] {
   val byte: Parse[Cut] = (ByteCut |*| (
     flag[String](short('b') |+| metavar("list"))
   , switch(short('n')).not
-  , arguments.some[File](metavar("file"))
+  , arguments[File](metavar("file"))
   )).map(x => x)
 
   val char: Parse[Cut] = (CharCut |*| (
     flag[String](short('c') |+| metavar("list"))
-  , arguments.some[File](metavar("file"))
+  , arguments[File](metavar("file"))
   )).map(x => x)
 
   val field: Parse[Cut] = (FieldCut |*| (
     flag[String](short('f') |+| metavar("list"))
   , switch(short('s'))
   , flag[Char](short('d') |+| long("delimiter")).default('\t')
-  , arguments.some[File](metavar("file"))
+  , arguments[File](metavar("file"))
   )).map(x => x)
 
   def command: Command[Cut] =

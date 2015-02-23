@@ -32,6 +32,7 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   Switches are off unless toggled                 $switchesOff
   Multiple switches work in a single entry        $multipleSwitches
   Short option flag can come at the end of switch $flagAfterSwitch
+  Can measure the length of a set of flags        $flagsLength
   Short option flag args works without spaces     $shortFlagPost
   Position arguments work                         $positionalArgs
   Many arguments work                             $manyArgs
@@ -103,34 +104,34 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   def switchesOff =
     run(switch(short('a')), Nil) ==== false.right
 
-  def multipleSwitches = {
+  def multipleSwitches =
     run((switch(short('a')) |@| switch(short('b')))(_ -> _), List("-ab")) ==== (true, true).right
-  }
 
-  def flagAfterSwitch = {
+  def flagAfterSwitch =
     run((switch(short('a')) |@| flag[String](short('b')))(_ -> _), List("-ab", "c")) ==== (true, "c").right
-  }
 
-  def shortFlagPost = {
+  def shortFlagPost =
     run(flag[String]( short('a')), List("-ab")) ==== "b".right
-  }
+
+  def flagsLength =
+    run(terminator[Unit](short('t'), ()).many.map(_.length), List("-ttt")) ==== 3.right
 
   def positionalArgs =
-    run((arguments.one[String](metavar("src")) |@| arguments.one[String](metavar("dst")))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
+    run((argument[String](metavar("src")) |@| argument[String](metavar("dst")))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
 
   def manyArgs = prop((args: List[String]) =>
-    run(arguments.many[String](metavar("files")), "--" :: args) ==== args.right
+    run(arguments[String](metavar("files")), "--" :: args) ==== args.right
   )
 
   def positionalFollowingMany = prop((args: List[String]) => args.length >= 1 ==> {
-    run((arguments.one[String](metavar("src")) |@| arguments.many[String](metavar("dst")))(_ -> _), "--" :: args) ==== (args.head, args.tail).right
+    run((argument[String](metavar("src")) |@| arguments[String](metavar("dst")))(_ -> _), "--" :: args) ==== (args.head, args.tail).right
   })
 
   def manyFollowingPositional = prop((args: List[String]) => args.length >= 1 ==> {
-    run((arguments.many[String](metavar("dst")) |@| arguments.one[String](metavar("src")))(_ -> _), "--" :: args) ==== (args.init, args.last).right
+    run((arguments[String](metavar("dst")) |@| argument[String](metavar("src")))(_ -> _), "--" :: args) ==== (args.init, args.last).right
   }).pendingUntilFixed
 
-  def someFailsOnEmpty = run(arguments.some[String](metavar("files")), List()).toEither must beLeft
+  def someFailsOnEmpty = run(argument[String](metavar("files")).some, List()).toEither must beLeft
 
   def invalidOpt = {
     run(flag[String](short('a')), List("-c")) ==== ParseErrorInvalidOption("-c").left
@@ -141,11 +142,11 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   }
 
   def intArgString = {
-    run(arguments.one[Int](metavar("src")), List("file.txt")) ==== ParseErrorMessage("Error parsing `file.txt` as `Int`").left
+    run(argument[Int](metavar("src")), List("file.txt")) ==== ParseErrorMessage("Error parsing `file.txt` as `Int`").left
   }
 
   def missingArg = {
-    run(arguments.one[Int](metavar("src")), Nil).toEither must beLeft
+    run(argument[Int](metavar("src")), Nil).toEither must beLeft
   }
 
   def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
