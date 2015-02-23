@@ -94,7 +94,10 @@ object ParseTraversal {
     case SwitchParser(meta, a) =>
       w.name match {
         case ShortParsedName(c) =>
-          meta.hasShort(c).option(a.pure[StateArg])
+          meta.hasShort(c).option(
+            update[A](args =>
+              ((w.value.map(s => "-" ++ s).toList ++ args) -> a).pure[P]
+            ))
         case LongParsedName(s) =>
           meta.hasLong(s).option(a.pure[StateArg])
       }
@@ -133,28 +136,29 @@ object ParseTraversal {
       None
   }
 
-  def parseWord(arg: String): List[ParsedWord] = arg.toList match {
+  def parseWord(arg: String): Option[ParsedWord] = arg.toList match {
     case '-' :: '-' :: w => w.indexOf('=') match {
-      case -1 => ParsedWord(LongParsedName(w.mkString), None).pure[List]
+      case -1 => Some(ParsedWord(LongParsedName(w.mkString), None))
       case i  =>
         val (cmd, value) = w.splitAt(i)
-        ParsedWord(LongParsedName(cmd.mkString), Some(value.tail.mkString)).pure[List]
+        Some(ParsedWord(LongParsedName(cmd.mkString), Some(value.tail.mkString)))
     }
-    case '-' :: ws => ws map (w => ParsedWord(ShortParsedName(w), None))
-    case _ => Nil
+    case '-' :: w :: Nil =>
+      Some(ParsedWord(ShortParsedName(w), None))
+    case '-' :: w :: rest =>
+      Some(ParsedWord(ShortParsedName(w), Some(rest.mkString)))
+    case _ =>
+      None
   }
 
   def stepParser[A](s: ParseState, arg: String, p: Parse[A]): NondetT[StateArg, Parse[A]] =
     s match {
       case SkipOpts => parseWord(arg) match {
-        case Nil     => searchArg(arg, p)
-        case ws      => ws.foldLeft(NondetT.lift(p.pure[StateArg]))((a,b) => a flatMap( p1 => (searchOpt(b, p1) )))
+        case None => searchArg(arg, p)
+        case Some(w) => searchOpt(w, p)
       }
       case AllowOpts =>
-        searchArg(arg, p) ++ (parseWord(arg) match {
-          case Nil     => NondetT.nil[StateArg, Parse[A]]
-          case ws      => ws.foldLeft(NondetT.lift(p.pure[StateArg]))((a,b) => a flatMap( p1 => (searchOpt(b, p1) )))
-        })
+        searchArg(arg, p) ++ NondetT.hoistMaybe[StateArg, ParsedWord](parseWord(arg)).flatMap(searchOpt(_, p))
     }
 
   def runParser[A](s: ParseState, p: Parse[A], args: List[String]): P[(A, List[String])] =

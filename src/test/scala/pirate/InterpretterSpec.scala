@@ -32,6 +32,7 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   Switches are off unless toggled                 $switchesOff
   Multiple switches work in a single entry        $multipleSwitches
   Short option flag can come at the end of switch $flagAfterSwitch
+  Short option flag args works without spaces     $shortFlagPost
   Position arguments work                         $positionalArgs
   Many arguments work                             $manyArgs
   Many arguments work after a positional          $positionalFollowingMany
@@ -108,6 +109,10 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
 
   def flagAfterSwitch = {
     run((switch(short('a')) |@| flag[String](short('b')))(_ -> _), List("-ab", "c")) ==== (true, "c").right
+  }
+
+  def shortFlagPost = {
+    run(flag[String]( short('a')), List("-ab")) ==== "b".right
   }
 
   def positionalArgs =
