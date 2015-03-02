@@ -34,6 +34,13 @@ sealed trait Parse[A] {
   def not(implicit ev: A =:= Boolean): Parse[Boolean] =
     map(!_)
 
+  def some: Parse[List[A]] = for {
+    a <- this
+    b <- many
+  } yield (a :: b)
+
+  def many: Parse[List[A]] =
+    some ||| nil.pure[Parse]
 }
 
 case class ValueParse[A](m: A) extends Parse[A]

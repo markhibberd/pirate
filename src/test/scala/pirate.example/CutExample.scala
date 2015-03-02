@@ -18,23 +18,23 @@ object CutMain extends PirateMainIO[Cut] {
   val byte: Parse[Cut] = (ByteCut |*| (
     flag[String](short('b') |+| metavar("list"))
   , switch(short('n')).not
-  , arguments.some[File](metavar("file"))
+  , arguments[File](metavar("file"))
   )).map(x => x)
 
   val char: Parse[Cut] = (CharCut |*| (
     flag[String](short('c') |+| metavar("list"))
-  , arguments.some[File](metavar("file"))
+  , arguments[File](metavar("file"))
   )).map(x => x)
 
   val field: Parse[Cut] = (FieldCut |*| (
     flag[String](short('f') |+| metavar("list"))
   , switch(short('s'))
   , flag[Char](short('d') |+| long("delimiter")).default('\t')
-  , arguments.some[File](metavar("file"))
+  , arguments[File](metavar("file"))
   )).map(x => x)
 
   def command: Command[Cut] =
-    (helper *> (byte ||| char ||| field)) ~ "cut" ~~
+    ((byte ||| char ||| field) <* helper) ~ "cut" ~~
      "This is a demo of the unix cut utlity"
 
   def run(c: Cut) = c match {
@@ -112,7 +112,7 @@ class CutExample extends spec.Spec { def is = s2"""
       ByteCut("1", true, List(new File("many"), new File("files"))).right
 
   def validButWithHelp =
-    run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText.left
+    run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText(None).left
 
   def invalid =
     Interpretter.run(CutMain.command.parse, nil).toEither must beLeft
