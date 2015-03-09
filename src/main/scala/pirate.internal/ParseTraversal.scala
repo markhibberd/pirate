@@ -73,12 +73,11 @@ object ParseTraversal {
   def searchArg[A](arg: String, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
       def run[B](options: Parser[B]): NondetT[StateArg, B] =
-        p.pure[NondetArg].flatMap(_ =>
-          argMatches(options, arg) match {
-            case None => NondetT.nil[StateArg, B]
-            case Some(a) => NondetT.lift[StateArg, B](a)
-          }
-        )
+         (if (options.isArg) NondetT.cut[StateArg] else ().pure[NondetArg]).flatMap(_ =>
+            argMatches(options, arg) match {
+              case None => NondetT.nil[StateArg, B]
+              case Some(a) => NondetT.lift[StateArg, B](a)
+         })
     }, p)
 
   def toParseError(r: ReadError): ParseError = r match {

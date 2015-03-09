@@ -18,7 +18,6 @@ object GitManPath extends GitCommand
 object GitInfoPath extends GitCommand
 case class GitAdd(force: Boolean, interactive: Boolean, patch: Boolean, edit: Boolean, pathspec: List[File]) extends GitCommand
 case class GitRm(force: Boolean, dryRun: Boolean, recurse: Boolean, cached: Boolean, pathspec: List[File]) extends GitCommand
-case class GitNest(inside: GitCommand) extends GitCommand
 
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
