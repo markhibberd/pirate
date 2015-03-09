@@ -40,6 +40,6 @@ object MthExample {
 
     println(Interpretter.run(all, List("-n", "21", "-s", "-c", "hello")))
 
-    println(Usage.print(command))
+    println(Usage.print(command, Nil))
   }
 }

@@ -33,6 +33,6 @@ object InteractiveExample {
 
     println(Interpretter.run(example, List("-n", "21", "-s", "-c", "hello")))
 
-    println(Usage.print(command))
+    println(Usage.print(command, Nil))
   }
 }

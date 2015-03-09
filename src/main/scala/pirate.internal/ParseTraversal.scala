@@ -11,6 +11,10 @@ object ParseTraversal {
   case class ShortParsedName(c: Char) extends ParsedName
   case class ParsedWord(name: ParsedName, value: Option[String])
 
+  type P[A] = EitherT[PWR, ParseError, A]
+  type PWR[A] = WriterT[PR, List[String], A]
+  type PR[A] = Reader[Prefs, A]
+
   def runParserFully[A](s: ParseState, p: Parse[A], args: List[String]): P[A] =
     runParser(s, p, args).flatMap({
       case (a, Nil) => a.pure[P]
@@ -21,7 +25,7 @@ object ParseTraversal {
     errorP(ParseErrorNoMessage)
 
   def errorP[A](e: ParseError): P[A] =
-    P[A](_ => e.left)
+    EitherT.left(e.pure[PWR])
 
   def errorMessageP[A](e: String): P[A] =
     errorP(ParseErrorMessage(e))
@@ -30,10 +34,7 @@ object ParseTraversal {
     hoistDisjunction(o)
 
   def hoistDisjunction[A](o: ParseTree[Info] \/ A): P[A] =
-    o.fold(es => errorP(ParseErrorMissing(es)), a => P[A](_ => a.right))
-
-  def tryP[A](p: P[A]): P[ParseError \/ A] =
-    P(prefs => p.run(prefs).right)
+    o.fold(es => errorP(ParseErrorMissing(es)), a => a.pure[P])
 
   type NondetP[A] = NondetT[P, A]
 
@@ -72,8 +73,7 @@ object ParseTraversal {
   def searchArg[A](arg: String, p: Parse[A]): NondetArg[Parse[A]] =
     search(new OptionRunner[StateArg] {
       def run[B](options: Parser[B]): NondetT[StateArg, B] =
-        (if (options.isArg) NondetT.cut[StateArg]
-         else NondetT.singleton[StateArg, Parse[A]](p)).flatMap(_ =>
+        p.pure[NondetArg].flatMap(_ =>
           argMatches(options, arg) match {
             case None => NondetT.nil[StateArg, B]
             case Some(a) => NondetT.lift[StateArg, B](a)
@@ -128,8 +128,10 @@ object ParseTraversal {
       }).some
     case CommandParser(sub) =>
       if (sub.name === arg)
-        StateT[P, List[String], A](args =>
-          runParser(SkipOpts, sub.parse, args).map(_.swap)).pure[Option]
+        StateT[P, List[String], A](args => for {
+          _ <- EitherT.right[PWR,ParseError,Unit](().pure[PWR].<++:(arg :: Nil))
+          x <- runParser(SkipOpts, sub.parse, args).map(_.swap)
+        } yield x).pure[Option]
       else
         None
     case _ =>

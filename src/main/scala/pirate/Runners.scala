@@ -3,39 +3,41 @@ package pirate
 import scalaz._, effect.IO
 
 trait Runners {
-  def run[A, B](args: List[String], command: Command[A], f: A => B): ParseError \/ B  =
-    Interpretter.run(command.parse, args).map(f)
+  def run[A, B](args: List[String], command: Command[A], f: A => B): (List[String], ParseError \/ B) = {
+    val (ctx, a) = Interpretter.run(command.parse, args)
+    ctx -> a.map(f)
+  }
 
   def runOrFail[A](args: List[String], command: Command[A], f: A => IO[Unit]): IO[Unit]  =
     run[A, IO[Unit]](args, command, f) match {
-      case -\/(e) => e match {
+      case (ctx, -\/(e)) => e match {
         case ParseErrorNoMessage => IO {
-          Console.err.print(Usage.print(command))
+          Console.err.print(Usage.print(command, ctx))
         }
         case ParseErrorShowHelpText(s) => IO {
           s match {
-            case None      => Console.err.print(Usage.print(command))
-            case Some(sub) => Console.err.print(Usage.printSub(command, sub))
+            case None      => Console.err.print(Usage.print(command, ctx))
+            case Some(sub) => Console.err.print(Usage.print(command, sub :: ctx))
           }
         }
         case ParseErrorMessage(s) => IO {
           Console.err.println(s)
-          Console.err.print(Usage.print(command))
+          Console.err.print(Usage.print(command, ctx))
         }
         case ParseErrorMissing(s) => IO {
           Console.err.print(Usage.missing(command, s))
-          Console.err.print(Usage.print(command))
+          Console.err.print(Usage.print(command, ctx))
         }
         case ParseErrorInvalidOption(s) => IO {
           Console.err.println(Usage.invalid(s, true))
-          Console.err.print(Usage.print(command))
+          Console.err.print(Usage.print(command, ctx))
         }
         case ParseErrorInvalidArgument(s) => IO {
           Console.err.println(Usage.invalid(s, false))
-          Console.err.print(Usage.print(command))
+          Console.err.print(Usage.print(command, ctx))
         }
       }
-      case \/-(v) => v
+      case (_,\/-(v)) => v
     }
 
   def unsafeRunOrFail[A](args: List[String], command: Command[A], f: A => Unit): Unit =

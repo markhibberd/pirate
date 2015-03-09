@@ -5,11 +5,13 @@ import pirate.internal._
 import scalaz._, Scalaz._
 
 object Usage {
-  def print[A](command: Command[A]): String =
-    printWith(command, DefaultUsageMode)
+  def print[A](command: Command[A], context: List[String]): String =
+    printWith(command, context, DefaultUsageMode)
 
-  def printWith[A](command: Command[A], mode: UsageMode): String =
-    Render.infos(command.name, command.description, tree(command.parse), mode)
+  def printWith[A](command: Command[A], context: List[String], mode: UsageMode): String = context match {
+    case Nil => Render.infos(command.name, command.description, tree(command.parse), mode)
+    case x :: _ => printSubWith[A](command, x, mode) // The first entry is the "last" entry, so is the relevant context. 
+  }
 
   def printSub[A](command: Command[A], sub: String) =
     printSubWith(command: Command[A], sub: String, DefaultUsageMode)
