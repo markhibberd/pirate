@@ -2,8 +2,8 @@ package pirate
 
 import scalaz._, Scalaz._
 
-sealed trait Parse[A] {
-  def ~(name: String): Command[A] =
+sealed trait Parse[+A] {
+  def ~[B >: A](name: String): Command[B] =
     Command(name, None, this)
 
   def map[B](f: A => B): Parse[B] = this match {
@@ -22,16 +22,16 @@ sealed trait Parse[A] {
   def flatMap[B](f: A => Parse[B]): Parse[B] =
     BindParse(f, this)
 
-  def |||(other: Parse[A]): Parse[A] =
+  def |||[B >: A](other: Parse[B]): Parse[B] =
     AltParse(this, other)
 
   def option: Parse[Option[A]] =
     map(_.some) ||| ValueParse(None)
 
-  def default(fallback: => A): Parse[A] =
+  def default[B >: A](fallback: => B): Parse[B] =
     option.map(_.getOrElse(fallback))
 
-  def not(implicit ev: A =:= Boolean): Parse[Boolean] =
+  def not[B >: A](implicit ev: B =:= Boolean): Parse[Boolean] =
     map(!_)
 
   def some: Parse[List[A]] = for {
@@ -41,6 +41,9 @@ sealed trait Parse[A] {
 
   def many: Parse[List[A]] =
     some ||| nil.pure[Parse]
+
+  def + = some 
+  def * = many
 }
 
 case class ValueParse[A](m: A) extends Parse[A]
