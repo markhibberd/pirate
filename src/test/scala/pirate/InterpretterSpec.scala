@@ -52,7 +52,7 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
 
 """
 
-  import Interpretter._
+  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpretter.run(p, args)._2
 
   def testA(name: String): Parse[TestCommand] =
     terminator(long(name), TestA)

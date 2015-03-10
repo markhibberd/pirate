@@ -73,7 +73,7 @@ class CutExample extends spec.Spec { def is = s2"""
 """
 
   def run(args: String*): ParseError \/ Cut =
-    Interpretter.run(CutMain.command.parse, args.toList)
+    Interpretter.run(CutMain.command.parse, args.toList)._2
 
   def byte =
     run("-b", "1", "one") must_==
@@ -115,5 +115,5 @@ class CutExample extends spec.Spec { def is = s2"""
     run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText(None).left
 
   def invalid =
-    Interpretter.run(CutMain.command.parse, nil).toEither must beLeft
+    Interpretter.run(CutMain.command.parse, nil)._2.toEither must beLeft
 }
