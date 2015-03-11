@@ -93,7 +93,7 @@ class GitExample extends spec.Spec { def is = s2"""
 """
 
   def run(args: String*): (List[String], ParseError \/ Git) =
-    Interpretter.run(GitMain.command.parse, args.toList)
+    Interpreter.run(GitMain.command.parse, args.toList)
 
   def version = {
     run("-c", "thing", "--version") must_==

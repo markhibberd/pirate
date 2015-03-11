@@ -25,13 +25,13 @@ object InteractiveExample {
       |parsing options and see common usage.""".stripMargin
 
   def main(unused: Array[String]): Unit = {
-    println(Interpretter.run(example, List("-s", "-c", "hello", "-n", "12")))
+    println(Interpreter.run(example, List("-s", "-c", "hello", "-n", "12")))
 
-    println(Interpretter.run(example, List("-c", "hello", "-n", "12")))
+    println(Interpreter.run(example, List("-c", "hello", "-n", "12")))
 
-    println(Interpretter.run(example, List("-n", "21", "-c", "hello")))
+    println(Interpreter.run(example, List("-n", "21", "-c", "hello")))
 
-    println(Interpretter.run(example, List("-n", "21", "-s", "-c", "hello")))
+    println(Interpreter.run(example, List("-n", "21", "-s", "-c", "hello")))
 
     println(Usage.print(command, Nil))
   }

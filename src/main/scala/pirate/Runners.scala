@@ -4,7 +4,7 @@ import scalaz._, effect.IO
 
 trait Runners {
   def run[A, B](args: List[String], command: Command[A], f: A => B): (List[String], ParseError \/ B) = {
-    val (ctx, a) = Interpretter.run(command.parse, args)
+    val (ctx, a) = Interpreter.run(command.parse, args)
     ctx -> a.map(f)
   }
 
