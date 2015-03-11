@@ -9,8 +9,10 @@ object Text {
   /**
    * Wrap text at width. Prepend an indent on each line of indent.
    */
-  def wrap(firstText: String, flagIndent: Int)(text: String, width: Int, indent: Int): String = {
+  def wrap(firstText: String, flagIndent: Int)(text: String, widthFull: Int, indent: Int): String = {
     val spacer = space(indent)
+    // We need to pick a minimum size for the text
+    val width = math.max(widthFull, 50)
     val firstSpacer = space(Math.max(1,indent - firstText.length - flagIndent))
 
     // Add 1 for hyphen + newline
