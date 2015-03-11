@@ -28,17 +28,17 @@ object MthExample {
       |parsing options and see common usage.""".stripMargin
 
   def main(unused: Array[String]): Unit = {
-    println(Interpretter.run(all, List("-h")))
+    println(Interpreter.run(all, List("-h")))
 
-    println(Interpretter.run(all, List("-v")))
+    println(Interpreter.run(all, List("-v")))
 
-    println(Interpretter.run(all, List("-s", "-c", "hello", "-n", "12")))
+    println(Interpreter.run(all, List("-s", "-c", "hello", "-n", "12")))
 
-    println(Interpretter.run(all, List("-c", "hello", "-n", "12")))
+    println(Interpreter.run(all, List("-c", "hello", "-n", "12")))
 
-    println(Interpretter.run(all, List("-n", "21", "-c", "hello")))
+    println(Interpreter.run(all, List("-n", "21", "-c", "hello")))
 
-    println(Interpretter.run(all, List("-n", "21", "-s", "-c", "hello")))
+    println(Interpreter.run(all, List("-n", "21", "-s", "-c", "hello")))
 
     println(Usage.print(command, Nil))
   }

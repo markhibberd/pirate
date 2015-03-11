@@ -10,18 +10,18 @@ case class TestWrapper(cmd: TestCommand)
 case object TestA extends TestCommand
 case object TestB extends TestCommand
 
-class InterpretterSpec extends spec.Spec { def is = s2"""
+class InterpreterSpec extends spec.Spec { def is = s2"""
 
-  Interpretter Properties
-  =======================
+  Interpreter Properties
+  ======================
 
-  Basic interpretters
+  Basic interpreters
   ====
   Required found                                  $requiredFound
-  Required missing applicitives both              $requiredMissingA
-  Required missing applicitives first             $requiredMissingB
-  Required missing applicitives second            $requiredMissingC
-  Two alternattives missing                       $requiredMissingAlts
+  Required missing applicatives both              $requiredMissingA
+  Required missing applicatives first             $requiredMissingB
+  Required missing applicatives second            $requiredMissingC
+  Two alternatives missing                        $requiredMissingAlts
   Default found                                   $defaultFound
   Default missing                                 $defaultMissing
   Option found                                    $optionFound
@@ -44,15 +44,15 @@ class InterpretterSpec extends spec.Spec { def is = s2"""
   Arguments which parse poorly produces reasonable error  $intArgString
   Missing arguments produce sane errors           $missingArg
 
-  Composite interpretters
+  Composite interpreters
   ====
-  Interpretter handles the first multiple cases   $orFirst
-  Interpretter handles the second multiple cases  $orSecond
-  Interpretter handles wrapped commands well      $wrappers
+  Interpreter handles the first multiple cases   $orFirst
+  Interpreter handles the second multiple cases  $orSecond
+  Interpreter handles wrapped commands well      $wrappers
 
 """
 
-  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpretter.run(p, args)._2
+  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpreter.run(p, args)._2
 
   def testA(name: String): Parse[TestCommand] =
     terminator(long(name), TestA)
