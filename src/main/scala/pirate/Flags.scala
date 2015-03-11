@@ -16,6 +16,10 @@ trait Flags {
   def helperX: Parse[Option[Unit]] =
     parse(FlagParser(short('h') |+| long("help") |+| description("Prints the synopsis and a list of the most commonly used commands. If a subcommand is named this option will show the synposis for said command."), Read.string.option.flatMap(s => Read.error[Unit](ShowHelpText(s))))).option
 
+  // A simple parser to show the application version
+  def version(v: String): Parse[Option[Unit]] =
+    abort(short('v') |+| long("version") |+| description("Prints the application version."), ShowVersion(v))
+
   def abort(meta: Metadata, error: ReadError): Parse[Option[Unit]] =
     parse(FlagParser(meta, Read.error(error))).option
 
