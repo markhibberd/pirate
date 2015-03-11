@@ -16,9 +16,12 @@ trait Runners {
         }
         case ParseErrorShowHelpText(s) => IO {
           s match {
-            case None      => Console.err.print(Usage.print(command, ctx))
-            case Some(sub) => Console.err.print(Usage.print(command, sub :: ctx))
+            case None      => Console.out.print(Usage.print(command, ctx))
+            case Some(sub) => Console.out.print(Usage.print(command, sub :: ctx))
           }
+        }
+        case ParseErrorShowVersion(version) => IO {
+          Console.out.print("version "+version)
         }
         case ParseErrorMessage(s) => IO {
           Console.err.println(s)

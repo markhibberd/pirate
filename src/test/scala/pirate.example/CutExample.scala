@@ -34,16 +34,16 @@ object CutMain extends PirateMainIO[Cut] {
   )).map(x => x)
 
   def command: Command[Cut] =
-    ((byte ||| char ||| field) <* helper) ~ "cut" ~~
-     "This is a demo of the unix cut utlity"
+    ((byte ||| char ||| field) <* helper <* version("1.0")) ~ "cut" ~~
+     "This is a demo of the unix cut utility"
 
   def run(c: Cut) = c match {
     case ByteCut(list, split, files) =>
       IO.putStrLn(s"""cut -b $list ${if (split) "" else "-n "}$files""")
     case CharCut(list, files) =>
       IO.putStrLn(s"""cut -c $list $files""")
-    case FieldCut(list, supress, delimiter, files) =>
-      IO.putStrLn(s"""cut -f $list ${if (supress) "" else "-s "}${if (delimiter == '\t') "" else "-d '" + delimiter + "'"}$files""")
+    case FieldCut(list, suppress, delimiter, files) =>
+      IO.putStrLn(s"""cut -f $list ${if (suppress) "" else "-s "}${if (delimiter == '\t') "" else "-d '" + delimiter + "'"}$files""")
   }
 }
 
@@ -62,13 +62,14 @@ class CutExample extends spec.Spec { def is = s2"""
   cut -f 7 -s -d x seven                   $supressDelim
   cut -b 1 many files                      $manyFiles
   cut -b 1 one --help                      $validButWithHelp
+  cut -b 1 one --version                   $validButWithVersion
   cut                                      $invalid
 
   Cut Checks
   ==========
 
-  Name is set                              ${CutMain.command.name == "cut"}
-  Description is set                       ${CutMain.command.description == Some("This is a demo of the unix cut utlity")}
+  Name is set                              ${CutMain.command.name === "cut"}
+  Description is set                       ${CutMain.command.description === Some("This is a demo of the unix cut utility")}
 
 """
 
@@ -113,6 +114,9 @@ class CutExample extends spec.Spec { def is = s2"""
 
   def validButWithHelp =
     run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText(None).left
+
+  def validButWithVersion=
+    run("-b", "1", "one", "--version") must_== ParseErrorShowVersion("1.0").left
 
   def invalid =
     Interpretter.run(CutMain.command.parse, nil)._2.toEither must beLeft
