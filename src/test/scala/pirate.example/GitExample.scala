@@ -41,18 +41,17 @@ object GitMain extends PirateMainIO[Git] {
   val info: Parse[GitCommand] =
     terminator(long("info-path"), GitInfoPath)
 
-  // Applicitive style GitAdd |*| (switch ...) leads to invariance issues.
-  val add: Parse[GitCommand] = (switch(long("force") |+| short('f'))
-                            |@| switch(long("interactive") |+| short('i'))
-                            |@| switch(long("patch") |+| short('p'))
-                            |@| switch(long("edit") |+| short('e'))
-                            |@| arguments[File](metavar("paths")))(GitAdd)
+  val add: Parse[GitCommand] = GitAdd |*| (switch(long("force") |+| short('f'))
+                             , switch(long("interactive") |+| short('i'))
+                             , switch(long("patch") |+| short('p'))
+                             , switch(long("edit") |+| short('e'))
+                             , arguments[File](metavar("paths")))
 
-  val rm: Parse[GitCommand] = (switch(long("force") |+| short('f'))
-                            |@| switch(long("dry-run") |+| short('n'))
-                            |@| switch(short('r'))
-                            |@| switch(long("cached"))
-                            |@| arguments[File](metavar("paths")))(GitRm)
+  val rm: Parse[GitCommand] = GitRm |*| (switch(long("force") |+| short('f'))
+                             , switch(long("dry-run") |+| short('n'))
+                             , switch(short('r'))
+                             , switch(long("cached"))
+                             , arguments[File](metavar("paths")))
 
   def git(cmd: Parse[GitCommand]): Parse[Git] =
     (Git |*| (cwd, conf, exec, cmd)) <* helperX
