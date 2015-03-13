@@ -14,10 +14,10 @@ sealed trait Name {
   }
 
   def hasShort(s: Char): Boolean =
-    short.map(_ == s).getOrElse(false)
+    short.exists(_ == s)
 
   def hasLong(l: String): Boolean =
-    long.map(_ == l).getOrElse(false)
+    long.exists(_ == l)
 
   def render: String = this match {
     case ShortName(s) => s"-${s}"

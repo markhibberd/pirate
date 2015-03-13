@@ -55,66 +55,66 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpreter.run(p, args)._2
 
   def testA(name: String): Parse[TestCommand] =
-    terminator(long(name), TestA)
+    terminator(long(name), Flags.empty, TestA)
 
   def testB(name: String): Parse[TestCommand] =
-    terminator(long(name), TestB)
+    terminator(long(name), Flags.empty, TestB)
 
   def wrap(cmd: Parse[TestCommand]): Parse[TestWrapper] =
     cmd.map(TestWrapper)
 
   def requiredFound =
-    run(flag[String]( short('a')), List("-a", "b")) ==== "b".right
+    run(flag[String](short('a'), Flags.empty), List("-a", "b")) ==== "b".right
 
   def requiredMissingA =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
+    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def requiredMissingB =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false))))))
+    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false))))))
 
   def requiredMissingC =
-    run((flag[String](short('a')) |@| flag[String](short('b')))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
+    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def requiredMissingAlts =
-    run(flag[String](short('a')) ||| flag[String](short('b')), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAlt(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
+    run(flag[String](short('a'), Flags.empty) ||| flag[String](short('b'), Flags.empty), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAlt(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def defaultFound =
-    run(flag[String](short('a')).default("c"), List("-a", "b")) ==== "b".right
+    run(flag[String](short('a'), Flags.empty).default("c"), List("-a", "b")) ==== "b".right
 
   def defaultMissing =
-    run(flag[String](short('a')).default("c"), List()) ==== "c".right
+    run(flag[String](short('a'), Flags.empty).default("c"), List()) ==== "c".right
 
   def optionFound =
-    run(flag[String](short('a')).option, List("-a", "b")) ==== Some("b").right
+    run(flag[String](short('a'), Flags.empty).option, List("-a", "b")) ==== Some("b").right
 
   def optionMissing =
-    run(flag[String](short('a')).option, List()) ==== None.right
+    run(flag[String](short('a'), Flags.empty).option, List()) ==== None.right
 
   def assignmentFound = prop((name: LongNameString, value: String) => {
-    run(flag[String](long(name.s)), List(s"--${name.s}=$value")) ==== value.right
+    run(flag[String](long(name.s), Flags.empty), List(s"--${name.s}=$value")) ==== value.right
   })
 
   def assignmentMissing = prop((name: Name, lname: LongNameString, value: String) => name.long != Some(lname.s) ==> {
-    run(flag[String](name), List(s"--${lname.s}=$value")).toEither must beLeft
+    run(flag[String](name, Flags.empty), List(s"--${lname.s}=$value")).toEither must beLeft
   })
 
   def switchesOn =
-    run(switch(short('a')), List("-a")) ==== true.right
+    run(switch(short('a'), Flags.empty), List("-a")) ==== true.right
 
   def switchesOff =
-    run(switch(short('a')), Nil) ==== false.right
+    run(switch(short('a'), Flags.empty), Nil) ==== false.right
 
   def multipleSwitches =
-    run((switch(short('a')) |@| switch(short('b')))(_ -> _), List("-ab")) ==== (true, true).right
+    run((switch(short('a'), Flags.empty) |@| switch(short('b'), Flags.empty))(_ -> _), List("-ab")) ==== (true, true).right
 
   def flagAfterSwitch =
-    run((switch(short('a')) |@| flag[String](short('b')))(_ -> _), List("-ab", "c")) ==== (true, "c").right
+    run((switch(short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-ab", "c")) ==== (true, "c").right
 
   def shortFlagPost =
-    run(flag[String]( short('a')), List("-ab")) ==== "b".right
+    run(flag[String](short('a'), Flags.empty), List("-ab")) ==== "b".right
 
   def flagsLength =
-    run(terminator(short('t'), ()).many.map(_.length), List("-ttt")) ==== 3.right
+    run(terminator(short('t'), Flags.empty, ()).many.map(_.length), List("-ttt")) ==== 3.right
 
   def positionalArgs =
     run((argument[String](metavar("src")) |@| argument[String](metavar("dst")))(_ -> _), List("/tmp/src", "tmp/dst")) ==== ("/tmp/src", "tmp/dst").right
@@ -134,11 +134,11 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   def someFailsOnEmpty = run(argument[String](metavar("files")).some, List()).toEither must beLeft
 
   def invalidOpt = {
-    run(flag[String](short('a')), List("-c")) ==== ParseErrorInvalidOption("-c").left
+    run(flag[String](short('a'), Flags.empty), List("-c")) ==== ParseErrorInvalidOption("-c").left
   }
 
   def invalidArg = {
-    run(flag[String](short('a')), List("file.txt")) ==== ParseErrorInvalidArgument("file.txt").left
+    run(flag[String](short('a'), Flags.empty), List("file.txt")) ==== ParseErrorInvalidArgument("file.txt").left
   }
 
   def intArgString = {

@@ -71,19 +71,18 @@ object Arbitraries {
     mvar <- arbitrary[Option[String]]
     hid <- arbitrary[Boolean]
     a <- arbitrary[A]
-  } yield SwitchParser[A](Metadata(Some(n), desc, mvar, hid), a))
+  } yield SwitchParser[A](n, Metadata(desc, mvar, hid), a))
 
   implicit def FlagParserArbitrary[A: Read: Arbitrary]: Arbitrary[FlagParser[A]] = Arbitrary(for {
     n <- arbitrary[Name]
     desc <- arbitrary[Option[String]]
     mvar <- arbitrary[Option[String]]
     hid <- arbitrary[Boolean]
-  } yield FlagParser[A](Metadata(Some(n), desc, mvar, hid), Read.of[A]))
+  } yield FlagParser[A](n, Metadata(desc, mvar, hid), Read.of[A]))
 
   implicit def ArgumentParserArbitrary[A: Read: Arbitrary]: Arbitrary[ArgumentParser[A]] = Arbitrary(for {
-    n <- arbitrary[Option[Name]]
     desc <- arbitrary[Option[String]]
     mvar <- arbitrary[Option[String]]
     hid <- arbitrary[Boolean]
-  } yield ArgumentParser[A](Metadata(n, desc, mvar, hid), Read.of[A]))
+  } yield ArgumentParser[A](Metadata(desc, mvar, hid), Read.of[A]))
 }
