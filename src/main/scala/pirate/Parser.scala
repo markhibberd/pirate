@@ -4,10 +4,10 @@ import scalaz._
 
 sealed trait Parser[A] {
   def map[B](f: A => B): Parser[B] = this match {
-    case SwitchParser(meta, a) =>
-      SwitchParser(meta, f(a))
-    case FlagParser(meta, p) =>
-      FlagParser(meta, p.map(f))
+    case SwitchParser(flag, meta, a) =>
+      SwitchParser(flag, meta, f(a))
+    case FlagParser(flag, meta, p) =>
+      FlagParser(flag, meta, p.map(f))
     case ArgumentParser(meta, p) =>
       ArgumentParser(meta, p.map(f))
     case CommandParser(sub) =>
@@ -19,15 +19,15 @@ sealed trait Parser[A] {
     case _                    => false
   }
   def isVisible: Boolean = this match {
-    case SwitchParser(meta, _) => meta.visible
-    case FlagParser(meta, _) => meta.visible
+    case SwitchParser(_, meta, _) => meta.visible
+    case FlagParser(_, meta, _) => meta.visible
     case ArgumentParser(meta, _) => meta.visible
     case CommandParser(sub) => true
   }
 }
 
-case class SwitchParser[A](meta: Metadata, a: A) extends Parser[A]
-case class FlagParser[A](meta: Metadata, p: Read[A]) extends Parser[A]
+case class SwitchParser[A](flag: Name, meta: Metadata, a: A) extends Parser[A]
+case class FlagParser[A](flag: Name, meta: Metadata, p: Read[A]) extends Parser[A]
 case class ArgumentParser[A](meta: Metadata, p: Read[A]) extends Parser[A]
 case class CommandParser[A](sub: Command[A]) extends Parser[A]
 

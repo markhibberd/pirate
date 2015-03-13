@@ -91,26 +91,26 @@ object ParseTraversal {
     StateT[P, List[String], A](run)
 
   def optMatches[A](parser: Parser[A], w: ParsedWord): Option[StateArg[A]] = parser match {
-    case SwitchParser(meta, a) =>
+    case SwitchParser(flag, _, a) =>
       w.name match {
         case ShortParsedName(c) =>
-          meta.hasShort(c).option(
+          flag.hasShort(c).option(
             update[A](args =>
               ((w.value.map(s => "-" ++ s).toList ++ args) -> a).pure[P]
             ))
         case LongParsedName(s) =>
-          meta.hasLong(s).option(a.pure[StateArg])
+          flag.hasLong(s).option(a.pure[StateArg])
       }
-    case FlagParser(meta, p) =>
+    case FlagParser(flag, meta, p) =>
       w.name match {
         case ShortParsedName(c) =>
-          meta.hasShort(c).option(
+          flag.hasShort(c).option(
             update[A](args => p.read(w.value.toList ++ args) match {
               case -\/(e) => errorP(toParseError(e))
               case \/-(r) => r.pure[P]
             }))
         case LongParsedName(s) =>
-          meta.hasLong(s).option(
+          flag.hasLong(s).option(
             update[A](args => p.read(w.value.toList ++ args) match {
               case -\/(e) => errorP(toParseError(e))
               case \/-(r) => r.pure[P]

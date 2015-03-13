@@ -21,37 +21,37 @@ case class GitRm(force: Boolean, dryRun: Boolean, recurse: Boolean, cached: Bool
 
 object GitMain extends PirateMainIO[Git] {
   val version: Parse[GitCommand] =
-    terminator(long("version") |+| short('v') |+| description("Prints the Git suite version that the git program came from."), GitVersion)
+    terminator(both('v', "version"), description("Prints the Git suite version that the git program came from."), GitVersion)
 
   val cwd: Parse[Option[String]] =
-    flag[String](short('C') |+| metavar("<path>") |+| description("Run as if git was started in <path> instead of the current working directory.")).option
+    flag[String](short('C'), metavar("<path>") |+| description("Run as if git was started in <path> instead of the current working directory.")).option
 
   val conf: Parse[Option[String]] =
-    flag[String](short('c') |+| metavar("<name>=<value>") |+| description("Pass a configuration parameter to the command.")).option
+    flag[String](short('c'), metavar("<name>=<value>") |+| description("Pass a configuration parameter to the command.")).option
 
   val exec: Parse[Option[String]] =
-    flag[String](long("exec-path") |+| metavar("<path>") |+| description("Path to wherever your core Git programs are installed.")).option
+    flag[String](long("exec-path"), metavar("<path>") |+| description("Path to wherever your core Git programs are installed.")).option
 
   val html: Parse[GitCommand] =
-    terminator(long("html-path") |+| description("Print the path, without trailing slash, where Git's HTML documentation is installed and exit."), GitHtmlPath)
+    terminator(long("html-path"), description("Print the path, without trailing slash, where Git's HTML documentation is installed and exit."), GitHtmlPath)
 
   val man: Parse[GitCommand] =
-    terminator(long("man-path") |+| description("Print the manpath (see man(1)) for the man pages for this version of Git and exit."), GitManPath)
+    terminator(long("man-path"), description("Print the manpath (see man(1)) for the man pages for this version of Git and exit."), GitManPath)
 
   val info: Parse[GitCommand] =
-    terminator(long("info-path"), GitInfoPath)
+    terminator(long("info-path"), empty, GitInfoPath)
 
   // Applicitive style GitAdd |*| (switch ...) leads to invariance issues.
-  val add: Parse[GitCommand] = (switch(long("force") |+| short('f'))
-                            |@| switch(long("interactive") |+| short('i'))
-                            |@| switch(long("patch") |+| short('p'))
-                            |@| switch(long("edit") |+| short('e'))
+  val add: Parse[GitCommand] = (switch(both('f', "force"), empty)
+                            |@| switch(both('i', "interactive"), empty)
+                            |@| switch(both('p', "patch"), empty)
+                            |@| switch(both('e', "edit"), empty)
                             |@| arguments[File](metavar("paths")))(GitAdd)
 
-  val rm: Parse[GitCommand] = (switch(long("force") |+| short('f'))
-                            |@| switch(long("dry-run") |+| short('n'))
-                            |@| switch(short('r'))
-                            |@| switch(long("cached"))
+  val rm: Parse[GitCommand] = (switch(both('f', "force"), empty)
+                            |@| switch(both('n', "dry-run"), empty)
+                            |@| switch(short('r'), empty)
+                            |@| switch(long("cached"), empty)
                             |@| arguments[File](metavar("paths")))(GitRm)
 
   def git(cmd: Parse[GitCommand]): Parse[Git] =
