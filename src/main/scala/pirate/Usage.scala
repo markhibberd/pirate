@@ -13,7 +13,7 @@ object Usage {
     case x :: _ => printSubWith[A](command, x, mode) // The first entry is the "last" entry, so is the relevant context. 
   }
 
-  def printSub[A](command: Command[A], sub: String) =
+  def printSub[A](command: Command[A], sub: String): String =
     printSubWith(command: Command[A], sub: String, DefaultUsageMode)
 
   def printSubWith[A](command: Command[A], sub: String, mode: UsageMode): String =
@@ -38,7 +38,7 @@ object Usage {
       ArgumentInfo(meta.metavar, meta.description, info.multi, info.dfault)
   }
 
-  def invalid(arg: String, isOption: Boolean) = isOption match {
+  def invalid(arg: String, isOption: Boolean): String = isOption match {
     case true  => s"Invalid option `${arg}`"
     case false => s"Invalid argument `${arg}`"
   }
@@ -117,33 +117,40 @@ object Render {
     def mDfault(mark: Boolean)(opt: String): String =
       if (mark) s"[${opt}]" else opt
 
-    def availableOptions = if (i.switches.length == 0) "" else
-      s"""|Available options:
-          |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+    def availableOptions: String =
+      if (i.switches.length == 0) ""
+      else
+        s"""|Available options:
+            |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+            |""".stripMargin
+
+    def availableArguments: String =
+      if (i.arguments.length == 0) ""
+      else
+        s"""|Positional arguments:
+            |${flagspace}${i.arguments.map(argumentinfo).mkString("\n" + flagspace)}
+            |""".stripMargin
+
+    def availableCommands: String =
+      if (i.commands.length == 0) ""
+      else
+        s"""|Available commands:
+            |${flagspace}${(i.commands.map(commandinfo)).mkString("\n" + flagspace)}
+            |""".stripMargin
+
+    def full: String =
+      s"""|Usage:
+          |${flagspace}${wrap(name,mode.flagIndent)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
+          |
+          |${description.map(_ + "\n").getOrElse("")}
+          |${availableOptions}
+          |${availableArguments}
+          |${availableCommands}
           |""".stripMargin
 
-    def availableArguments = if (i.arguments.length == 0) "" else
-      s"""|Positional arguments:
-          |${flagspace}${i.arguments.map(argumentinfo).mkString("\n" + flagspace)}
+    def missing: String =
+      s"""|${wrap("Missing parameters:",0)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
           |""".stripMargin
-
-    def availableCommands = if (i.commands.length == 0) "" else
-      s"""|Available commands:
-          |${flagspace}${(i.commands.map(commandinfo)).mkString("\n" + flagspace)}
-          |""".stripMargin
-
-    def full = s"""|Usage:
-        |${flagspace}${wrap(name,mode.flagIndent)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
-        |
-        |${description.map(_ + "\n").getOrElse("")}
-        |${availableOptions}
-        |${availableArguments}
-        |${availableCommands}
-        |""".stripMargin
-
-    def missing = 
-    s"""|${wrap("Missing parameters:",0)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
-        |""".stripMargin
   }
 }
 
