@@ -28,6 +28,12 @@ class ReadSpec extends spec.Spec { def is = s2"""
 
   Char doesn't parse strings          $charerr
   Numeric doesn't parse strings       $numericerr
+
+  Returning none will fail            $optionFail
+  Returning some will pass            $optionPass
+  Returning left will fail            $eitherFail
+  Returning right will pass           $eitherPass
+
   Witness (compilation is sufficient) $ok
 
 """
@@ -46,6 +52,18 @@ class ReadSpec extends spec.Spec { def is = s2"""
 
   def numericerr = prop((s: String) => !s.parseInt.isSuccess ==> {
     Read.parse[Int](List(s)).toOption ==== None})
+
+  def optionFail = prop((s: String, e: String) =>
+    Read.optionRead(_ => None, e).read(List(s)) ==== ReadErrorInvalidType(s, e).left)
+
+  def optionPass = prop((s: String, r: List[String], e: String) =>
+    Read.optionRead(Some(_), e).read(s :: r) ==== (r, s).right)
+
+  def eitherFail = prop((s: String, e: String) =>
+    Read.eitherRead(_ => e.left).read(List(s)) ==== ReadErrorInvalidType(s, e).left)
+
+  def eitherPass = prop((s: String, r: List[String]) =>
+    Read.eitherRead(_.right).read(s :: r) ==== (r, s).right)
 
   def symmetric[A: Read: Arbitrary] = prop((a: A) =>
     Read.parse[A](List(a.toString)).toOption ==== Some(a))
