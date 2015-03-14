@@ -127,7 +127,10 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
     optionRead(s => Try(f(s)).toOption, expected)
 
   def optionRead[A](f: String => Option[A], expected: String): Read[A] =
-    string flatMap (s => f(s).cata(v => value(v), error(ReadErrorInvalidType(s, expected))))
+    eitherRead(s => f(s).toRightDisjunction(expected))
+
+  def eitherRead[A](f: String => String \/ A): Read[A] =
+    string.flatMap(s => f(s).fold(e => error(ReadErrorInvalidType(s, e)), value(_)))
 
   implicit val ReadChar: Read[Char] =
     optionRead(s => (s.length == 1).option(s.charAt(0)), "Char")
