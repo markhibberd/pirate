@@ -1,0 +1,17 @@
+#!/bin/sh -eux
+
+git2() {
+  # This is a shitty/slow way to run a main class, but saves us stuffing around with classpaths or assembly plugin
+  ARGS="$@"
+  ./sbt ";test:runMain pirate.example.GitMain $ARGS"
+}
+
+git2 --help
+git2 --version
+git2 --info-path
+git2 add -i file.txt
+
+if git2; then echo "No subcommand should fail"; exit 1; fi
+if git2 --wat; then echo "Badly formed command should fail"; exit 1; fi
+if git2 missing; then echo "Missing sub-command should fail"; exit 1; fi
+if git2 add --wat; then echo "Badly formed sub-command should fail"; exit 1; fi

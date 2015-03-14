@@ -1,3 +1,5 @@
-#!/bin/sh
+#!/bin/sh -eu
 
 ./sbt -Dsbt.log.noformat=true "; clean; test-only -- console; +publish;  echo-version"
+
+./src/test/bin/run
