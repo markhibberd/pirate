@@ -67,7 +67,9 @@ object MyApp extends PirateMain[MyArgs] {
 Or run directly:
 
 ```scala
-Runners.unsafeRunOrFail(args.toList, cmd, args => ???)
+Runners.runOrFail(args.toList, cmd).map {
+  args => ???
+}
 ````
 
 When run with incorrect parameters, a custom help text will be generated, e.g.,
