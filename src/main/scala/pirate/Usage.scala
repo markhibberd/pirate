@@ -5,6 +5,24 @@ import pirate.internal._
 import scalaz._, Scalaz._
 
 object Usage {
+
+  def printError[A](command: Command[A], ctx: List[String], error: ParseError): List[String] \/ List[String] = error match {
+    case ParseErrorNoMessage =>
+      List(Usage.print(command, ctx)).left
+    case ParseErrorShowHelpText(s) =>
+      List(s.cata(sub => Usage.print(command, sub :: ctx), Usage.print(command, ctx))).right
+    case ParseErrorShowVersion(version) =>
+      List("version " + version).right
+    case ParseErrorMessage(s) =>
+      List(s, Usage.print(command, ctx)).left
+    case ParseErrorMissing(s) =>
+      List(Usage.missing(command, s), Usage.print(command, ctx)).left
+    case ParseErrorInvalidOption(s) =>
+      List(Usage.invalid(s, true), Usage.print(command, ctx)).left
+    case ParseErrorInvalidArgument(s) =>
+      List(Usage.invalid(s, false), Usage.print(command, ctx)).left
+  }
+
   def print[A](command: Command[A], context: List[String]): String =
     printWith(command, context, DefaultUsageMode)
 
