@@ -136,7 +136,7 @@ object Render {
       if (mark) s"[${opt}]" else opt
 
     def availableOptions: String =
-      if (i.switches.length == 0) ""
+      if (i.switches.length == 0 && i.flags.length == 0) ""
       else
         s"""|Available options:
             |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
