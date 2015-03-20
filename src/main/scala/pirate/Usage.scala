@@ -10,7 +10,7 @@ object Usage {
     case ParseErrorNoMessage =>
       List(Usage.print(command, ctx)).left
     case ParseErrorShowHelpText(s) =>
-      List(s.cata(sub => Usage.print(command, sub :: ctx), Usage.print(command, ctx))).right
+      List(s.cata(sub => Usage.print(command, ctx ++ sub.pure[List]), Usage.print(command, ctx))).right
     case ParseErrorShowVersion(version) =>
       List("version " + version).right
     case ParseErrorMessage(s) =>
@@ -28,16 +28,11 @@ object Usage {
 
   def printWith[A](command: Command[A], context: List[String], mode: UsageMode): String = context match {
     case Nil => Render.infos(command.name, command.description, tree(command.parse), mode)
-    case x :: _ => printSubWith[A](command, x, mode) // The first entry is the "last" entry, so is the relevant context. 
+    case x :: xs =>
+      Infos(tree(command.parse).flatten).commands.find(c => c.name === x).map {
+        sub => printWith(Command(command.name + " " + sub.name, sub.description, sub.parse), xs, mode)
+      }.getOrElse("Invalid subcommand")
   }
-
-  def printSub[A](command: Command[A], sub: String): String =
-    printSubWith(command: Command[A], sub: String, DefaultUsageMode)
-
-  def printSubWith[A](command: Command[A], sub: String, mode: UsageMode): String =
-    Infos(tree(command.parse).flatten).commands.find(c => c.name === sub).map {
-      x => Render.infos(command.name + " " + x.name, x.description, x.info, mode)
-    }.getOrElse("Invalid subcommand")
 
   def tree[A](parse: Parse[A]): ParseTree[Info] =
     ParseTraversal.treeTraverse(parse, new TreeTraverseF[Info] {
@@ -51,7 +46,7 @@ object Usage {
     case FlagParser(flag, meta, p) =>
       FlagInfo(flag, meta.description, meta.metavar, info.multi, info.dfault)
     case CommandParser(sub) =>
-      CommandInfo(sub.name, sub.description, Usage.tree(sub.parse))
+      CommandInfo(sub.name, sub.description, sub.parse)
     case ArgumentParser(meta, p) =>
       ArgumentInfo(meta.metavar, meta.description, info.multi, info.dfault)
   }
@@ -96,10 +91,10 @@ object Render {
     }
 
     def anyInfo(i: Info): String = i match {
-      case f: SwitchInfo   => flagO(f.flag) |> mDfault(f.dfault)
-      case o: FlagInfo     => option(o.flag, o.meta) |> mDfault(o.dfault)
-      case a: ArgumentInfo => argx(a) |> mDfault(a.dfault)
-      case c: CommandInfo  => c.name + " ARGS..."
+      case f: SwitchInfo     => flagO(f.flag) |> mDfault(f.dfault)
+      case o: FlagInfo       => option(o.flag, o.meta) |> mDfault(o.dfault)
+      case a: ArgumentInfo   => argx(a) |> mDfault(a.dfault)
+      case c: CommandInfo[_] => c.name + " ARGS..."
     }
 
     def argx(a: ArgumentInfo): String =
@@ -114,7 +109,7 @@ object Render {
     def argumentinfo(a: ArgumentInfo): String =
       wrap(argx(a), mode.flagIndent)(a.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
-    def commandinfo(c: CommandInfo): String =
+    def commandinfo(c: CommandInfo[_]): String =
       wrap(c.name, mode.flagIndent)(c.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def flag(f: Name): String = f match {
@@ -174,17 +169,17 @@ object Render {
 
 
 case class Infos(l: List[Info]) {
-  def switches  = l.collect { case a: SwitchInfo   => a }
-  def flags     = l.collect { case a: FlagInfo     => a }
-  def arguments = l.collect { case a: ArgumentInfo => a }
-  def commands  = l.collect { case a: CommandInfo  => a }
+  def switches  = l.collect { case a: SwitchInfo      => a }
+  def flags     = l.collect { case a: FlagInfo        => a }
+  def arguments = l.collect { case a: ArgumentInfo    => a }
+  def commands  = l.collect { case a: CommandInfo[_]  => a }
 }
 
 sealed trait Info
 case class SwitchInfo(flag: Name, description: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class ArgumentInfo(meta: Option[String], description: Option[String], multi: Boolean, dfault: Boolean) extends Info
-case class CommandInfo(name: String, description: Option[String], info: ParseTree[Info]) extends Info
+case class CommandInfo[A](name: String, description: Option[String], parse: Parse[A]) extends Info
 
 /**
  * Usage mode provides configuration options for generating

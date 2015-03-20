@@ -65,7 +65,7 @@ object GitMain extends PirateMainIO[Git] {
     case GitHtmlPath => IO.putStrLn("html-path")
     case GitManPath => IO.putStrLn("man-path")
     case GitInfoPath => IO.putStrLn("info-path")
-    case GitAdd(force, interactive, patch, edit, pathspec) => IO.putStrLn("Removing files")
+    case GitAdd(force, interactive, patch, edit, pathspec) => IO.putStrLn("Adding files")
     case GitRm(force, dryRun, recurse, cached, pathspec) => IO.putStrLn("Removing files")
   }
 }

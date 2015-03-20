@@ -49,6 +49,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   Interpreter handles the first multiple cases   $orFirst
   Interpreter handles the second multiple cases  $orSecond
   Interpreter handles wrapped commands well      $wrappers
+  Context flows through multiple subcommands     $subcontext
 
 """
 
@@ -160,6 +161,9 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   def wrappers = prop((name: LongNameString) => {
     run(wrap(testA(name.s)), List(s"--${name.s}")) must_== TestWrapper(TestA).right
   })
+
+  def subcontext = Interpreter.run(subcommand(subcommand(subcommand(().pure[Parse] ~ "third" ) ~ "second" ) ~ "first"),
+    "first" :: "second" :: "third" :: Nil) must_== (("first" :: "second" :: "third" :: Nil) -> ().right)
 
   case class LongNameString(s: String)
   implicit def NonEmptyStringArbitrary: Arbitrary[LongNameString] = Arbitrary(
