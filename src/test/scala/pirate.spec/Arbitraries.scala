@@ -13,6 +13,13 @@ object Arbitraries {
 
   case class LongLine(value: String)
 
+  case class List5[A](value: List[A])
+  implicit def List5Arbitrary[A: Arbitrary]: Arbitrary[List5[A]] =
+    Arbitrary(for {
+      n <- Gen.choose(0, 5)
+      l <- Gen.listOfN(n, arbitrary[A])
+    } yield List5(l))
+
   implicit def LongLineArbitrary: Arbitrary[LongLine] =
     Arbitrary(Gen.resize(1000, arbitrary[String]) map LongLine.apply)
 
