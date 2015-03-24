@@ -17,12 +17,16 @@ object Text {
 
     // Add 1 for hyphen + newline
     val sb = new StringBuilder(text.length + (text.length / width * (spacer.length + 2)))
-    val s = firstText + firstSpacer + text
+    val s = firstText + firstSpacer + text.trim
 
     @annotation.tailrec
     def wrapit(o: Int, w: Int): Unit = {
       val i = o + w
-      if (s.length <= i) {
+      val nl = s.indexOf('\n', o)
+      if (nl > -1 && nl < o + w) {
+        sb ++= s.substring(o, nl) ++= "\n" ++= spacer
+        wrapit(nl + 1, width)
+      } else if (s.length <= i) {
         sb ++= s.substring(o)
         ()
       } else if (w <= 0) {
@@ -31,8 +35,7 @@ object Text {
       } else if (s.charAt(i) == ' ') {
         sb ++= s.substring(o, i) ++= "\n" ++= spacer
         wrapit(i + 1, width)
-      }
-      else
+      } else
         wrapit(o, w - 1)
     }
 

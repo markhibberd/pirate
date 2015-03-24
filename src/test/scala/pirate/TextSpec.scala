@@ -13,6 +13,7 @@ class TextSpec extends spec.Spec { def is = s2"""
   wrap no longer than width + indent              $indent
   handle negative widths                          $negativeWidth
   never lose content                              $safe
+  text with new lines has proper gutter           $gutter
 
 """
 
@@ -31,6 +32,9 @@ class TextSpec extends spec.Spec { def is = s2"""
   )
 
   def safe = prop((l: LongLine) => drains(l.value, wrap("", 0)(l.value, 80, 0)))
+
+  def gutter = prop((ls: (List5[LongLine])) =>
+    wrap("", 0)(ls.value.map(_.value).mkString("\n"), 80, 10).split('\n').map(_.take(10)).mkString("").trim ==== "")
 
   def drains(orig: String, modded: String): Boolean = {
     var i = 0
