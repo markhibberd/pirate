@@ -168,6 +168,17 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
   implicit def ReadOption[A: Read]: Read[Option[A]] =
     of[A].option
 
+  implicit def ConfigurationRead[A: Read, B: Read]: Read[(A, B)] =
+    Read.string >>= ( s =>
+      s.split("=", 2).toList match {
+        case key :: value :: Nil  => (for {
+          a <- Read.of[A].read(key :: Nil)
+          b <- Read.of[B].read(value :: Nil)
+        } yield (a._2 -> b._2)).fold(e => Read.error(e), _.pure[Read])
+        case _ => Read.failure("Expected a key=value pair")
+      }
+    )
+
   implicit def ReadMonad: Monad[Read] with MonadPlus[Read] = new Monad[Read] with MonadPlus[Read]{
     def point[A](a: => A) = value(a)
     def bind[A, B](p: Read[A])(f: A => Read[B]) = p flatMap f
