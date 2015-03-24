@@ -169,13 +169,13 @@ object Read extends shapeless.ProductTypeClassCompanion[Read] {
     of[A].option
 
   implicit def ConfigurationRead[A: Read, B: Read]: Read[(A, B)] =
-    Read.string >>= ( s =>
+    string >>= ( s =>
       s.split("=", 2).toList match {
         case key :: value :: Nil  => (for {
-          a <- Read.of[A].read(key :: Nil)
-          b <- Read.of[B].read(value :: Nil)
-        } yield (a._2 -> b._2)).fold(e => Read.error(e), _.pure[Read])
-        case _ => Read.failure("Expected a key=value pair")
+          a <- of[A].read(key :: Nil)
+          b <- of[B].read(value :: Nil)
+        } yield (a._2 -> b._2)).fold(e => error(e), _.pure[Read])
+        case _ => failure("Expected a key=value pair")
       }
     )
 
