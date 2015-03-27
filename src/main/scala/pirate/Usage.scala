@@ -46,7 +46,7 @@ object Usage {
     case FlagParser(flag, meta, p) =>
       FlagInfo(flag, meta.description, meta.metavar, info.multi, info.dfault)
     case CommandParser(sub) =>
-      CommandInfo(sub.name, sub.description, sub.parse)
+      CommandInfo(sub.name, sub.description, sub.parse.map(_ => ()))
     case ArgumentParser(meta, p) =>
       ArgumentInfo(meta.metavar, meta.description, info.multi, info.dfault)
   }
@@ -91,10 +91,10 @@ object Render {
     }
 
     def anyInfo(i: Info): String = i match {
-      case f: SwitchInfo     => flagO(f.flag) |> mDfault(f.dfault)
-      case o: FlagInfo       => option(o.flag, o.meta) |> mDfault(o.dfault)
-      case a: ArgumentInfo   => argx(a) |> mDfault(a.dfault)
-      case c: CommandInfo[_] => c.name + " ARGS..."
+      case f: SwitchInfo   => flagO(f.flag) |> mDfault(f.dfault)
+      case o: FlagInfo     => option(o.flag, o.meta) |> mDfault(o.dfault)
+      case a: ArgumentInfo => argx(a) |> mDfault(a.dfault)
+      case c: CommandInfo  => c.name + " ARGS..."
     }
 
     def argx(a: ArgumentInfo): String =
@@ -109,7 +109,7 @@ object Render {
     def argumentinfo(a: ArgumentInfo): String =
       wrap(argx(a), mode.flagIndent)(a.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
-    def commandinfo(c: CommandInfo[_]): String =
+    def commandinfo(c: CommandInfo): String =
       wrap(c.name, mode.flagIndent)(c.description.getOrElse(""), mode.width - mode.descIndent, mode.descIndent)
 
     def flag(f: Name): String = f match {
@@ -169,17 +169,17 @@ object Render {
 
 
 case class Infos(l: List[Info]) {
-  def switches  = l.collect { case a: SwitchInfo      => a }
-  def flags     = l.collect { case a: FlagInfo        => a }
-  def arguments = l.collect { case a: ArgumentInfo    => a }
-  def commands  = l.collect { case a: CommandInfo[_]  => a }
+  def switches  = l.collect { case a: SwitchInfo   => a }
+  def flags     = l.collect { case a: FlagInfo     => a }
+  def arguments = l.collect { case a: ArgumentInfo => a }
+  def commands  = l.collect { case a: CommandInfo  => a }
 }
 
 sealed trait Info
 case class SwitchInfo(flag: Name, description: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class ArgumentInfo(meta: Option[String], description: Option[String], multi: Boolean, dfault: Boolean) extends Info
-case class CommandInfo[A](name: String, description: Option[String], parse: Parse[A]) extends Info
+case class CommandInfo(name: String, description: Option[String], parse: Parse[Unit]) extends Info
 
 /**
  * Usage mode provides configuration options for generating
