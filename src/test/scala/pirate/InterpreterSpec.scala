@@ -21,6 +21,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   Required missing applicatives both              $requiredMissingA
   Required missing applicatives first             $requiredMissingB
   Required missing applicatives second            $requiredMissingC
+  Left over arguments fails                       $leftover
   Two alternatives missing                        $requiredMissingAlts
   Default found                                   $defaultFound
   Default missing                                 $defaultMissing
@@ -46,6 +47,9 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
 
   Composite interpreters
   ====
+  Backtracking occurs when set                   $dobacktrack
+  Backtracking does not occurs when set          $donotbacktrack
+  Interpreter still works with backtracking on   $donotbacktrackbutstillwork
   Interpreter handles the first multiple cases   $orFirst
   Interpreter handles the second multiple cases  $orSecond
   Interpreter handles wrapped commands well      $wrappers
@@ -53,7 +57,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
 
 """
 
-  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpreter.run(p, args)._2
+  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpreter.run(p, args, NullPrefs)._2
 
   def testA(name: String): Parse[TestCommand] =
     terminator(long(name), Flags.empty, TestA)
@@ -71,10 +75,13 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
     run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
 
   def requiredMissingB =
-    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false))))))
+    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-b", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false))))
 
   def requiredMissingC =
-    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeAp(List(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
+    run((flag[String](short('a'), Flags.empty) |@| flag[String](short('b'), Flags.empty))(_ -> _), List("-a", "c")).toEither must beLeft(ParseErrorMissing(ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))
+
+  def leftover =
+    run(().pure[Parse], List("-a")) ==== ParseErrorLeftOver("-a" :: Nil).left
 
   def requiredMissingAlts =
     run(flag[String](short('a'), Flags.empty) ||| flag[String](short('b'), Flags.empty), List()).toEither must beLeft(ParseErrorMissing(ParseTreeAlt(List(ParseTreeLeaf(FlagInfo(ShortName('a'), None, None, false, false)), ParseTreeLeaf(FlagInfo(ShortName('b'), None, None, false, false))))))
@@ -150,6 +157,15 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
     run(argument[Int](metavar("src")), Nil).toEither must beLeft
   }
 
+  def dobacktrack = Interpreter.run((subcommand(().pure[Parse] ~ "first") |@| switch(short('a'), Flags.empty))(_ -> _),
+    "first" :: "-a" :: Nil, NullPrefs) must_== (("first" :: Nil) -> ((), true).right)
+
+  def donotbacktrack = Interpreter.run((subcommand(().pure[Parse] ~ "first") |@| switch(short('a'), Flags.empty))(_ -> _),
+    "first" :: "-a" :: Nil, NullPrefs.copy(backtrack=false)) must_== (("first" :: Nil) -> ParseErrorLeftOver("-a" :: Nil).left)
+
+  def donotbacktrackbutstillwork = Interpreter.run((subcommand(().pure[Parse] ~ "first") |@| switch(short('a'), Flags.empty))(_ -> _),
+    "-a" :: "first" :: Nil, NullPrefs.copy(backtrack=false)) must_== (("first" :: Nil) -> ((), true).right)
+
   def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
     run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameOne.s}")) must_== TestA.right
   })
@@ -163,7 +179,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   })
 
   def subcontext = Interpreter.run(subcommand(subcommand(subcommand(().pure[Parse] ~ "third" ) ~ "second" ) ~ "first"),
-    "first" :: "second" :: "third" :: Nil) must_== (("first" :: "second" :: "third" :: Nil) -> ().right)
+    "first" :: "second" :: "third" :: Nil, NullPrefs) must_== (("first" :: "second" :: "third" :: Nil) -> ().right)
 
   case class LongNameString(s: String)
   implicit def NonEmptyStringArbitrary: Arbitrary[LongNameString] = Arbitrary(

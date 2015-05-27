@@ -6,31 +6,30 @@ import scalaz._, Scalaz._
 
 object Usage {
 
-  def printError[A](command: Command[A], ctx: List[String], error: ParseError): List[String] \/ List[String] = error match {
+  def printError[A](command: Command[A], ctx: List[String], error: ParseError, mode: Prefs): List[String] \/ List[String] = error match {
     case ParseErrorNoMessage =>
-      List(Usage.print(command, ctx)).left
+      List(Usage.print(command, ctx, mode)).left
     case ParseErrorShowHelpText(s) =>
-      List(s.cata(sub => Usage.print(command, ctx ++ sub.pure[List]), Usage.print(command, ctx))).right
+      List(s.cata(sub => Usage.print(command, ctx ++ sub.pure[List], mode), Usage.print(command, ctx, mode))).right
     case ParseErrorShowVersion(version) =>
       List("version " + version).right
+    case ParseErrorLeftOver(xs) =>
+      List(s"Left over arguments: " ++ xs.mkString(", "), Usage.print(command, ctx, mode)).left
     case ParseErrorMessage(s) =>
-      List(s, Usage.print(command, ctx)).left
+      List(s, Usage.print(command, ctx, mode)).left
     case ParseErrorMissing(s) =>
-      List(Usage.missing(command, s), Usage.print(command, ctx)).left
+      List(Usage.missing(command, s, mode), Usage.print(command, ctx, mode)).left
     case ParseErrorInvalidOption(s) =>
-      List(Usage.invalid(s, true), Usage.print(command, ctx)).left
+      List(Usage.invalid(s, true), Usage.print(command, ctx, mode)).left
     case ParseErrorInvalidArgument(s) =>
-      List(Usage.invalid(s, false), Usage.print(command, ctx)).left
+      List(Usage.invalid(s, false), Usage.print(command, ctx, mode)).left
   }
 
-  def print[A](command: Command[A], context: List[String]): String =
-    printWith(command, context, DefaultUsageMode)
-
-  def printWith[A](command: Command[A], context: List[String], mode: UsageMode): String = context match {
+  def print[A](command: Command[A], context: List[String], mode: Prefs): String = context match {
     case Nil => Render.infos(command.name, command.description, tree(command.parse), mode)
     case x :: xs =>
       Infos(tree(command.parse).flatten).commands.find(c => c.name === x).map {
-        sub => printWith(Command(command.name + " " + sub.name, sub.description, sub.parse), xs, mode)
+        sub => print(Command(command.name + " " + sub.name, sub.description, sub.parse), xs, mode)
       }.getOrElse("Invalid subcommand")
   }
 
@@ -56,10 +55,7 @@ object Usage {
     case false => s"Invalid argument `${arg}`"
   }
 
-  def missing[A](command: Command[A], fails: ParseTree[Info]): String =
-    missingWith[A](command, fails, DefaultUsageMode)
-
-  def missingWith[A](command: Command[A], fails: ParseTree[Info], mode: UsageMode): String = {
+  def missing[A](command: Command[A], fails: ParseTree[Info], mode: Prefs): String = {
     Render.info(command.name, command.description, fails, mode).missing
   }
 }
@@ -67,19 +63,28 @@ object Usage {
 object Render {
   import Text._
 
-  def infos(name: String, description: Option[String], is: ParseTree[Info], mode: UsageMode): String =
+  def infos(name: String, description: Option[String], is: ParseTree[Info], mode: Prefs): String =
     info(name, description, is, mode).full
 
-  case class info(name: String, description: Option[String], tree: ParseTree[Info], mode: UsageMode) {
+  case class info(name: String, description: Option[String], tree: ParseTree[Info], mode: Prefs) {
     val flagspace = space(mode.flagIndent)
     val i = Infos(tree.flatten)
 
-    def synopsis =
+    def synopsis = {
+      def synposisLine(t: ParseTree[Info]) =
+        s"${flagspace}${wrap(name,mode.flagIndent)(foldTree(t), mode.width - name.length, name.length + mode.flagIndent + 1)}"
       if (mode.condenseSynopsis)
         "[OPTIONS] " + i.arguments.map(argx).mkString(" ")
       else {
-        foldTree(tree)
+        if (mode.separateTopLevels) {
+          tree match {
+            case ParseTreeAlt(subTrees) => subTrees.map(synposisLine).mkString("\n")
+            case ParseTreeAp(_) => synposisLine(tree)
+            case ParseTreeLeaf(_) => synposisLine(tree)
+          }
+        } else synposisLine(tree)
       }
+    }
 
     def foldTree(x: ParseTree[Info]): String = x match {
       case ParseTreeLeaf(value) => anyInfo(value)
@@ -134,26 +139,26 @@ object Render {
       if (i.switches.length == 0 && i.flags.length == 0) ""
       else
         s"""|Available options:
-            |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).mkString("\n" + flagspace)}
+            |${flagspace}${(i.switches.map(flaginfo) ++ i.flags.map(optioninfo)).distinct.mkString("\n" + flagspace)}
             |""".stripMargin
 
     def availableArguments: String =
       if (i.arguments.length == 0) ""
       else
         s"""|Positional arguments:
-            |${flagspace}${i.arguments.map(argumentinfo).mkString("\n" + flagspace)}
+            |${flagspace}${i.arguments.map(argumentinfo).distinct.mkString("\n" + flagspace)}
             |""".stripMargin
 
     def availableCommands: String =
       if (i.commands.length == 0) ""
       else
         s"""|Available commands:
-            |${flagspace}${(i.commands.map(commandinfo)).mkString("\n" + flagspace)}
+            |${flagspace}${(i.commands.map(commandinfo)).distinct.mkString("\n" + flagspace)}
             |""".stripMargin
 
     def full: String =
       s"""|Usage:
-          |${flagspace}${wrap(name,mode.flagIndent)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
+          |${synopsis}
           |
           |${description.map(_ + "\n").getOrElse("")}
           |${availableOptions}
@@ -180,29 +185,3 @@ case class SwitchInfo(flag: Name, description: Option[String], multi: Boolean, d
 case class FlagInfo(flag: Name, description: Option[String], meta: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class ArgumentInfo(meta: Option[String], description: Option[String], multi: Boolean, dfault: Boolean) extends Info
 case class CommandInfo(name: String, description: Option[String], parse: Parse[Unit]) extends Info
-
-/**
- * Usage mode provides configuration options for generating
- * a usage string.
- */
-case class UsageMode(
-  condenseSynopsis: Boolean,
-  flagIndent: Int,
-  descIndent: Int,
-  width: Int,
-  tightOneOrManySynopsis: Boolean
-)
-
-/**
- * Default usage mode.
- *  - Explicit synopsis.
- *  - 8/16 indents
- *  - 80 width
- */
-object DefaultUsageMode extends UsageMode(
-  condenseSynopsis = false,
-  flagIndent = 2,
-  descIndent = 26,
-  width = 80,
-  tightOneOrManySynopsis = true
-)
