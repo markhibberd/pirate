@@ -8,10 +8,10 @@ case class Prefs(
   backtrack: Boolean,
   separateTopLevels: Boolean,
   condenseSynopsis: Boolean,
+  usageOnError: Boolean,
   flagIndent: Int,
   descIndent: Int,
-  width: Int,
-  tightOneOrManySynopsis: Boolean
+  width: Int
 )
 
 /**
@@ -24,8 +24,8 @@ object NullPrefs extends Prefs(
   backtrack = true,
   separateTopLevels = true,
   condenseSynopsis = false,
+  usageOnError = false,
   flagIndent = 2,
   descIndent = 26,
-  width = 80,
-  tightOneOrManySynopsis = true
+  width = 80
 )

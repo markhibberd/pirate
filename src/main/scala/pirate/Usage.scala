@@ -6,23 +6,24 @@ import scalaz._, Scalaz._
 
 object Usage {
 
-  def printError[A](command: Command[A], ctx: List[String], error: ParseError, mode: Prefs): List[String] \/ List[String] = error match {
-    case ParseErrorNoMessage =>
-      List(Usage.print(command, ctx, mode)).left
-    case ParseErrorShowHelpText(s) =>
-      List(s.cata(sub => Usage.print(command, ctx ++ sub.pure[List], mode), Usage.print(command, ctx, mode))).right
-    case ParseErrorShowVersion(version) =>
-      List("version " + version).right
-    case ParseErrorLeftOver(xs) =>
-      List(s"Left over arguments: " ++ xs.mkString(", "), Usage.print(command, ctx, mode)).left
-    case ParseErrorMessage(s) =>
-      List(s, Usage.print(command, ctx, mode)).left
-    case ParseErrorMissing(s) =>
-      List(Usage.missing(command, s, mode), Usage.print(command, ctx, mode)).left
-    case ParseErrorInvalidOption(s) =>
-      List(Usage.invalid(s, true), Usage.print(command, ctx, mode)).left
-    case ParseErrorInvalidArgument(s) =>
-      List(Usage.invalid(s, false), Usage.print(command, ctx, mode)).left
+  def printError[A](command: Command[A], ctx: List[String], error: ParseError, mode: Prefs): List[String] \/ List[String] = {
+    def printUsageWhenSet: List[String] = if (mode.usageOnError) Usage.print(command, ctx, mode) :: Nil else Nil
+    error match {
+      case ParseErrorShowHelpText(s) =>
+        List(s.cata(sub => Usage.print(command, ctx ++ sub.pure[List], mode), Usage.print(command, ctx, mode))).right
+      case ParseErrorOkMessage(s) =>
+        List(s).right
+      case ParseErrorLeftOver(xs) =>
+        (s"Left over arguments: " ++ xs.mkString(", ") :: printUsageWhenSet).left
+      case ParseErrorMessage(s) =>
+        (s :: printUsageWhenSet).left
+      case ParseErrorMissing(s) =>
+        (Usage.missing(command, s, mode) :: printUsageWhenSet).left
+      case ParseErrorInvalidOption(s) =>
+        (Usage.invalid(s, true) :: printUsageWhenSet).left
+      case ParseErrorInvalidArgument(s) =>
+        (Usage.invalid(s, false) :: printUsageWhenSet).left
+    }
   }
 
   def print[A](command: Command[A], context: List[String], mode: Prefs): String = context match {
@@ -167,7 +168,7 @@ object Render {
           |""".stripMargin
 
     def missing: String =
-      s"""|${wrap("Missing parameters:",0)(synopsis, mode.width - name.length, name.length + mode.flagIndent + 1)}
+      s"""|${wrap("Missing parameters:",0)(synopsis, 0, 18)}
           |""".stripMargin
   }
 }
