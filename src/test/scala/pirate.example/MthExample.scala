@@ -22,7 +22,7 @@ object MthExample {
   val all = switch(short('h'), empty).as[Args](Help) ||| switch(short('v'), empty).as(Version) ||| example
 
  val command = all ~ "example" ~~
-  s"""|An interactive example for pirate with variants.
+   """|An interactive example for pirate with variants.
       |
       |This will allow you to experiment with different
       |parsing options and see common usage.""".stripMargin
