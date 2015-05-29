@@ -28,7 +28,7 @@ def template(n: Int) = s"""
       s"""Z.apply3(Z.apply${n / 2}(${(0 until (n / 2)).map(m => params(m).toLower).mkString(", ")})((${(0 until (n / 2)).map(_ => "_").mkString(", ")})), Z.apply${(n / 2)}(${(0 until (n / 2)).map(m => params(m + n / 2).toLower).mkString(", ")})((${(0 until (n / 2)).map(_ => "_").mkString(", ")})), ${params(n - 1).toLower})((x1, x2, x3) => fab(${(1 to (n / 2)).map(m => "x1._" + m).mkString(", ")}, ${(1 to (n / 2)).map(m => "x2._" + m).mkString(", ")}, x3))"""
 
 
-  val header = s"""
+  val header = """
 package pirate
 
 import scalaz._, Scalaz._
@@ -38,7 +38,7 @@ object ApplicativeStyle extends ApplicativeStyle
 trait ApplicativeStyle {
 """
 
-  val one = s"""
+  val one = """
   implicit class Function1ApplicativeStyle[A, B](fab: A => B) {
     def |*|[Z[_]](a: Z[A])(implicit Z: Applicative[Z]): Z[B] =
       a.map(fab)

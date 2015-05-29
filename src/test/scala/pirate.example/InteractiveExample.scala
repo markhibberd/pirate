@@ -17,7 +17,7 @@ object InteractiveExample {
   )
 
  val command = example ~ "example" ~~
-  s"""|An interactive example for pirate.
+   """|An interactive example for pirate.
       |
       |This will allow you to experiment with different
       |parsing options and see common usage.""".stripMargin
