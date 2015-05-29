@@ -14,9 +14,9 @@ class ParseSpec extends spec.Spec { def is = s2"""
     (ValueParse(None) ~ n).name == n)
 
   def desc = prop((n: String) =>
-    (ValueParse(None) ~ n).description == None)
+    (ValueParse(None) ~ n).description === None)
 
   def descSet = prop((n: (String, String)) =>
-    (ValueParse(None) ~ n._1 ~~ n._2).description == Some(n._2))
+    (ValueParse(None) ~ n._1 ~~ n._2).description === Some(n._2))
 
 }
