@@ -31,7 +31,7 @@ class TextSpec extends spec.Spec { def is = s2"""
     wrap("", 0)(l.value, 50 - s.value, 10).split('\n').forall(_.length <= 90)
   )
 
-  def safe = prop((l: LongLine) => drains(l.value, wrap("", 0)(l.value, 80, 0)))
+  def safe = prop((l: LongLine) => drains(l.value.trim, wrap("", 0)(l.value, 80, 5)))
 
   def gutter = prop((ls: (List5[LongLine])) =>
     wrap("", 0)(ls.value.map(_.value).mkString("\n"), 80, 10).split('\n').map(_.take(10)).mkString("").trim ==== "")
