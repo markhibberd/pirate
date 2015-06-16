@@ -57,7 +57,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
 
 """
 
-  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpreter.run(p, args, NullPrefs)._2
+  def run[A](p: Parse[A], args: List[String]): ParseError \/ A = Interpreter.run(p, args, DefaultPrefs())._2
 
   def testA(name: String): Parse[TestCommand] =
     terminator(long(name), Flags.empty, TestA)
@@ -158,13 +158,13 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   }
 
   def dobacktrack = Interpreter.run((subcommand(().pure[Parse] ~ "first") |@| switch(short('a'), Flags.empty))(_ -> _),
-    "first" :: "-a" :: Nil, NullPrefs) must_== (("first" :: Nil) -> ((), true).right)
+    "first" :: "-a" :: Nil, DefaultPrefs()) must_== (("first" :: Nil) -> ((), true).right)
 
   def donotbacktrack = Interpreter.run((subcommand(().pure[Parse] ~ "first") |@| switch(short('a'), Flags.empty))(_ -> _),
-    "first" :: "-a" :: Nil, NullPrefs.copy(backtrack=false)) must_== (("first" :: Nil) -> ParseErrorLeftOver("-a" :: Nil).left)
+    "first" :: "-a" :: Nil, DefaultPrefs().copy(backtrack=false)) must_== (("first" :: Nil) -> ParseErrorLeftOver("-a" :: Nil).left)
 
   def donotbacktrackbutstillwork = Interpreter.run((subcommand(().pure[Parse] ~ "first") |@| switch(short('a'), Flags.empty))(_ -> _),
-    "-a" :: "first" :: Nil, NullPrefs.copy(backtrack=false)) must_== (("first" :: Nil) -> ((), true).right)
+    "-a" :: "first" :: Nil, DefaultPrefs().copy(backtrack=false)) must_== (("first" :: Nil) -> ((), true).right)
 
   def orFirst = prop((nameOne: LongNameString, nameTwo: LongNameString) => nameOne.s != nameTwo.s ==> {
     run((testA(nameOne.s) ||| testB(nameTwo.s)) , List(s"--${nameOne.s}")) must_== TestA.right
@@ -179,7 +179,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   })
 
   def subcontext = Interpreter.run(subcommand(subcommand(subcommand(().pure[Parse] ~ "third" ) ~ "second" ) ~ "first"),
-    "first" :: "second" :: "third" :: Nil, NullPrefs) must_== (("first" :: "second" :: "third" :: Nil) -> ().right)
+    "first" :: "second" :: "third" :: Nil, DefaultPrefs()) must_== (("first" :: "second" :: "third" :: Nil) -> ().right)
 
   case class LongNameString(s: String)
   implicit def NonEmptyStringArbitrary: Arbitrary[LongNameString] = Arbitrary(

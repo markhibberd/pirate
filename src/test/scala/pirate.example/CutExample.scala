@@ -33,7 +33,7 @@ object CutMain extends PirateMainIO[Cut] {
   , arguments[File](metavar("file"))
   )).map(x => x)
 
-  override def prefs = NullPrefs.copy(separateTopLevels = true)
+  override def prefs = DefaultPrefs().copy(separateTopLevels = true)
 
   def command: Command[Cut] =
     (byte ||| char ||| field) ~ "cut" ~~
@@ -74,7 +74,7 @@ class CutExample extends spec.Spec { def is = s2"""
 """
 
   def run(args: String*): ParseError \/ Cut =
-    Interpreter.run(CutMain.command.parse, args.toList, NullPrefs)._2
+    Interpreter.run(CutMain.command.parse, args.toList, DefaultPrefs())._2
 
   def byte =
     run("-b", "1", "one") must_==
@@ -113,5 +113,5 @@ class CutExample extends spec.Spec { def is = s2"""
       ByteCut("1", true, List(new File("many"), new File("files"))).right
 
   def invalid =
-    Interpreter.run(CutMain.command.parse, nil, NullPrefs)._2.toEither must beLeft
+    Interpreter.run(CutMain.command.parse, nil, DefaultPrefs())._2.toEither must beLeft
 }

@@ -20,12 +20,14 @@ case class Prefs(
  *  - 8/16 indents
  *  - 80 width
  */
-object NullPrefs extends Prefs(
-  backtrack = true,
-  separateTopLevels = true,
-  condenseSynopsis = false,
-  usageOnError = false,
-  flagIndent = 2,
-  descIndent = 26,
-  width = 80
-)
+object DefaultPrefs {
+  def apply() = Prefs(
+    backtrack = true,
+    separateTopLevels = true,
+    condenseSynopsis = false,
+    usageOnError = false,
+    flagIndent = 2,
+    descIndent = 26,
+    width = 80
+  )
+}

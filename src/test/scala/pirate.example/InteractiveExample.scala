@@ -24,7 +24,7 @@ object InteractiveExample {
       |parsing options and see common usage.""".stripMargin
 
   def run(args: String*): (List[String], ParseError \/ Example) =
-    Interpreter.run(example, args.toList, NullPrefs)
+    Interpreter.run(example, args.toList, DefaultPrefs())
 
   def main(unused: Array[String]): Unit = {
     println(run("-s", "-c", "hello", "-n", "12"))
@@ -35,6 +35,6 @@ object InteractiveExample {
 
     println(run("-n", "21", "-s", "-c", "hello"))
 
-    println(Usage.print(command, Nil, NullPrefs))
+    println(Usage.print(command, Nil, DefaultPrefs()))
   }
 }
