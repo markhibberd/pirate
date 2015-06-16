@@ -7,8 +7,10 @@ trait PirateMain[A] {
 
   def run(a: A): Unit
 
+  def prefs: Prefs = DefaultPrefs()
+
   def main(args: Array[String]): Unit =
-    Runners.runOrFail(args.toList, command).map(run).unsafePerformIO
+    Runners.runOrFail(args.toList, command, prefs).map(run).unsafePerformIO
 }
 
 trait PirateMainIO[A] {
@@ -16,6 +18,8 @@ trait PirateMainIO[A] {
 
   def run(a: A): IO[Unit]
 
+  def prefs: Prefs = DefaultPrefs()
+
   def main(args: Array[String]): Unit =
-    Runners.runOrFail(args.toList, command).flatMap(run).unsafePerformIO
+    Runners.runOrFail(args.toList, command, prefs).flatMap(run).unsafePerformIO
 }

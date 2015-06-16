@@ -18,7 +18,7 @@ trait Flags {
 
   // A simple parser to show the application version
   def version(v: String): Parse[Option[Unit]] =
-    abort(both('v', "version"), description("Prints the application version."), ShowVersion(v))
+    abort(both('v', "version"), description("Prints the application version."), ShowOkText("version: " ++ v))
 
   def abort(flag: Name, meta: Metadata, error: ReadError): Parse[Option[Unit]] =
     parse(FlagParser(flag, meta, Read.error(error))).option

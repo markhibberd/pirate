@@ -16,25 +16,27 @@ case class FieldCut(list: String, suppress: Boolean, delimiter: Char, files: Lis
 // FIX descriptions on fields
 object CutMain extends PirateMainIO[Cut] {
   val byte: Parse[Cut] = (ByteCut |*| (
-    flag[String](short('b'), metavar("list"))
-  , switch(short('n'), empty).not
+    flag[String](short('b'), metavar("list") |+| description("The list specifies byte positions."))
+  , switch(short('n'), description("Do not split multi-byte characters.")).not
   , arguments[File](metavar("file"))
   )).map(x => x)
 
   val char: Parse[Cut] = (CharCut |*| (
-    flag[String](short('c'), metavar("list"))
+    flag[String](short('c'), metavar("list") |+| description("The list specifies character positions."))
   , arguments[File](metavar("file"))
   )).map(x => x)
 
   val field: Parse[Cut] = (FieldCut |*| (
-    flag[String](short('f'), metavar("list"))
-  , switch(short('s'), empty)
-  , flag[Char](both('d', "delimiter"), empty).default('\t')
+    flag[String](short('f'), metavar("list") |+| description("The list specifies fields, separated in the input by the field delimiter character (see the -d option.)  Output fields are separated by a single occurrence of the field delimiter character."))
+  , switch(short('s'), description("Suppress lines with no field delimiter characters."))
+  , flag[Char](both('d', "delimiter"), metavar("delim") |+| description("Use delim as the field delimiter character instead of the tab character.")).default('\t')
   , arguments[File](metavar("file"))
   )).map(x => x)
 
+  override def prefs = DefaultPrefs().copy(separateTopLevels = true)
+
   def command: Command[Cut] =
-    ((byte ||| char ||| field) <* helper <* version("1.0")) ~ "cut" ~~
+    (byte ||| char ||| field) ~ "cut" ~~
      "This is a demo of the unix cut utility"
 
   def run(c: Cut) = c match {
@@ -61,9 +63,7 @@ class CutExample extends spec.Spec { def is = s2"""
   cut -f 7 -d x -s seven                   $delimSupress
   cut -f 7 -s -d x seven                   $supressDelim
   cut -b 1 many files                      $manyFiles
-  cut -b 1 one --help                      $validButWithHelp
-  cut -b 1 one --version                   $validButWithVersion
-  cut                                      $invalid
+  cut with invalid args fails              $invalid
 
   Cut Checks
   ==========
@@ -74,7 +74,7 @@ class CutExample extends spec.Spec { def is = s2"""
 """
 
   def run(args: String*): ParseError \/ Cut =
-    Interpreter.run(CutMain.command.parse, args.toList)._2
+    Interpreter.run(CutMain.command.parse, args.toList, DefaultPrefs())._2
 
   def byte =
     run("-b", "1", "one") must_==
@@ -112,12 +112,6 @@ class CutExample extends spec.Spec { def is = s2"""
     run("-b", "1", "many", "files") must_==
       ByteCut("1", true, List(new File("many"), new File("files"))).right
 
-  def validButWithHelp =
-    run("-b", "1", "one", "--help") must_== ParseErrorShowHelpText(None).left
-
-  def validButWithVersion=
-    run("-b", "1", "one", "--version") must_== ParseErrorShowVersion("1.0").left
-
   def invalid =
-    Interpreter.run(CutMain.command.parse, nil)._2.toEither must beLeft
+    Interpreter.run(CutMain.command.parse, nil, DefaultPrefs())._2.toEither must beLeft
 }

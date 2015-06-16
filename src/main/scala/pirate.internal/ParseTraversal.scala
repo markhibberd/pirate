@@ -18,20 +18,11 @@ object ParseTraversal {
   def runParserFully[A](s: ParseState, p: Parse[A], args: List[String]): P[A] =
     runParser(s, p, args).flatMap({
       case (a, Nil) => a.pure[P]
-      case (_, xs)  => errorMessageP("left over arguments: " + xs)
+      case (_, xs)  => errorP(ParseErrorLeftOver(xs))
     })
-
-  def zeroP[A]: P[A] =
-    errorP(ParseErrorNoMessage)
 
   def errorP[A](e: ParseError): P[A] =
     EitherT.left(e.pure[PWR])
-
-  def errorMessageP[A](e: String): P[A] =
-    errorP(ParseErrorMessage(e))
-
-  def exitP[A, B](p: Parse[B], o: ParseTree[Info] \/ A): P[A] =
-    hoistDisjunction(o)
 
   def hoistDisjunction[A](o: ParseTree[Info] \/ A): P[A] =
     o.fold(es => errorP(ParseErrorMissing(es)), a => a.pure[P])
@@ -82,7 +73,7 @@ object ParseTraversal {
 
   def toParseError(r: ReadError): ParseError = r match {
     case ShowHelpText(sub)    => ParseErrorShowHelpText(sub)
-    case ShowVersion(version) => ParseErrorShowVersion(version)
+    case ShowOkText(s)        => ParseErrorOkMessage(s)
     case ReadErrorInvalidType(token,expected) => ParseErrorMessage(s"Error parsing `${token}` as `${expected}`")
     case e            => ParseErrorMessage(e.toString)
   }
@@ -130,7 +121,11 @@ object ParseTraversal {
       if (sub.name === arg)
         StateT[P, List[String], A](args => for {
           _ <- EitherT.right[PWR,ParseError,Unit](().pure[PWR].<++:(arg :: Nil))
-          x <- runParser(SkipOpts, sub.parse, args).map(_.swap)
+          prefs <- EitherT.right[PWR,ParseError,Prefs](WriterT[PR, List[String], Prefs](Reader(p => (nil -> p))))
+          x <- if (prefs.backtrack)
+            runParser(SkipOpts, sub.parse, args).map(_.swap)
+          else
+            runParserFully(SkipOpts, sub.parse, args).map(nil[String] -> _)
         } yield x).pure[Option]
       else
         None
@@ -163,7 +158,7 @@ object ParseTraversal {
 
   def runParser[A](s: ParseState, p: Parse[A], args: List[String]): P[(A, List[String])] =
     args match {
-      case Nil => exitP(p, ParseTraversal.eval(false,p).map(_ -> args))
+      case Nil => hoistDisjunction(ParseTraversal.eval(false,p).map(_ -> args))
       case "--" :: rest => runParser(AllowOpts, p, rest)
       case arg :: restArgs =>
         stepParser(s, arg, p).disamb.run(restArgs).flatMap({
@@ -254,11 +249,13 @@ sealed trait ParseTree[A] {
 
   def simplify: ParseTree[A] = this match {
     case ParseTreeLeaf(a) => ParseTreeLeaf(a)
+    case ParseTreeAp(x :: Nil) => x.simplify
     case ParseTreeAp(xs) => ParseTreeAp(xs.map(_.simplify).flatMap({
       case ParseTreeAp(ys) => ys
       case ParseTreeAlt(Nil) => Nil
       case x => List(x)
     }))
+    case ParseTreeAlt(x :: Nil) => x.simplify
     case ParseTreeAlt(xs) => ParseTreeAlt(xs.map(_.simplify).flatMap({
       case ParseTreeAlt(ys) => ys
       case ParseTreeAp(Nil) => Nil

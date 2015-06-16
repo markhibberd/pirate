@@ -27,19 +27,22 @@ object MthExample {
       |This will allow you to experiment with different
       |parsing options and see common usage.""".stripMargin
 
+  def run(args: String*): (List[String], ParseError \/ Args) =
+    Interpreter.run(example, args.toList, DefaultPrefs())
+
   def main(unused: Array[String]): Unit = {
-    println(Interpreter.run(all, List("-h")))
+    println(run("-h"))
 
-    println(Interpreter.run(all, List("-v")))
+    println(run("-v"))
 
-    println(Interpreter.run(all, List("-s", "-c", "hello", "-n", "12")))
+    println(run("-s", "-c", "hello", "-n", "12"))
 
-    println(Interpreter.run(all, List("-c", "hello", "-n", "12")))
+    println(run("-c", "hello", "-n", "12"))
 
-    println(Interpreter.run(all, List("-n", "21", "-c", "hello")))
+    println(run("-n", "21", "-c", "hello"))
 
-    println(Interpreter.run(all, List("-n", "21", "-s", "-c", "hello")))
+    println(run("-n", "21", "-s", "-c", "hello"))
 
-    println(Usage.print(command, Nil))
+    println(Usage.print(command, Nil,DefaultPrefs()))
   }
 }

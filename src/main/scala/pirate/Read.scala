@@ -199,7 +199,7 @@ case object ReadErrorEmpty extends ReadError
 case object ReadErrorNotEnoughInput extends ReadError
 case object ReadErrorTooMuchInput extends ReadError
 case class ShowHelpText(sub: Option[String]) extends ReadError
-case class ShowVersion(version: String) extends ReadError
+case class ShowOkText(s: String) extends ReadError
 case class ReadErrorInvalidType(token: String, expected: String) extends ReadError
 case class ReadErrorUnexpected(token: String) extends ReadError
 case class ReadErrorMessage(message: String) extends ReadError
