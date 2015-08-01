@@ -1,0 +1,13 @@
+InvalidType=Error parsing `{0}` as `{1}`
+Unexpected=Unexpected value {0}
+RequiresExtra={0} requires extra input
+Leftover=Left over arguments: {0}
+InvalidSubcommand=Invalid subcommand `{0}`
+InvalidOption=Invalid option `{0}`
+InvalidArgument=Invalid argument `{0}`
+AvailableOptions=Available options:
+PositionalArguments=Positional arguments:
+AvailableCommands=Available commands:
+Usage=Usage:
+MissingParameters=Missing parameters:
+OPTIONS=[OPTIONS]

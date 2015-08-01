@@ -150,7 +150,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   }
 
   def intArgString = {
-    run(argument[Int](metavar("src")), List("file.txt")) ==== ParseErrorMessage("Error parsing `file.txt` as `Int`").left
+    run(argument[Int](metavar("src")), List("file.txt")) ==== ParseErrorReadError(ReadErrorInvalidType("file.txt","Int"), ArgumentInfo(Some("src"),None,false,false)).left
   }
 
   def missingArg = {

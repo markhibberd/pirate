@@ -1,0 +1,13 @@
+InvalidType=Erreur `{0}` analysé comme `{1}`
+Unexpected=Valeur inattendue {0}
+RequiresExtra={0} requiert plus de données
+Leftover=Arguments restants `{0}`
+InvalidSubcommand=Sous-commande incorrect `{0}`
+InvalidOption=Option non valide `{0}`
+InvalidArgument=Argument non valide `{0}`
+AvailableOptions=Options disponibles:
+PositionalArguments=Arguments positionnels:
+AvailableCommands=Commandes disponibles:
+Usage=Utilisation:
+MissingParameters=Paramètres manquant:
+OPTIONS=[OPTIONS]

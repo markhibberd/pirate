@@ -1,7 +1,7 @@
 package pirate.internal
 
 import pirate._
-import scalaz._, Scalaz._
+import scalaz.{Name => _, _}, Scalaz._
 
 // FIX current dumping ground for all of the dodgy code, need to work through and clean this up.
 
@@ -71,12 +71,8 @@ object ParseTraversal {
          })
     }, p)
 
-  def toParseError(r: ReadError): ParseError = r match {
-    case ShowHelpText(sub)    => ParseErrorShowHelpText(sub)
-    case ShowOkText(s)        => ParseErrorOkMessage(s)
-    case ReadErrorInvalidType(token,expected) => ParseErrorMessage(s"Error parsing `${token}` as `${expected}`")
-    case e            => ParseErrorMessage(e.toString)
-  }
+  def toParseError[A](r: ReadError, p: Parser[A]): ParseError =
+    ParseErrorReadError(r, Usage.flags(p, OptHelpInfo(false, false)))
 
   def update[A](run: List[String] => P[(List[String], A)]): StateArg[A] =
     StateT[P, List[String], A](run)
@@ -97,13 +93,13 @@ object ParseTraversal {
         case ShortParsedName(c) =>
           flag.hasShort(c).option(
             update[A](args => p.read(w.value.toList ++ args) match {
-              case -\/(e) => errorP(toParseError(e))
+              case -\/(e) => errorP(toParseError(e, parser))
               case \/-(r) => r.pure[P]
             }))
         case LongParsedName(s) =>
           flag.hasLong(s).option(
             update[A](args => p.read(w.value.toList ++ args) match {
-              case -\/(e) => errorP(toParseError(e))
+              case -\/(e) => errorP(toParseError(e, parser))
               case \/-(r) => r.pure[P]
             }))
       }
@@ -114,7 +110,7 @@ object ParseTraversal {
   def argMatches[A](parser: Parser[A], arg: String): Option[StateArg[A]] = parser match {
     case ArgumentParser(_, p) =>
       update[A](args => p.read(arg :: args) match {
-        case -\/(e) => errorP(toParseError(e))
+        case -\/(e) => errorP(toParseError(e, parser))
         case \/-(r) => r.pure[P]
       }).some
     case CommandParser(sub) =>

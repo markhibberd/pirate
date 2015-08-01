@@ -101,18 +101,24 @@ class GitExample extends spec.Spec { def is = s2"""
   }
 
   def help = {
-    run("-c", "thing", "--help") must_==
-      Nil -> ParseErrorShowHelpText(None).left
+    run("-c", "thing", "--help") match {
+      case (Nil, -\/(ParseErrorReadError(ShowHelpText(None), _))) => ok
+      case _ => ko
+    }
   }
 
   def helpContext = {
-    run("--help", "add") must_==
-      Nil -> ParseErrorShowHelpText(Some("add")).left
+    run("--help", "add") match {
+      case (Nil, -\/(ParseErrorReadError(ShowHelpText(Some("add")), _))) => ok
+      case _ => ko
+    }
   }
 
   def helpAdd = {
-    run("add", "--help") must_==
-      List("add") -> ParseErrorShowHelpText(None).left
+    run("add", "--help") match {
+      case (List("add"), -\/(ParseErrorReadError(ShowHelpText(None), _))) => ok
+      case _ => ko
+    }
   }
 
   def helpText = {

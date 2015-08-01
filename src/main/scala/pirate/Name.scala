@@ -29,8 +29,8 @@ sealed trait Name {
 case class ShortName(s: Char) extends Name
 case class LongName(l: String) extends Name
 case class BothName(s: Char, l: String) extends Name
-object Name { 
-  def apply(s: Char, l: String) = BothName(s, l) 
+object Name {
+  def apply(s: Char, l: String) = BothName(s, l)
   def combine (first: Name, second: Name) = (first, second) match {
     case (ShortName(s), LongName(l)) => BothName(s, l)
     case (LongName(l), ShortName(s)) => BothName(s, l)
