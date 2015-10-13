@@ -50,10 +50,9 @@ case class AltParse[A](a: Parse[A], b: Parse[A]) extends Parse[A]
 case class BindParse[A, B](f: A => Parse[B], a: Parse[A]) extends Parse[B]
 
 object Parse {
-  implicit def ParseMonad: Monad[Parse] with Plus[Parse] = new Monad[Parse] with Plus[Parse] {
+  implicit def ParseApplicative: Applicative[Parse] with Plus[Parse] = new Applicative[Parse] with Plus[Parse] {
     def point[A](a: => A) = ValueParse(a)
     override def map[A, B](a: Parse[A])(f: A => B) = a map f
-    def bind[A, B](a: Parse[A])(f: A => Parse[B]) = a flatMap f
     override def ap[A, B](a: => Parse[A])(f: => Parse[A => B]) = ApParse(f, a)
     def plus[A](a: Parse[A], b: => Parse[A]) = AltParse(a, b)
   }
