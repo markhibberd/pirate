@@ -19,9 +19,6 @@ sealed trait Parse[A] {
       BindParse(k.map(_.map(f)), a)
   }
 
-  def flatMap[B](f: A => Parse[B]): Parse[B] =
-    BindParse(f, this)
-
   def |||(other: Parse[A]): Parse[A] =
     AltParse(this, other)
 
@@ -34,10 +31,8 @@ sealed trait Parse[A] {
   def not(implicit ev: A =:= Boolean): Parse[Boolean] =
     map(!_)
 
-  def some: Parse[List[A]] = for {
-    a <- this
-    b <- many
-  } yield (a :: b)
+  def some: Parse[List[A]] =
+    BindParse((a: A) => many.map(a :: _), this)
 
   def many: Parse[List[A]] =
     some ||| nil.pure[Parse]
