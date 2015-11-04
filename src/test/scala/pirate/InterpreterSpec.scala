@@ -3,7 +3,7 @@ package pirate
 import org.scalacheck.{Arbitrary, Gen}, Arbitrary.arbitrary
 import Pirate._
 import pirate.internal._
-import scalaz._, Scalaz._, scalaz.scalacheck.ScalaCheckBinding._
+import scalaz._, Scalaz._
 
 sealed trait TestCommand
 case class TestWrapper(cmd: TestCommand)
@@ -15,8 +15,9 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   Interpreter Properties
   ======================
 
-  Basic interpreters
-  ====
+  Basic interpretters
+  ===================
+
   Required found                                  $requiredFound
   Required missing applicatives both              $requiredMissingA
   Required missing applicatives first             $requiredMissingB
@@ -46,7 +47,7 @@ class InterpreterSpec extends spec.Spec { def is = s2"""
   Missing arguments produce sane errors           $missingArg
 
   Composite interpreters
-  ====
+  ======================
   Backtracking occurs when set                   $dobacktrack
   Backtracking does not occurs when set          $donotbacktrack
   Interpreter still works with backtracking on   $donotbacktrackbutstillwork
