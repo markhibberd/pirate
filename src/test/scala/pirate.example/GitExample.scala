@@ -7,7 +7,7 @@ import java.io.File
 
 case class Git(
   cwd: Option[String],
-  conf: Option[String],
+  conf: Map[String, String],
   exec: Option[String],
   cmd: GitCommand
 )
@@ -26,8 +26,8 @@ object GitMain extends PirateMainIO[Git] {
   val cwd: Parse[Option[String]] =
     flag[String](short('C'), metavar("<path>") |+| description("Run as if git was started in <path> instead of the current working directory.")).option
 
-  val conf: Parse[Option[String]] =
-    flag[String](short('c'), metavar("<name>=<value>") |+| description("Pass a configuration parameter to the command.")).option
+  val conf: Parse[Map[String, String]] =
+    flag[(String, String)](short('c'), metavar("<name>=<value>") |+| description("Pass a configuration parameter to the command.")).many.map(_.toMap)
 
   val exec: Parse[Option[String]] =
     flag[String](long("exec-path"), metavar("<path>") |+| description("Path to wherever your core Git programs are installed.")).option
@@ -96,12 +96,12 @@ class GitExample extends spec.Spec { def is = s2"""
     Interpreter.run(GitMain.command.parse, args.toList, DefaultPrefs())
 
   def version = {
-    run("-c", "thing", "--version") must_==
-      Nil -> Git(None, Some("thing"), None, GitVersion).right
+    run("-c", "some=thing", "--version") must_==
+      Nil -> Git(None, Map("some" -> "thing"), None, GitVersion).right
   }
 
   def help = {
-    run("-c", "thing", "--help") must_==
+    run("-c", "some=thing", "--help") must_==
       Nil -> ParseErrorShowHelpText(None).left
   }
 
@@ -125,11 +125,11 @@ class GitExample extends spec.Spec { def is = s2"""
 
   def gitAdd = {
     run("add", "one", "two", "three", "-f", "--interactive") must_==
-      List("add") -> Git(None, None, None, GitAdd(true, true, false, false, List(new File("one"), new File("two"), new File("three")))).right
+      List("add") -> Git(None, Map(), None, GitAdd(true, true, false, false, List(new File("one"), new File("two"), new File("three")))).right
   }
 
   def gitRm = {
-    run("rm", "--dry-run", "file", "-c", "thing") must_==
-      List("rm") -> Git(None, Some("thing"), None, GitRm(false, true, false, false, List(new File("file")))).right
+    run("rm", "--dry-run", "file", "-c", "some=thing") must_==
+      List("rm") -> Git(None, Map("some" -> "thing"), None, GitRm(false, true, false, false, List(new File("file")))).right
   }
 }

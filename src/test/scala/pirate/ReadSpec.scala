@@ -25,9 +25,11 @@ class ReadSpec extends spec.Spec { def is = s2"""
   File example                        $file
   URI example                         $uri
   URL example                         $url
+  Configuration example               $configuration
 
   Char doesn't parse strings          $charerr
   Numeric doesn't parse strings       $numericerr
+  Configuration needs an equals       $configurationerr
 
   Returning none will fail            $optionFail
   Returning some will pass            $optionPass
@@ -47,11 +49,17 @@ class ReadSpec extends spec.Spec { def is = s2"""
   def url =
     Read.parse[URL](List("http://some/file")).toOption ==== Some(new URL("http://some/file"))
 
+  def configuration =prop((s: (String, Int)) => !s._1.contains('=') ==> {
+    Read.parse[(String, Int)](List(s"${s._1}=${s._2}")).toOption ==== Some(s) })
+
   def charerr = prop((c: Char, d: Char, s: String ) =>
     Read.parse[Char](List(c.toString +  d.toString + s)).toOption ==== None)
 
   def numericerr = prop((s: String) => !s.parseInt.isSuccess ==> {
     Read.parse[Int](List(s)).toOption ==== None})
+
+  def configurationerr = prop((s: String) => !s.contains('=') ==> {
+    Read.parse[(String, String)](List(s)).toOption ==== None })
 
   def optionFail = prop((s: String, e: String) =>
     Read.optionRead(_ => None, e).read(List(s)) ==== ReadErrorInvalidType(s, e).left)
@@ -81,11 +89,12 @@ class ReadSpec extends spec.Spec { def is = s2"""
   Read.of[java.net.URL]
   Read.of[Option[String]]
 
-  import Read.auto._
-
   Read.of[(Int, Int)]
   Read.of[(String, Int)]
   Read.of[(Int, String)]
-  Read.of[(Int, Int, Int, Int, Int)]
   Read.of[(Int, Option[Int])]
+
+  import Read.auto._
+
+  Read.of[(Int, Int, Int, Int, Int)]
 }
