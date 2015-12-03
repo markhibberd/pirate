@@ -19,9 +19,6 @@ sealed trait Parse[A] {
       BindParse(k.map(_.map(f)), a)
   }
 
-  def flatMap[B](f: A => Parse[B]): Parse[B] =
-    BindParse(f, this)
-
   def |||(other: Parse[A]): Parse[A] =
     AltParse(this, other)
 
@@ -34,10 +31,8 @@ sealed trait Parse[A] {
   def not(implicit ev: A =:= Boolean): Parse[Boolean] =
     map(!_)
 
-  def some: Parse[List[A]] = for {
-    a <- this
-    b <- many
-  } yield (a :: b)
+  def some: Parse[List[A]] =
+    BindParse((a: A) => many.map(a :: _), this)
 
   def many: Parse[List[A]] =
     some ||| nil.pure[Parse]
@@ -50,10 +45,9 @@ case class AltParse[A](a: Parse[A], b: Parse[A]) extends Parse[A]
 case class BindParse[A, B](f: A => Parse[B], a: Parse[A]) extends Parse[B]
 
 object Parse {
-  implicit def ParseMonad: Monad[Parse] with Plus[Parse] = new Monad[Parse] with Plus[Parse] {
+  implicit def ParseApplicative: Applicative[Parse] with Plus[Parse] = new Applicative[Parse] with Plus[Parse] {
     def point[A](a: => A) = ValueParse(a)
     override def map[A, B](a: Parse[A])(f: A => B) = a map f
-    def bind[A, B](a: Parse[A])(f: A => Parse[B]) = a flatMap f
     override def ap[A, B](a: => Parse[A])(f: => Parse[A => B]) = ApParse(f, a)
     def plus[A](a: Parse[A], b: => Parse[A]) = AltParse(a, b)
   }
