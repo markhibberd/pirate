@@ -27,11 +27,11 @@ object build extends Build {
       , scalacOptions in (Test,console) := Seq("-language:_", "-feature")
     , scalacOptions in Test := Seq("-Yrangepos")
     , libraryDependencies ++= Seq(
-        "org.scalaz" %% "scalaz-core" % "7.1.0"
-      , "org.scalaz" %% "scalaz-effect" % "7.1.0"
-      , "org.scalaz" %% "scalaz-scalacheck-binding" % "7.1.0" % "test"
-      , "org.specs2" %% "specs2-core" % "3.6.5" % "test"
-      , "org.specs2" %% "specs2-scalacheck" % "3.6.5" % "test"
+        "org.scalaz" %% "scalaz-core" % "7.2.6"
+      , "org.scalaz" %% "scalaz-effect" % "7.2.6"
+      , "org.scalaz" %% "scalaz-scalacheck-binding" % "7.2.6" % "test"
+      , "org.specs2" %% "specs2-core" % "3.8.9" % "test"
+      , "org.specs2" %% "specs2-scalacheck" % "3.8.9" % "test"
       ) ++ (
         if (scalaVersion.value.contains("2.10")) Seq("com.chuusai"  % s"shapeless_${scalaVersion.value}" % "2.0.0")
         else                                     Seq("com.chuusai" %% s"shapeless"                       % "2.0.0")
